@@ -5,26 +5,25 @@ mutable struct MultiBosonCMPSData_MDMinv{T<:Number} <: AbstractCMPSData
     Λs::Matrix{T}
     function MultiBosonCMPSData_MDMinv(Q::Matrix{T}, M::Matrix{T}, Minv::Matrix{T}, Λs::Matrix{T}) where T
         if !(M * Minv ≈ Matrix{T}(I, size(M))) 
-            @warn "M * Minv != I"
-            Minv = inv(M)
+            Minv = pinv(M)
         end
         return new{T}(Q, M, Minv, Λs)
     end
     function MultiBosonCMPSData_MDMinv(Q::Matrix{T}, M::Matrix{T}, Λs::Matrix{T}) where T
-        Minv = inv(M)
+        Minv = pinv(M)
         return new{T}(Q, M, Minv, Λs)
     end
     function MultiBosonCMPSData_MDMinv(f, χ::Integer, d::Integer)
         Q = f(ComplexF64, χ, χ)
         M = f(ComplexF64, χ, χ)
-        Minv = inv(M)
+        Minv = pinv(M)
         Λs = f(ComplexF64, χ, d)
-        return new{T}(Q, M, Minv, Λs)
+        return new{ComplexF64}(Q, M, Minv, Λs)
     end
     function MultiBosonCMPSData_MDMinv(v::Vector{T}, χ::Integer, d::Integer) where T<:Number
         Q = reshape(v[1:χ^2], (χ, χ))
         M = reshape(v[χ^2+1:2*χ^2], (χ, χ))
-        Minv = inv(M)
+        Minv = pinv(M)
         Λs = reshape(v[2*χ^2+1:end], (χ, d))
         return new{T}(Q, M, Minv, Λs)
     end
@@ -44,28 +43,28 @@ Base.vec(ψ::MultiBosonCMPSData_MDMinv) = [vec(ψ.Q); vec(ψ.M); vec(ψ.Λs)]
 function LinearAlgebra.mul!(w::MultiBosonCMPSData_MDMinv, v::MultiBosonCMPSData_MDMinv, α)
     mul!(w.Q, v.Q, α)
     mul!(w.M, v.M, α)
-    w.Minv .= inv(w.M)
+    w.Minv .= pinv(w.M)
     mul!(w.Λs, v.Λs, α)
     return w
 end
 function LinearAlgebra.rmul!(v::MultiBosonCMPSData_MDMinv, α)
     rmul!(v.Q, α)
     rmul!(v.M, α)
-    v.Minv .= inv(v.M)
+    v.Minv .= pinv(v.M)
     rmul!(v.Λs, α)
     return v
 end
 function LinearAlgebra.axpy!(α, ψ1::MultiBosonCMPSData_MDMinv, ψ2::MultiBosonCMPSData_MDMinv)
     axpy!(α, ψ1.Q, ψ2.Q)
     axpy!(α, ψ1.M, ψ2.M)
-    ψ2.Minv .= inv(ψ2.M)
+    ψ2.Minv .= pinv(ψ2.M)
     axpy!(α, ψ1.Λs, ψ2.Λs)
     return ψ2
 end
 function LinearAlgebra.axpby!(α, ψ1::MultiBosonCMPSData_MDMinv, β, ψ2::MultiBosonCMPSData_MDMinv)
     axpby!(α, ψ1.Q, β, ψ2.Q)
     axpby!(α, ψ1.M, β, ψ2.M)
-    ψ2.Minv .= inv(ψ2.M)
+    ψ2.Minv .= pinv(ψ2.M)
     axpby!(α, ψ1.Λs, β, ψ2.Λs)
     return ψ2
 end
@@ -80,7 +79,7 @@ function randomize!(ψ::MultiBosonCMPSData_MDMinv)
     T = eltype(ψ)
     map!(x -> randn(T), ψ.Q, ψ.Q)
     map!(x -> randn(T), ψ.M, ψ.M)
-    ψ.Minv .= inv(ψ.M)
+    ψ.Minv .= pinv(ψ.M)
     map!(x -> randn(T), ψ.Λs, ψ.Λs)
 end
 
@@ -110,7 +109,7 @@ function MultiBosonCMPSData_MDMinv(ψ::CMPSData)
     Q = ψ.Q.data
     Λs = zeros(eltype(ψ.Q), χ, d)
     _, M = eigen(ψ.Rs[1].data)
-    Minv = inv(M)
+    Minv = pinv(M)
    
     err2 = 0.
     for ix in 1:d
@@ -125,6 +124,7 @@ end
 function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_MDMinv)
     M, Minv = ψ.M, ψ.Minv
     d = get_d(ψ)
+    χ = get_χ(ψ)
     Ds = map(1:d) do ix 
         TensorMap(diagm(ψ.Λs[:, ix]), ℂ^χ, ℂ^χ)
     end
