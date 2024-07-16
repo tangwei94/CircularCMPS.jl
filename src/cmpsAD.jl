@@ -1,28 +1,28 @@
-"""
-    rrule(::typeof(tr), A::AbstractTensorMap)
+#"""
+#    rrule(::typeof(tr), A::AbstractTensorMap)
+#
+#    rrule for `TensorKit.tr`.
+#"""
+#function ChainRulesCore.rrule(::typeof(tr), A::AbstractTensorMap)
+#    fwd = tr(A)
+#    function tr_pushback(f̄wd)
+#        Ā = f̄wd * id(domain(A))
+#        return NoTangent(), Ā
+#    end 
+#    return fwd, tr_pushback
+#end
 
-    rrule for `TensorKit.tr`.
-"""
-function ChainRulesCore.rrule(::typeof(tr), A::AbstractTensorMap)
-    fwd = tr(A)
-    function tr_pushback(f̄wd)
-        Ā = f̄wd * id(domain(A))
-        return NoTangent(), Ā
-    end 
-    return fwd, tr_pushback
-end
-
-"""
-    rrule(::typeof(adjoint), A::AbstractTensorMap)
-
-    rrule for adjoint.
-"""
-function ChainRulesCore.rrule(::typeof(adjoint), A::AbstractTensorMap)
-    function adjoint_pushback(f̄wd)
-        return NoTangent(), f̄wd'
-    end
-    return A', adjoint_pushback
-end
+#"""
+#    rrule(::typeof(adjoint), A::AbstractTensorMap)
+#
+#    rrule for adjoint.
+#"""
+#function ChainRulesCore.rrule(::typeof(adjoint), A::AbstractTensorMap)
+#    function adjoint_pushback(f̄wd)
+#        return NoTangent(), f̄wd'
+#    end
+#    return A', adjoint_pushback
+#end
 
 @non_differentiable id(V::VectorSpace)
 @non_differentiable isomorphism(cod::VectorSpace, dom::VectorSpace)
@@ -99,12 +99,12 @@ function ChainRulesCore.rrule(::typeof(K_mat), ϕ::CMPSData, ψ::CMPSData)
 
     function K_mat_pushback(f̄wd)
         f̄wd = K_permute(f̄wd)
-        @tensor Q̄_ϕ[-1; -2] := conj(f̄wd[1, -2, 1, -1])
-        @tensor Q̄_ψ[-1; -2] := f̄wd[-1, 1, -2, 1]
+        @tensor Q̄_ϕ[-1; -2] := conj(f̄wd[1 -2; 1 -1])
+        @tensor Q̄_ψ[-1; -2] := f̄wd[-1 1; -2 1]
         R̄s_ψ, R̄s_ϕ = MPSBondTensor[], MPSBondTensor[]
         for (Rψ, Rϕ) in zip(ψ.Rs, ϕ.Rs)
-            @tensor R̄ϕ[-1; -2] := conj(f̄wd[2, -2, 1, -1] * Rψ'[1, 2])
-            @tensor R̄ψ[-1; -2] := f̄wd[-1, 2, -2, 1] * Rϕ[1, 2]
+            @tensor R̄ϕ[-1; -2] := conj(f̄wd[2 -2; 1 -1]) * conj(Rψ'[1; 2]) # TODO specifically test this one
+            @tensor R̄ψ[-1; -2] := f̄wd[-1 2; -2 1] * Rϕ[1; 2]
             push!(R̄s_ψ, R̄ψ)
             push!(R̄s_ϕ, R̄ϕ)
         end

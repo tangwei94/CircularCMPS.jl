@@ -8,25 +8,25 @@ mutable struct MultiBosonCMPSData_MDMinv{T<:Number} <: AbstractCMPSData
             @warn "M * Minv != I"
             Minv = inv(M)
         end
-        return new(Q, M, Minv, Λs)
+        return new{T}(Q, M, Minv, Λs)
     end
     function MultiBosonCMPSData_MDMinv(Q::Matrix{T}, M::Matrix{T}, Λs::Matrix{T}) where T
         Minv = inv(M)
-        return new(Q, M, Minv, Λs)
+        return new{T}(Q, M, Minv, Λs)
     end
     function MultiBosonCMPSData_MDMinv(f, χ::Integer, d::Integer)
         Q = f(ComplexF64, χ, χ)
         M = f(ComplexF64, χ, χ)
         Minv = inv(M)
         Λs = f(ComplexF64, χ, d)
-        return MultiBosonCMPSData_MDMinv(Q, M, Minv, Λs)
+        return new{T}(Q, M, Minv, Λs)
     end
     function MultiBosonCMPSData_MDMinv(v::Vector{T}, χ::Integer, d::Integer) where T<:Number
         Q = reshape(v[1:χ^2], (χ, χ))
         M = reshape(v[χ^2+1:2*χ^2], (χ, χ))
         Minv = inv(M)
         Λs = reshape(v[2*χ^2+1:end], (χ, d))
-        return MultiBosonCMPSData{T}(Q, M, Minv, Λs)
+        return new{T}(Q, M, Minv, Λs)
     end
 end
 
@@ -154,7 +154,7 @@ end
 #    return MultiBosonCMPSData(Q, Λs) 
 #end
 
-#function tangent_map(ψm::MultiBosonCMPSData, Xm::MultiBosonCMPSData, EL::MPSBondTensor, ER::MPSBondTensor, Kinv::AbstractTensorMap{S, 2, 2}) where {S<:EuclideanSpace}
+#function tangent_map(ψm::MultiBosonCMPSData, Xm::MultiBosonCMPSData, EL::MPSBondTensor, ER::MPSBondTensor, Kinv::AbstractTensorMap{S, 2, 2}) where {S}
 #    χ = get_χ(ψm)
 #    ψ = CMPSData(ψm)
 #    X = CMPSData(Xm)

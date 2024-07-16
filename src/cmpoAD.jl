@@ -1,8 +1,8 @@
-function otimes_rev_l(X::AbstractTensorMap{<:EuclideanSpace, 2, 2}, B::AbstractTensorMap{<:EuclideanSpace, 1, 1})
+function otimes_rev_l(X::AbstractTensorMap{S, 2, 2}, B::AbstractTensorMap{S, 1, 1}) where S
     @tensor rev[-1; -2] := X[-1 1; -2 2] * B'[2; 1]
     return rev
 end
-function otimes_rev_r(X::AbstractTensorMap{<:EuclideanSpace, 2, 2}, A::AbstractTensorMap{<:EuclideanSpace, 1, 1})
+function otimes_rev_r(X::AbstractTensorMap{S, 2, 2}, A::AbstractTensorMap{S, 1, 1}) where S
     @tensor rev[-1; -2] := X[1 -1; 2 -2] * A'[2; 1]
     return rev
 end

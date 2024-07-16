@@ -18,7 +18,7 @@ Base.:-(ψ::MultiBosonCMPSData_P, ϕ::MultiBosonCMPSData_P) = MultiBosonCMPSData
 Base.:*(ψ::MultiBosonCMPSData_P, x::Number) = MultiBosonCMPSData_P(ψ.Q * x, ψ.Ms .* x)
 Base.:*(x::Number, ψ::MultiBosonCMPSData_P) = MultiBosonCMPSData_P(ψ.Q * x, ψ.Ms .* x)
 LinearAlgebra.dot(ψ1::MultiBosonCMPSData_P, ψ2::MultiBosonCMPSData_P) = dot(ψ1.Q, ψ2.Q) + sum(dot.(ψ1.Ms, ψ2.Ms))
-Base.eltype(ψ::MultiBosonCMPSData) = eltype(ψ.Q)
+Base.eltype(ψ::MultiBosonCMPSData_P) = eltype(ψ.Q)
 LinearAlgebra.dot(ψ1::MultiBosonCMPSData_P, ψ2::MultiBosonCMPSData_P) = dot(ψ1.Q, ψ2.Q) + dot(ψ1.Ms, ψ2.Ms)
 LinearAlgebra.norm(ψ::MultiBosonCMPSData_P) = sqrt(norm(dot(ψ, ψ)))
 #Base.vec(ψ::MultiBosonCMPSData_P) = [vec(ψ.Q); vec(ψ.Ms)]
@@ -136,7 +136,7 @@ function expand(ψ::MultiBosonCMPSData_P, χ::Integer; perturb::Float64=1e-3)
     return MultiBosonCMPSData_P(Q, Ms) 
 end
 
-function tangent_map(ψm::MultiBosonCMPSData_P, Xm::MultiBosonCMPSData_P, EL::MPSBondTensor, ER::MPSBondTensor, Kinv::AbstractTensorMap{S, 2, 2}) where {S<:EuclideanSpace}
+function tangent_map(ψm::MultiBosonCMPSData_P, Xm::MultiBosonCMPSData_P, EL::MPSBondTensor, ER::MPSBondTensor, Kinv::AbstractTensorMap{S, 2, 2}) where {S}
     χ, d = get_χ(ψm), get_d(ψm)
     ψ = CMPSData(ψm)
     X = CMPSData(Xm)
