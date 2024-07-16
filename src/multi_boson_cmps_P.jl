@@ -19,7 +19,6 @@ Base.:*(ψ::MultiBosonCMPSData_P, x::Number) = MultiBosonCMPSData_P(ψ.Q * x, ψ
 Base.:*(x::Number, ψ::MultiBosonCMPSData_P) = MultiBosonCMPSData_P(ψ.Q * x, ψ.Ms .* x)
 LinearAlgebra.dot(ψ1::MultiBosonCMPSData_P, ψ2::MultiBosonCMPSData_P) = dot(ψ1.Q, ψ2.Q) + sum(dot.(ψ1.Ms, ψ2.Ms))
 Base.eltype(ψ::MultiBosonCMPSData_P) = eltype(ψ.Q)
-LinearAlgebra.dot(ψ1::MultiBosonCMPSData_P, ψ2::MultiBosonCMPSData_P) = dot(ψ1.Q, ψ2.Q) + dot(ψ1.Ms, ψ2.Ms)
 LinearAlgebra.norm(ψ::MultiBosonCMPSData_P) = sqrt(norm(dot(ψ, ψ)))
 #Base.vec(ψ::MultiBosonCMPSData_P) = [vec(ψ.Q); vec(ψ.Ms)]
 

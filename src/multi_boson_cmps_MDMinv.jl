@@ -72,7 +72,7 @@ end
 function Base.similar(ψ::MultiBosonCMPSData_MDMinv) 
     Q = similar(ψ.Q)
     Λs = similar(ψ.Λs)
-    return MultiBosonCMPSData_MDMinv(Q, ψ.M, ψ.Minv, Λs)
+    return MultiBosonCMPSData_MDMinv(Q, copy(ψ.M), copy(ψ.Minv), Λs)
 end
 
 function randomize!(ψ::MultiBosonCMPSData_MDMinv)
@@ -86,7 +86,7 @@ end
 function Base.zero(ψ::MultiBosonCMPSData_MDMinv) 
     Q = zero(ψ.Q)
     Λs = zero(ψ.Λs)
-    return MultiBosonCMPSData_MDMinv(Q, ψ.M, ψ.Minv, Λs)
+    return MultiBosonCMPSData_MDMinv(Q, copy(ψ.M), copy(ψ.Minv), Λs)
 end
 
 @inline get_χ(ψ::MultiBosonCMPSData_MDMinv) = size(ψ.Q, 1)
@@ -124,17 +124,18 @@ end
 function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_MDMinv)
     M, Minv = ψ.M, ψ.Minv
     d = get_d(ψ)
-    χ = get_χ(ψ)
     Ds = map(1:d) do ix 
-        TensorMap(diagm(ψ.Λs[:, ix]), ℂ^χ, ℂ^χ)
+        diagm(ψ.Λs[:, ix])
     end
     function CMPSData_pushback(∂ψ)
-        ∂Q = ∂ψ.Q
-        ∂Λs = map(∂ψ.Rs) do ∂R
-            return M' * ∂R * Minv'
+        ∂Q = ∂ψ.Q.data
+        ∂Λs = similar(ψ.Λs)
+        for (ix, ∂R) in enumerate(∂ψ.Rs)
+            ∂Λs[:, ix] = diag(M' * ∂R.data * Minv')
         end
-        ∂M = sum(∂R .* adjoint.(Ds) * Minv') + sum(M' .* adjoint.(Ds) * Minv' * ∂R * Minv')
-        return NoTangent(), (∂Q, ∂M, ∂Λs) 
+        ∂M = sum([∂R.data * Minv' * D' for (∂R, D) in zip(∂ψ.Rs, Ds)]) - 
+             sum([Minv' * D' * M' * ∂R.data * Minv' for (∂R, D) in zip(∂ψ.Rs, Ds)])
+        return NoTangent(), MultiBosonCMPSData_MDMinv(∂Q, ∂M, ∂Λs) 
     end
     return CMPSData(ψ), CMPSData_pushback
 end

@@ -11,58 +11,62 @@
     @test get_χ(ψb) == 2 
     @test get_d(ψb) == 3 
 
-    #@test norm(CMPSData(ψa)) ≈ norm(ψa) 
 end
+
+#@testset "test MultiBosonCMPSData_MDMinv to CMPSData conversion" for ix in 1:10
+    χ, d = 4, 2
+    ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
+    ϕn = CMPSData(rand, χ, d)
+    function _F1(ψ)
+        ψn = CMPSData(ψ)
+
+        TM1 = TransferMatrix(ϕn, ψn)
+        TM2 = TransferMatrix(ψn, ϕn)
+        vl1 = left_env(TM1)
+        vr2 = right_env(TM2)
+   
+        return norm(tr(vl1)) / norm(vl1) + norm(tr(vr2))/norm(vr2) + norm(tr(vl1 * vr2)) / norm(vl1) / norm(vr2)
+    end
+    function _F2(ψ)
+        ψn = CMPSData(ψ)
+
+        TM1 = TransferMatrix(ϕn, ψn)
+        TM2 = TransferMatrix(ψn, ψn)
+        vl1 = left_env(TM1)
+        vr2 = right_env(TM2)
+   
+        return norm(tr(vl1)) / norm(vl1) + norm(tr(vr2))/norm(vr2) + norm(tr(vl1 * vr2)) / norm(vl1) / norm(vr2)
+    end
+    cs, μs = ComplexF64[1. 1.4; 1.4 2.], ComplexF64[2.1, 2.3]
+    function _FE(ψ::MultiBosonCMPSData_MDMinv)
+        ψn = CMPSData(ψ)
+        OH = kinetic(ψn) + cs[1,1]*point_interaction(ψn, 1) + cs[2,2]*point_interaction(ψn, 2) + cs[1,2] * point_interaction(ψn, 1, 2) + cs[2,1] * point_interaction(ψn, 2, 1) - μs[1] * particle_density(ψn, 1) - μs[2] * particle_density(ψn, 2)
+        TM = TransferMatrix(ψn, ψn)
+        envL = permute(left_env(TM), ((), (1, 2)))
+        envR = permute(right_env(TM), ((2, 1), ())) 
+        return real(tr(envL * OH * envR) / tr(envL * envR))
+    end
+    function _FE1(ψ::MultiBosonCMPSData_MDMinv)
+        ψn = CMPSData(ψ)
+        OH = kinetic(ψn) + point_interaction(ψn, cs) - particle_density(ψn, μs)
+        TM = TransferMatrix(ψn, ψn)
+        envL = permute(left_env(TM), ((), (1, 2)))
+        envR = permute(right_env(TM), ((2, 1), ())) 
+        return real(tr(envL * OH * envR) / tr(envL * envR))
+    end
+
+    test_ADgrad(_F1, ψ)
+    test_ADgrad(_F2, ψ)
+    test_ADgrad(_FE, ψ)
+    # TODO. _FE1 grad incorrect. why? 
+    #test_ADgrad(_FE1, ψ)
+#end
+
+
 
 1
 #@testset "test multibosoncmps <-> cmps " for ix in 1:10
 #
-#    χ, d = 4, 2
-#    ψ = MultiBosonCMPSData_P(rand, χ, d)
-#    ϕn = CMPSData(rand, (χ^d), d)
-#    function _F1(ψ)
-#        ψn = CMPSData(ψ)
-#
-#        TM1 = TransferMatrix(ϕn, ψn)
-#        TM2 = TransferMatrix(ψn, ϕn)
-#        vl1 = left_env(TM1)
-#        vr2 = right_env(TM2)
-#   
-#        return norm(tr(vl1)) / norm(vl1) + norm(tr(vr2))/norm(vr2) + norm(tr(vl1 * vr2)) / norm(vl1) / norm(vr2)
-#    end
-#    function _F2(ψ)
-#        ψn = CMPSData(ψ)
-#
-#        TM1 = TransferMatrix(ϕn, ψn)
-#        TM2 = TransferMatrix(ψn, ψn)
-#        vl1 = left_env(TM1)
-#        vr2 = right_env(TM2)
-#   
-#        return norm(tr(vl1)) / norm(vl1) + norm(tr(vr2))/norm(vr2) + norm(tr(vl1 * vr2)) / norm(vl1) / norm(vr2)
-#    end
-#    cs, μs = ComplexF64[1. 1.4; 1.4 2.], ComplexF64[2.1, 2.3]
-#    function _FE(ψ::MultiBosonCMPSData_P)
-#        ψn = CMPSData(ψ)
-#        OH = kinetic(ψn) + cs[1,1]*point_interaction(ψn, 1) + cs[2,2]*point_interaction(ψn, 2) + cs[1,2] * point_interaction(ψn, 1, 2) + cs[2,1] * point_interaction(ψn, 2, 1) - μs[1] * particle_density(ψn, 1) - μs[2] * particle_density(ψn, 2)
-#        TM = TransferMatrix(ψn, ψn)
-#        envL = permute(left_env(TM), (), (1, 2))
-#        envR = permute(right_env(TM), (2, 1), ()) 
-#        return real(tr(envL * OH * envR) / tr(envL * envR))
-#    end
-#    function _FE1(ψ::MultiBosonCMPSData_P)
-#        ψn = CMPSData(ψ)
-#        OH = kinetic(ψn) + point_interaction(ψn, cs) - particle_density(ψn, μs)
-#        TM = TransferMatrix(ψn, ψn)
-#        envL = permute(left_env(TM), (), (1, 2))
-#        envR = permute(right_env(TM), (2, 1), ()) 
-#        return real(tr(envL * OH * envR) / tr(envL * envR))
-#    end
-#
-#    test_ADgrad(_F1, ψ)
-#    test_ADgrad(_F2, ψ)
-#    test_ADgrad(_FE, ψ)
-#    # TODO. _FE1 grad incorrect. why? 
-#    #test_ADgrad(_FE1, ψ)
 #end
 
 #@testset "test Kmat_pseudo_inv by numerical integration" for ix in 1:10
