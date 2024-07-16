@@ -66,13 +66,26 @@ end
     #test_ADgrad(_FE1, ψ)
 end
 
+@testset "left canonical form MultiBosonCMPSData_MDMinv" for ix in 1:10
+    χ, d = 4, 2
+    ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
+    ψl = left_canonical(ψ)
 
+    ψcl = CMPSData(ψl)
+    fK_dagger = transfer_matrix_dagger(ψcl, ψcl)
+    
+    # solve the fixed-point equation
+    init = similar(ψcl.Q)
+    randomize!(init);
+    ws, vls, _ = eigsolve(fK_dagger, init, 1, :LR)
+    @test norm(ws[1]) < 1e-12
+
+    vl = id(space(ψcl.Q, 1))
+    @test norm(fK_dagger(vl)) < 1e-12
+
+end
 
 1
-#@testset "test multibosoncmps <-> cmps " for ix in 1:10
-#
-#end
-
 #@testset "test Kmat_pseudo_inv by numerical integration" for ix in 1:10
 #    χ, d = 4, 2
 #    ψ = MultiBosonCMPSData_P(rand, χ, d)

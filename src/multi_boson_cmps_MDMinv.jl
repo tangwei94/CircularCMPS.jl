@@ -39,7 +39,6 @@ LinearAlgebra.dot(ψ1::MultiBosonCMPSData_MDMinv, ψ2::MultiBosonCMPSData_MDMinv
 LinearAlgebra.norm(ψ::MultiBosonCMPSData_MDMinv) = sqrt(norm(dot(ψ, ψ)))
 Base.vec(ψ::MultiBosonCMPSData_MDMinv) = [vec(ψ.Q); vec(ψ.M); vec(ψ.Λs)]
 
-# FIXME. I don't remember why I did this. Are these necessary?
 function LinearAlgebra.mul!(w::MultiBosonCMPSData_MDMinv, v::MultiBosonCMPSData_MDMinv, α)
     mul!(w.Q, v.Q, α)
     mul!(w.M, v.M, α)
@@ -138,6 +137,17 @@ function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_MDMinv)
         return NoTangent(), MultiBosonCMPSData_MDMinv(∂Q, ∂M, ∂Λs) 
     end
     return CMPSData(ψ), CMPSData_pushback
+end
+
+function left_canonical(ψ::MultiBosonCMPSData_MDMinv)
+    ψc = CMPSData(ψ)
+
+    X, ψcl = left_canonical(ψc)
+    Q = ψcl.Q.data 
+    M = X.data * ψ.M 
+    Minv = ψ.Minv * pinv(X.data)
+
+    return MultiBosonCMPSData_MDMinv(Q, M, Minv, copy(ψ.Λs))
 end
 
 #function expand(ψ::MultiBosonCMPSData, χ::Integer; perturb::Float64=1e-1)
