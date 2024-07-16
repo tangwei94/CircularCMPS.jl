@@ -71,17 +71,19 @@ end
     ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
     ψl = left_canonical(ψ)
 
-    ψcl = CMPSData(ψl)
-    fK_dagger = transfer_matrix_dagger(ψcl, ψcl)
-    
-    # solve the fixed-point equation
-    init = similar(ψcl.Q)
-    randomize!(init);
-    ws, vls, _ = eigsolve(fK_dagger, init, 1, :LR)
-    @test norm(ws[1]) < 1e-12
+    function check_left_canonical_form(x)
+        cmps = CMPSData(x)
+        @test norm(cmps.Q + cmps.Q' + sum([R' * R for R in cmps.Rs])) < 1e-12
+    end
 
-    vl = id(space(ψcl.Q, 1))
-    @test norm(fK_dagger(vl)) < 1e-12
+    check_left_canonical_form(ψl)
+
+    α = rand()
+    dΛs = randn(ComplexF64, χ, d)
+    X = randn(ComplexF64, χ, χ)
+    ψl1 = CircularCMPS.retract_left_canonical(ψl, α, dΛs, X)
+    
+    check_left_canonical_form(ψl1)
 
 end
 

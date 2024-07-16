@@ -150,6 +150,23 @@ function left_canonical(ψ::MultiBosonCMPSData_MDMinv)
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, copy(ψ.Λs))
 end
 
+function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv, α::Float64, dΛs::Matrix, X::Matrix)
+    Λs = ψ.Λs + α * dΛs
+    M = exp(α * X) * ψ.M
+    Minv = ψ.Minv * exp(-α * X)
+
+    D0s = [diagm(ψ.Λs[:, ix]) for ix in 1:get_d(ψ)]
+    Ds = [diagm(Λs[:, ix]) for ix in 1:get_d(ψ)]
+
+    Rs = [ψ.M * D0 * ψ.Minv for D0 in D0s] 
+    R1s = [M * D * Minv for D in Ds] 
+    ΔRs = R1s .- Rs
+
+    Q = ψ.Q - sum([R' * ΔR + 0.5 * ΔR' * ΔR for (R, ΔR) in zip(Rs, ΔRs)])
+
+    return MultiBosonCMPSData_MDMinv(Q, M, Minv, Λs)
+end
+
 #function expand(ψ::MultiBosonCMPSData, χ::Integer; perturb::Float64=1e-1)
 #    χ0, d = get_χ(ψ), get_d(ψ)
 #    if χ <= χ0
