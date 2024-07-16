@@ -13,10 +13,14 @@
 
 end
 
-#@testset "test MultiBosonCMPSData_MDMinv to CMPSData conversion" for ix in 1:10
+@testset "test MultiBosonCMPSData_MDMinv to CMPSData conversion" for ix in 1:10
     χ, d = 4, 2
     ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
     ϕn = CMPSData(rand, χ, d)
+
+    ψn = CMPSData(ψ)
+    @test norm(ψn - CMPSData(MultiBosonCMPSData_MDMinv(ψn))) < 1e-12
+
     function _F1(ψ)
         ψn = CMPSData(ψ)
 
@@ -46,21 +50,21 @@ end
         envR = permute(right_env(TM), ((2, 1), ())) 
         return real(tr(envL * OH * envR) / tr(envL * envR))
     end
-    function _FE1(ψ::MultiBosonCMPSData_MDMinv)
-        ψn = CMPSData(ψ)
-        OH = kinetic(ψn) + point_interaction(ψn, cs) - particle_density(ψn, μs)
-        TM = TransferMatrix(ψn, ψn)
-        envL = permute(left_env(TM), ((), (1, 2)))
-        envR = permute(right_env(TM), ((2, 1), ())) 
-        return real(tr(envL * OH * envR) / tr(envL * envR))
-    end
+    #function _FE1(ψ::MultiBosonCMPSData_MDMinv)
+    #    ψn = CMPSData(ψ)
+    #    OH = kinetic(ψn) + point_interaction(ψn, cs) - particle_density(ψn, μs)
+    #    TM = TransferMatrix(ψn, ψn)
+    #    envL = permute(left_env(TM), ((), (1, 2)))
+    #    envR = permute(right_env(TM), ((2, 1), ())) 
+    #    return real(tr(envL * OH * envR) / tr(envL * envR))
+    #end
 
     test_ADgrad(_F1, ψ)
     test_ADgrad(_F2, ψ)
     test_ADgrad(_FE, ψ)
     # TODO. _FE1 grad incorrect. why? 
     #test_ADgrad(_FE1, ψ)
-#end
+end
 
 
 
