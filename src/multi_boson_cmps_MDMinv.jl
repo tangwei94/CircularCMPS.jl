@@ -167,6 +167,38 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv, α::Float64, dΛs
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Λs)
 end
 
+struct MultiBosonCMPSData_MDMinv_Grad{T<:Number} <: AbstractCMPSData
+    dDs::Vector{Diagonal{T, Vector{T}}}
+    X::Matrix{T}
+end
+
+Base.:+(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad) = MultiBosonCMPSData_MDMinv_Grad(a.dDs .+ b.dDs, a.X + b.X)
+Base.:-(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad) = MultiBosonCMPSData_MDMinv_Grad(a.dDs .- b.dDs, a.X - b.X)
+Base.:*(a::MultiBosonCMPSData_MDMinv_Grad, x::Number) = MultiBosonCMPSData_MDMinv_Grad(a.dDs * x, a.X * x)
+Base.:*(x::Number, a::MultiBosonCMPSData_MDMinv_Grad) = MultiBosonCMPSData_MDMinv_Grad(a.dDs * x, a.X * x)
+Base.eltype(a::MultiBosonCMPSData_MDMinv_Grad) = eltype(a.X)
+LinearAlgebra.dot(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad) = sum(dot.(a.dDs, b.dDs)) + dot(a.X, b.X)
+LinearAlgebra.norm(a::MultiBosonCMPSData_MDMinv_Grad) = sqrt(norm(dot(a, a)))
+Base.similar(a::MultiBosonCMPSData_MDMinv_Grad) = MultiBosonCMPSData_MDMinv_Grad(similar.(a.dDs), similar(a.X))
+function randomize!(a::MultiBosonCMPSData_MDMinv_Grad)
+    T = eltype(a)
+    for ix in eachindex(a.dDs)
+        v = view(a.dDs[ix], diagind(a.dDs[ix]))
+        map!(x -> randn(T), v, v)
+    end
+    map!(x -> randn(T), a.X, a.X)
+    return a
+end
+
+function diff_to_grad(ψ::MultiBosonCMPSData_MDMinv, ∂ψ::MultiBosonCMPSData_MDMinv)
+    Rs = [ψ.M * Diagonal(ψ.Λs[:, ix]) * ψ.Minv for ix in 1:get_d(ψ)]
+    ∂Ds = [Diagonal(∂ψ.Λs[:, ix]) for ix in 1:get_d(∂ψ)]
+
+    gDs = [Diagonal(-ψ.M' * R * ∂ψ.Q * ψ.Minv' + ∂D) for (R, ∂D) in zip(Rs, ∂Ds)]
+    gX = sum([- R * ∂ψ.Q * R' - R' * R * ∂ψ.Q + ∂ψ.M * ψ.M' for R in Rs])
+    return MultiBosonCMPSData_MDMinv_Grad(gDs, gX)
+end
+
 #function expand(ψ::MultiBosonCMPSData, χ::Integer; perturb::Float64=1e-1)
 #    χ0, d = get_χ(ψ), get_d(ψ)
 #    if χ <= χ0

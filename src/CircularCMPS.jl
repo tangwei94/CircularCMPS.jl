@@ -40,7 +40,7 @@ export TransferMatrix, left_env, right_env, Kmat_pseudo_inv
 export MultiBosonCMPSData, tangent_map
 
 # multi_boson_cmps_MDMinv.jl
-export MultiBosonCMPSData_MDMinv
+export MultiBosonCMPSData_MDMinv, MultiBosonCMPSData_MDMinv_Grad
 
 # multi_boson_cmps_P.jl
 export MultiBosonCMPSData_P
