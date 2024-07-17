@@ -51,13 +51,12 @@ end
 @inline get_χ(ψ::CMPSData) = dim(_firstspace(ψ.Q))
 @inline get_d(ψ::CMPSData) = length(ψ.Rs)
 TensorKit.space(ψ::CMPSData) = _firstspace(ψ.Q)
-TensorKit.norm(ϕ::CMPSData) =  sqrt(norm(ϕ.Q)^2 + norm(ϕ.Rs)^2)
 
 get_matrices(ψ::CMPSData) = (ψ.Q, ψ.Rs)
 
 # TODO. define transfer_matrix object as MPSKit.jl did
 """ 
-    transfer_matrix(ϕ::CMPSData, ψ::CMPSData) where S<:EuclideanSpace
+    transfer_matrix(ϕ::CMPSData, ψ::CMPSData) where S
 
     The transfer matrix for <ϕ|ψ>.
     target at right vector. 
@@ -75,7 +74,7 @@ function transfer_matrix(ϕ::CMPSData, ψ::CMPSData)
 end
 
 """
-   transfer_matrix_dagger(ϕ::CMPSData{S}, ψ::CMPSData{S}) where S<:EuclideanSpace
+   transfer_matrix_dagger(ϕ::CMPSData{S}, ψ::CMPSData{S}) where S
     
    The Hermitian conjugate of the transfer matrix for <ϕ|ψ>.
    target at left vector. 

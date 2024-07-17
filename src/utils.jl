@@ -1,7 +1,7 @@
 # copied from MPSKit.jl
-const MPSBondTensor{S} = AbstractTensorMap{S,1,1} where {S<:EuclideanSpace}
-const GenericMPSTensor{S,N} = AbstractTensorMap{S,N,1} where {S<:EuclideanSpace,N} 
-const MPSTensor{S} = GenericMPSTensor{S,2} where {S<:EuclideanSpace}
+const MPSBondTensor{S} = AbstractTensorMap{S,1,1} where {S}
+const GenericMPSTensor{S,N} = AbstractTensorMap{S,N,1} where {S,N} 
+const MPSTensor{S} = GenericMPSTensor{S,2} where {S}
 
 _firstspace(t::AbstractTensorMap) = space(t, 1)
 _lastspace(t::AbstractTensorMap) = space(t, numind(t))
@@ -22,11 +22,11 @@ end
 randomize!(a::TensorMap) = fill_data!(a,randn)
 
 # default permutation of K matrix 
-function K_permute(K::AbstractTensorMap{S, 2, 2}) where {S<:EuclideanSpace}
+function K_permute(K::AbstractTensorMap{S, 2, 2}) where {S}
     return permute(K, (2, 3), (4, 1))
 end
 
-function K_permute_back(K::AbstractTensorMap{S, 2, 2}) where {S<:EuclideanSpace}
+function K_permute_back(K::AbstractTensorMap{S, 2, 2}) where {S}
     return permute(K, (4, 1), (2, 3))
 end
 
@@ -35,12 +35,12 @@ function K_otimes(A::MPSBondTensor, B::MPSBondTensor)
     return Abar_otimes_B
 end
 
-function Kact_R(K::AbstractTensorMap{S, 2, 2}, v::MPSBondTensor) where {S<:EuclideanSpace}
+function Kact_R(K::AbstractTensorMap{S, 2, 2}, v::MPSBondTensor) where {S}
     @tensor Kr[-1; -2] := K[-1 2; 1 -2] * v[1; 2]
     return Kr
 end
 
-function Kact_L(K::AbstractTensorMap{S, 2, 2}, v::MPSBondTensor) where {S<:EuclideanSpace}
+function Kact_L(K::AbstractTensorMap{S, 2, 2}, v::MPSBondTensor) where {S}
     @tensor Kl[-1; -2] := K[1 -1; -2 2] * v[2; 1]
     return Kl
 end
