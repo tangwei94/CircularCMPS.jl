@@ -12,12 +12,14 @@ c12 = 0.5
 #c2, μ2 = parse(Float64, ARGS[1]), parse(Float64, ARGS[2])
 #c12 = parse(Float64, ARGS[3]) 
 
-Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf)
+Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
 
-χ1 = 4
-ϕ1 = MultiBosonCMPSData_MDMinv(rand, χ1, 2)
-res1_MDMinv = ground_state(Hm, ϕ1; do_preconditioning=false, maxiter=1000);
-res1_MDMinv_precond = ground_state(Hm, ϕ1; do_preconditioning=true, maxiter=1000);
+χ1 = 8;
+ϕ1 = MultiBosonCMPSData_MDMinv(rand, χ1, 2);
+ϕ1 = left_canonical(ϕ1);
+
+res1_MDMinv = ground_state(Hm, ϕ1; do_preconditioning=false, maxiter=500);
+res1_MDMinv_precond = ground_state(Hm, ϕ1; do_preconditioning=true, maxiter=500);
 
 gn1 = norm(res1_MDMinv[3])
 gn2 = norm(res1_MDMinv_precond[3])

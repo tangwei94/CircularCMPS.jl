@@ -95,7 +95,7 @@ function left_canonical(ψ::MultiBosonCMPSData_MDMinv)
     X, ψcl = left_canonical(ψc)
     Q = ψcl.Q.data 
     M = X.data * ψ.M 
-    Minv = ψ.Minv * pinv(X.data)
+    Minv = ψ.Minv * inv(X.data)
 
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, deepcopy(ψ.Ds))
 end
@@ -115,6 +115,11 @@ function right_env(ψ::MultiBosonCMPSData_MDMinv)
 end
 
 function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, dDs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
+    # check left canonical form 
+    ψc = CMPSData(ψ)
+    ϵ = norm(ψc.Q + ψc.Q' + sum([R' * R for R in ψc.Rs]))
+    (ϵ > 1e-12) && @warn "your cmps has deviated from the left canonical form, err=$ϵ"
+
     Ds = ψ.Ds .+ α .* dDs
     M = exp(α * X) * ψ.M
     Minv = ψ.Minv * exp(-α * X)

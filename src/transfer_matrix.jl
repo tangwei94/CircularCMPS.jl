@@ -85,7 +85,7 @@ function right_env_backward(TM::TransferMatrix, λ::Number, vr::MPSBondTensor, �
     
     (norm(dot(vr, ∂vr)) > 1e-9) && @warn "right_env_backward: forward computation not gauge invariant: final computation should not depend on the phase of vr." # important
     #∂vr = ∂vr - dot(vr, ∂vr) * vr 
-    ξr_adj, info = linsolve(x -> flip(TM)(x) - λ*x, ∂vr', init') # subtle
+    ξr_adj, info = linsolve(x -> flip(TM)(x) - λ*x, ∂vr', init'; maxiter=500) # subtle
     (info.converged == 0) && @warn "right_env_backward not converged: normres = $(info.normres)"
     
     return ξr_adj'
@@ -97,7 +97,7 @@ function left_env_backward(TM::TransferMatrix, λ::Number, vl::MPSBondTensor, �
     init = init - dot(vl, init) * vl # important
 
     (norm(dot(vl, ∂vl)) > 1e-9) && @warn "left_env_backward: forward computation not gauge invariant: final computation should not depend on the phase of vl." # important
-    ξl_adj, info = linsolve(x -> TM(x) - λ*x, ∂vl', init') # subtle
+    ξl_adj, info = linsolve(x -> TM(x) - λ*x, ∂vl', init'; maxiter=500) # subtle
     (info.converged == 0) && @warn "left_env_backward not converged: normres = $(info.normres)"
 
     return ξl_adj'

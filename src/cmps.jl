@@ -104,7 +104,8 @@ function left_canonical(ψ::CMPSData)
     # solve the fixed-point equation
     init = similar(ψ.Q, _firstspace(ψ.Q)←_firstspace(ψ.Q))
     randomize!(init);
-    ws, vls, _ = eigsolve(fK_dagger, init, 1, :LR)
+    ws, vls, info = eigsolve(fK_dagger, init, 1, :LR; maxiter=250, tol=eps(1.0))
+    (info.converged == 0) && @warn "left_canonical not converged: normres = $(info.normres)"
     w = ws[1]
     vl = vls[1]
 
@@ -114,7 +115,7 @@ function left_canonical(ψ::CMPSData)
     Xinv = u' * sqrt(inv(s))
 
     # update Q and R 
-    Q = X * ψ.Q * Xinv - 0.5 * w * id(_firstspace(ψ.Q)) # TODO. better way to normalize? 
+    Q = X * ψ.Q * Xinv - 0.5 * w * id(space(ψ.Q, 1)) # TODO. better way to normalize? 
     Rs = [X * R * Xinv for R in ψ.Rs]
 
     return X, CMPSData(Q, Rs) 
