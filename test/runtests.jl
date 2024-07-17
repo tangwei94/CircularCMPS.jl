@@ -1,5 +1,5 @@
 using TensorKit, LinearAlgebra, KrylovKit
-using TensorKitAD, ChainRules, Zygote 
+using ChainRules, Zygote 
 using QuadGK
 using Test
 using Revise

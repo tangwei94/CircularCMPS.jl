@@ -17,7 +17,7 @@
 #end
 #
 #"""
-#   transfer_matrix_dagger(ϕ::CMPSData{S}, ψ::CMPSData{S}) where S<:EuclideanSpace
+#   transfer_matrix_dagger(ϕ::CMPSData{S}, ψ::CMPSData{S}) where S
 #    
 #   The Hermitian conjugate of the transfer matrix for <ϕ|ψ>.
 #   target at left vector. 

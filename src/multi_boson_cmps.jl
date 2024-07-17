@@ -112,7 +112,7 @@ function expand(ψ::MultiBosonCMPSData, χ::Integer; perturb::Float64=1e-1)
     return MultiBosonCMPSData(Q, Λs) 
 end
 
-function tangent_map(ψm::MultiBosonCMPSData, Xm::MultiBosonCMPSData, EL::MPSBondTensor, ER::MPSBondTensor, Kinv::AbstractTensorMap{S, 2, 2}) where {S<:EuclideanSpace}
+function tangent_map(ψm::MultiBosonCMPSData, Xm::MultiBosonCMPSData, EL::MPSBondTensor, ER::MPSBondTensor, Kinv::AbstractTensorMap{S, 2, 2}) where {S}
     χ = get_χ(ψm)
     ψ = CMPSData(ψm)
     X = CMPSData(Xm)

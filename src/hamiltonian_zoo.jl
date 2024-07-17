@@ -328,3 +328,95 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
         return results, Λs
     end
 end
+
+function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000)
+    if H.L < Inf
+        error("finite size not implemented yet.")
+    end
+
+    cs = Matrix{ComplexF64}(H.cs)
+    μs = Vector{ComplexF64}(H.μs)
+
+    function fE_inf(ψ::MultiBosonCMPSData_MDMinv)
+        ψn = CMPSData(ψ)
+        OH = kinetic(ψn) + H.cs[1,1]* point_interaction(ψn, 1) + H.cs[2,2]* point_interaction(ψn, 2) + H.cs[1,2] * point_interaction(ψn, 1, 2) + H.cs[2,1] * point_interaction(ψn, 2, 1) - H.μs[1] * particle_density(ψn, 1) - H.μs[2] * particle_density(ψn, 2)
+        TM = TransferMatrix(ψn, ψn)
+        envL = permute(left_env(TM), (), (1, 2))
+        envR = permute(right_env(TM), (2, 1), ()) 
+        return real(tr(envL * OH * envR) / tr(envL * envR))
+    end
+    
+    function fgE(ψ::MultiBosonCMPSData_MDMinv)
+        E, ∂ψ = withgradient(fE_inf, ψ)
+        g = diff_to_grad(ψ, ∂ψ[1])
+        return E, g
+    end
+    
+    function inner(ψ, a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad)
+        # be careful the cases with or without a factor of 2. depends on how to define the complex gradient
+        return real(dot(a, b)) 
+    end
+
+    function retract(ψ::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad, α::Real)
+        ψ1 = retract_left_canonical(ψ, α, dψ.dDs, dψ.X)
+        return ψ1, dψ
+    end
+    function scale!(dψ::MultiBosonCMPSData_MDMinv_Grad, α::Number)
+        for ix in eachindex(dψ.dDs)
+            dψ.dDs[ix] .= dψ.dDs[ix] * α
+        end
+        dψ.X .= dψ.X .* α
+        return dψ
+    end
+    function add!(y::MultiBosonCMPSData_MDMinv_Grad, x::MultiBosonCMPSData_MDMinv_Grad, α::Number=1, β::Number=1)
+        for ix in eachindex(y.dDs)
+            VectorInterface.add!(y.dDs[ix], x.dDs[ix], α, β)
+        end
+        VectorInterface.add!(y.X, x.X, α, β)
+        return y
+    end
+    # only for comparison
+    function _no_precondition(ψ::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
+        return dψ
+    end
+
+    function _precondition(ψ0::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
+        # check left canonical form 
+        ψc = CMPSData(ψ0)
+        if norm(ψc.Q + ψc.Q' + sum([R' * R for R in ψc.Rs])) > 1e-12
+            @warn "your cmps has deviated from the left canonical form"
+        end
+
+        ϵ = max(1e-12, 1e-3*norm(dψ))
+        χ, d = get_χ(ψ0), get_d(ψ0)
+        function f_map(v)
+            g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
+            return vec(tangent_map(ψ0, g)) + ϵ*v
+        end
+
+        vp, _ = linsolve(f_map, vec(dψ), rand(ComplexF64, χ*d+χ^2); maxiter=1000, ishermitian = true, isposdef = true, tol=ϵ)
+        return MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
+    end
+
+    transport!(v, x, d, α, xnew) = v
+
+    optalg_LBFGS = LBFGS(;maxiter=maxiter, gradtol=1e-8, verbosity=2)
+
+    if do_preconditioning
+        @show "doing precondition"
+        precondition = _precondition
+    else
+        @show "no precondition"
+        precondition = _no_precondition
+    end
+
+    ψ0 = left_canonical(ψ0)
+    ψ1, E1, grad1, numfg1, history1 = optimize(fgE, ψ0, optalg_LBFGS; retract = retract,
+                                    precondition = precondition,
+                                    inner = inner, transport! =transport!,
+                                    scale! = scale!, add! = add!
+                                    );
+
+    res1 = (ψ1, E1, grad1, numfg1, history1)
+    return res1
+end
