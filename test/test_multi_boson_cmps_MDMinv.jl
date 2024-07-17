@@ -157,8 +157,8 @@ end
 @testset "tangent_map" for ix in 1:10
     χ, d = 4, 2
     ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
-    ψc = CMPSData(ψ)
-    ρR = right_env(TransferMatrix(ψc, ψc)).data
+    ψ = left_canonical(ψ)
+    ρR = right_env(ψ)
     Rs = Ref(ψ.M) .* ψ.Ds .* Ref(ψ.Minv)
     ϕn = CMPSData(rand, χ, d)
 
@@ -193,5 +193,28 @@ end
     ovlp1 = sum([tr(W1 * ρR * W2') for (W1, W2) in zip(W1s, W2s)])
     ovlp2 = dot(g2, tangent_map(ψ, g1; ρR=ρR)) 
     @test ovlp1 ≈ ovlp2
+
+    ovlp1 = sum([tr(W1 * ρR * W1') for (W1, W2) in zip(W1s, W2s)])
+    ovlp2 = dot(g1, tangent_map(ψ, g1; ρR=ρR)) 
+    @test ovlp1 ≈ ovlp2
+    @test norm(imag(ovlp1)) < 1e-12
+end
+
+@testset "tangent_map should be hermitian" for ix in 1:10
+    χ, d = 4, 2
+    ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
+
+    M = zeros(ComplexF64, χ*d+χ^2, χ*d+χ^2)
+    for ix in 1:χ*d+χ^2
+        v = zeros(ComplexF64, χ*d+χ^2)
+        v[ix] = 1
+        g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
+        M[:, ix] = vec(tangent_map(ψ, g))
+    end
+
+    @test norm(M - M') < 1e-12
+
+    Λ, _ = eigen(Hermitian(M))
+    @test all(Λ .≥ -1e-14)
 
 end

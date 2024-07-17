@@ -348,7 +348,8 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
     
     function fgE(ψ::MultiBosonCMPSData_MDMinv)
         E, ∂ψ = withgradient(fE_inf, ψ)
-        return E, ∂ψ 
+        g = diff_to_grad(ψ, ∂ψ[1])
+        return E, g
     end
     
     function inner(ψ, a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad)
@@ -360,7 +361,6 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         ψ1 = retract_left_canonical(ψ, α, dψ.dDs, dψ.X)
         return ψ1, dψ
     end
-
     function scale!(dψ::MultiBosonCMPSData_MDMinv_Grad, α::Number)
         for ix in eachindex(dψ.dDs)
             dψ.dDs[ix] .= dψ.dDs[ix] * α
@@ -368,15 +368,13 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         dψ.X .= dψ.X .* α
         return dψ
     end
-
-    function add!(dψ::MultiBosonCMPSData_P, dψ1::MultiBosonCMPSData_P, α::Number) 
-        for ix in eachindex(dψ.dDs)
-            dψ.dDs[ix] .= dψ.dDs[ix] + dψ1.dDs[ix] * α
+    function add!(y::MultiBosonCMPSData_MDMinv_Grad, x::MultiBosonCMPSData_MDMinv_Grad, α::Number=1, β::Number=1)
+        for ix in eachindex(y.dDs)
+            VectorInterface.add!(y.dDs[ix], x.dDs[ix], α, β)
         end
-        dψ.X .= dψ.X + dψ1.X * α
-        return dψ
+        VectorInterface.add!(y.X, x.X, α, β)
+        return y
     end
-
     # only for comparison
     function _no_precondition(ψ::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
         return dψ
@@ -384,8 +382,14 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
 
     function _precondition(ψ0::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
         ϵ = max(1e-12, 1e-3*norm(dψ))
-        dψ1, _ = linsolve(g -> tangent_map(ψ0, g) + ϵ*g, dψ, dψ; maxiter=250, ishermitian = true, isposdef = true, tol=ϵ)
-        return dψ1
+        χ, d = get_χ(ψ0), get_d(ψ0)
+        function f_map(v)
+            g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
+            return vec(tangent_map(ψ0, g)) + ϵ*v
+        end
+
+        vp, _ = linsolve(f_map, vec(dψ), rand(ComplexF64, χ*d+χ^2); maxiter=1000, ishermitian = true, isposdef = true, tol=ϵ)
+        return MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
     end
 
     transport!(v, x, d, α, xnew) = v

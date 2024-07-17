@@ -9,7 +9,7 @@ __precompile__(true)
 
 using Parameters
 using LinearAlgebra
-using TensorKit, TensorOperations, KrylovKit, TensorKitManifolds
+using VectorInterface, TensorKit, TensorOperations, KrylovKit, TensorKitManifolds
 using ChainRules, ChainRulesCore, Zygote
 using OptimKit
 using LoopVectorization 
