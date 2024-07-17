@@ -381,6 +381,12 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
     end
 
     function _precondition(ψ0::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
+        # check left canonical form 
+        ψc = CMPSData(ψ0)
+        if norm(ψc.Q + ψc.Q' + sum([R' * R for R in ψc.Rs])) > 1e-12
+            @warn "your cmps has deviated from the left canonical form"
+        end
+
         ϵ = max(1e-12, 1e-3*norm(dψ))
         χ, d = get_χ(ψ0), get_d(ψ0)
         function f_map(v)
@@ -403,6 +409,8 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         @show "no precondition"
         precondition = _no_precondition
     end
+
+    ψ0 = left_canonical(ψ0)
     ψ1, E1, grad1, numfg1, history1 = optimize(fgE, ψ0, optalg_LBFGS; retract = retract,
                                     precondition = precondition,
                                     inner = inner, transport! =transport!,
