@@ -26,11 +26,11 @@ res1_MDMinv_precond = ground_state(Hm, ϕ1; do_preconditioning=true, maxiter=500
 res2_MDMinv = ground_state(Hm, ϕ2; do_preconditioning=false, maxiter=500);
 res2_MDMinv_precond = ground_state(Hm, ϕ2; do_preconditioning=true, maxiter=500);
 
-gn1 = norm(res1_MDMinv[3])
-gn2 = norm(res1_MDMinv_precond[3])
+gn1 = norm(res2_MDMinv[3])
+gn2 = norm(res2_MDMinv_precond[3])
 
-E1 = res1_MDMinv[2]
-E2 = res1_MDMinv_precond[2]
+E1 = res2_MDMinv[2]
+E2 = res2_MDMinv_precond[2]
 E1 - E2
 
 #χ1, χ2, χ3 = 4, 8, 16

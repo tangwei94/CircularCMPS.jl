@@ -380,7 +380,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         return dψ
     end
 
-    function _precondition(ψ0::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
+    function _precondition_linsolve(ψ0::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
         ϵ = max(1e-12, 1e-3*norm(dψ))
         χ, d = get_χ(ψ0), get_d(ψ0)
         function f_map(v)
@@ -389,6 +389,23 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         end
 
         vp, _ = linsolve(f_map, vec(dψ), rand(ComplexF64, χ*d+χ^2); maxiter=1000, ishermitian = true, isposdef = true, tol=ϵ)
+        return MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
+    end
+    function _precondition(ψ0::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
+        ϵ = max(1e-12, 1e-3*norm(dψ))
+        χ, d = get_χ(ψ0), get_d(ψ0)
+        P = zeros(ComplexF64, χ^2+d*χ, χ^2+d*χ)
+        v = zeros(ComplexF64, χ^2+d*χ)
+        for ix in 1:(χ^2+d*χ)
+            v[ix] = 1
+            g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
+            g1 = tangent_map(ψ0, g)
+            P[:, ix] = vec(g1)
+            v[ix] = 0
+        end 
+        Pdiag = view(P, diagind(P))
+        Pdiag .+= ϵ
+        vp = P \ vec(dψ)
         return MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
     end
 
