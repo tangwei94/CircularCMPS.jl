@@ -154,30 +154,44 @@ end
 #
 #end
 
-"""
-@testset "tangent_map should be hermitian and positive definite" for ix in 1:10
-    χ, d = 8, 2
-    ψ = MultiBosonCMPSData(rand, χ, d)
+@testset "tangent_map" for ix in 1:10
+    χ, d = 4, 2
+    ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
+    ψc = CMPSData(ψ)
+    ρR = right_env(TransferMatrix(ψc, ψc)).data
+    Rs = Ref(ψ.M) .* ψ.Ds .* Ref(ψ.Minv)
+    ϕn = CMPSData(rand, χ, d)
 
-    ψn = CMPSData(ψ);
-    K = K_permute(K_mat(ψn, ψn));
-    λ, EL = left_env(K);
-    λ, ER = right_env(K);
-    Kinv = Kmat_pseudo_inv(K, λ);
+    function _F1(ψ)
+        ψn = CMPSData(ψ)
 
-    M = zeros(ComplexF64, χ^2+d*χ, χ^2+d*χ)
-    for ix in 1:(χ^2+d*χ)
-        v = zeros(χ^2+d*χ)
-        v[ix] = 1
+        TM1 = TransferMatrix(ϕn, ψn)
+        TM2 = TransferMatrix(ψn, ϕn)
+        vl1 = left_env(TM1)
+        vr2 = right_env(TM2)
+   
+        return norm(tr(vl1)) / norm(vl1) + norm(tr(vr2))/norm(vr2) + norm(tr(vl1 * vr2)) / norm(vl1) / norm(vr2)
+    end
+    ∂ψ = _F1'(ψ)
+    ∂Ds = ∂ψ.Ds
+    g0 = CircularCMPS.diff_to_grad(ψ, ∂ψ)
 
-        X = MultiBosonCMPSData(v, χ, d)
-        v1 = vec(tangent_map(ψ, X, EL, ER, Kinv))
-        M[:, ix] = v1
-        @show norm(v1)
+    g1 = similar(g0)
+    randomize!(g1)
+    g2 = similar(g0)
+    randomize!(g2)
+
+    function tangent_vec(g::MultiBosonCMPSData_MDMinv_Grad)
+        Ws = [g.X * R - R * g.X + ψ.M * dD * ψ.Minv for (R, dD) in zip(Rs, g.dDs)]
+        V = - sum([R' * W for (R, W) in zip(Rs, Ws)])
+        return (V, Ws)
     end
 
-    @test norm(M - M') < 1e-12
-    a, _ = eigen(Hermitian(M))
-    @test a[1] > -1e-12
+    V1, W1s = tangent_vec(g1)
+    V2, W2s = tangent_vec(g2)
+
+    ovlp1 = sum([tr(W1 * ρR * W2') for (W1, W2) in zip(W1s, W2s)])
+    ovlp2 = dot(g2, tangent_map(ψ, g1; ρR=ρR)) 
+    @test ovlp1 ≈ ovlp2
+
 end
-"""

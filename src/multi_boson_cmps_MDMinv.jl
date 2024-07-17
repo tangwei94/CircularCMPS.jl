@@ -156,6 +156,7 @@ Base.eltype(a::MultiBosonCMPSData_MDMinv_Grad) = eltype(a.X)
 LinearAlgebra.dot(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad) = sum(dot.(a.dDs, b.dDs)) + dot(a.X, b.X)
 LinearAlgebra.norm(a::MultiBosonCMPSData_MDMinv_Grad) = sqrt(norm(dot(a, a)))
 Base.similar(a::MultiBosonCMPSData_MDMinv_Grad) = MultiBosonCMPSData_MDMinv_Grad(similar.(a.dDs), similar(a.X))
+Base.vec(a::MultiBosonCMPSData_MDMinv_Grad) = vcat(diag.(a.dDs)..., vec(a.X))
 function randomize!(a::MultiBosonCMPSData_MDMinv_Grad)
     T = eltype(a)
     for ix in eachindex(a.dDs)
@@ -172,6 +173,29 @@ function diff_to_grad(ψ::MultiBosonCMPSData_MDMinv, ∂ψ::MultiBosonCMPSData_M
     gDs = [Diagonal(-ψ.M' * R * ∂ψ.Q * ψ.Minv' + ∂D) for (R, ∂D) in zip(Rs, ∂ψ.Ds)]
     gX = sum([- R * ∂ψ.Q * R' + R' * R * ∂ψ.Q for R in Rs]) + ∂ψ.M * ψ.M'
     return MultiBosonCMPSData_MDMinv_Grad(gDs, gX)
+end
+
+function tangent_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing)
+    if isnothing(ρR)
+        ψc = CMPSData(ψ)
+        ρR = right_env(TransferMatrix(ψc, ψc)).data
+    end
+
+    Rs = map(D->ψ.M * D * ψ.Minv, ψ.Ds)
+
+    X = sum(map(zip(g.dDs, Rs)) do (dD, R)
+            g.X * R * ρR * R' - R' * g.X * R * ρR -
+            R * g.X * ρR * R' + R' * R * g.X * ρR + 
+            ψ.M * dD * ψ.Minv * ρR * R' - R' * ψ.M * dD * ψ.Minv * ρR
+        end)
+
+    dDs = map(zip(g.dDs, Rs)) do (dD, R)
+        Diagonal(ψ.M' * g.X * R * ρR * ψ.Minv' -
+            ψ.M' * R * g.X * ρR * ψ.Minv' + 
+            ψ.M' * ψ.M * dD * ψ.Minv * ρR * ψ.Minv')
+    end
+
+    return MultiBosonCMPSData_MDMinv_Grad(dDs, X)
 end
 
 #function expand(ψ::MultiBosonCMPSData, χ::Integer; perturb::Float64=1e-1)
