@@ -79,9 +79,9 @@ end
     check_left_canonical_form(ψl)
 
     α = rand()
-    dΛs = randn(ComplexF64, χ, d)
+    dDs = [Diagonal(randn(ComplexF64, χ)) for ix in 1:d]
     X = randn(ComplexF64, χ, χ)
-    ψl1 = CircularCMPS.retract_left_canonical(ψl, α, dΛs, X)
+    ψl1 = CircularCMPS.retract_left_canonical(ψl, α, dDs, X)
     
     check_left_canonical_form(ψl1)
 
@@ -90,6 +90,7 @@ end
 @testset "test diff_to_grad" for ix in 1:10
     χ, d = 4, 2
     ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
+    Rs = Ref(ψ.M) .* ψ.Ds .* Ref(ψ.Minv)
     ϕn = CMPSData(rand, χ, d)
 
     function _F1(ψ)
@@ -103,11 +104,10 @@ end
         return norm(tr(vl1)) / norm(vl1) + norm(tr(vr2))/norm(vr2) + norm(tr(vl1 * vr2)) / norm(vl1) / norm(vr2)
     end
     ∂ψ = _F1'(ψ)
-    ∂Ds = map(ix -> Diagonal(∂ψ.Λs[:, ix]), 1:get_d(∂ψ)) 
+    ∂Ds = ∂ψ.Ds
     g0 = CircularCMPS.diff_to_grad(ψ, ∂ψ)
 
-    Rs = [ψ.M * diagm(ψ.Λs[:, ix]) * ψ.Minv for ix in 1:get_d(ψ)]
-    function VW(g::MultiBosonCMPSData_MDMinv_Grad)
+    function tangent_vec(g::MultiBosonCMPSData_MDMinv_Grad)
         Ws = [g.X * R - R * g.X + ψ.M * dD * ψ.Minv for (R, dD) in zip(Rs, g.dDs)]
         V = - sum([R' * W for (R, W) in zip(Rs, Ws)])
         gM = g.X * ψ.M
@@ -117,10 +117,8 @@ end
     g1 = similar(g0)
     randomize!(g1)
 
-    @show dot(g0, g1)
-
-    rQ1, rDs1, rM1 = VW(g1)
-    @show dot(∂ψ.Q, rQ1) + sum(dot.(∂Ds, rDs1)) + dot(∂ψ.M, rM1)
+    rQ1, rDs1, rM1 = tangent_vec(g1)
+    @test dot(g0, g1) ≈ dot(∂ψ.Q, rQ1) + sum(dot.(∂Ds, rDs1)) + dot(∂ψ.M, rM1)
 end
 
 1
