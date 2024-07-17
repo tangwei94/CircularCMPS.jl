@@ -133,6 +133,32 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, d
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
 
+function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb::Float64=1e-3)
+    χ0, d = get_χ(ψ), get_d(ψ)
+    if χ <= χ0
+        @warn "new χ not bigger than χ0"
+        return ψ
+    end
+
+    Q = perturb * randn(eltype(ψ), χ, χ)
+    Q[1:χ0, 1:χ0] = ψ.Q
+    Λ, _ = eigen(ψ.Q)
+    Qdiag = view(Q, diagind(Q))
+    Qdiag[χ0+1:end] .+= minimum(real.(Λ)) - 1e-3
+    
+    M = Matrix{eltype(ψ)}(I, χ, χ)
+    M[1:χ0, 1:χ0] = ψ.M
+    M .+= perturb * randn(eltype(ψ), χ, χ)
+
+    Ds = map(1:d) do ix
+        Ddiag = perturb*randn(eltype(ψ), χ)
+        Ddiag[1:χ0] .= diag(ψ.Ds[ix])
+        Diagonal(Ddiag)
+    end
+
+    return MultiBosonCMPSData_MDMinv(Q, M, Ds) 
+end
+
 struct MultiBosonCMPSData_MDMinv_Grad{T<:Number} <: AbstractCMPSData
     dDs::Vector{Diagonal{T, Vector{T}}}
     X::Matrix{T}
@@ -196,20 +222,6 @@ function tangent_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv
     return MultiBosonCMPSData_MDMinv_Grad(dDs, X)
 end
 
-#function expand(ψ::MultiBosonCMPSData, χ::Integer; perturb::Float64=1e-1)
-#    χ0, d = get_χ(ψ), get_d(ψ)
-#    if χ <= χ0
-#        @warn "new χ not bigger than χ0"
-#        return ψ
-#    end
-#    Q = 0.1 * randn(eltype(ψ), χ, χ)
-#    Q[1:χ0, 1:χ0] = ψ.Q
-#
-#    Λs = perturb * randn(eltype(ψ), χ, d)
-#    Λs[1:χ0, 1:d] = ψ.Λs
-#
-#    return MultiBosonCMPSData(Q, Λs) 
-#end
 
 #function tangent_map(ψm::MultiBosonCMPSData, Xm::MultiBosonCMPSData, EL::MPSBondTensor, ER::MPSBondTensor, Kinv::AbstractTensorMap{S, 2, 2}) where {S}
 #    χ = get_χ(ψm)
