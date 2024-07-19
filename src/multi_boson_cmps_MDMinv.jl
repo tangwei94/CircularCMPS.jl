@@ -140,20 +140,24 @@ function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb::Float64=1e-
         return ψ
     end
 
-    Q = perturb * randn(eltype(ψ), χ, χ)
-    Q[1:χ0, 1:χ0] = ψ.Q
-    Λ, _ = eigen(ψ.Q)
-    Qdiag = view(Q, diagind(Q))
-    Qdiag[χ0+1:end] .+= minimum(real.(Λ)) - 1e-3
-    
+    Qd, Qu = eigen(ψ.Q)
+    _, Qminind = findmin(real.(Qd))
+    Q = diagm(vcat(Qd, fill(Qd[Qminind] - log(10), χ - χ0)))
+
+    # the norm of M and Minv can be very ill-conditioned, e.g., one of them is very small and the other is very large
+    α = norm(ψ.M)*norm(ψ.Minv)
+    if norm(ψ.M) < norm(ψ.Minv)
+        M0 = ψ.M * α
+    else
+        M0 = ψ.M / α
+    end
+
     M = Matrix{eltype(ψ)}(I, χ, χ)
-    M[1:χ0, 1:χ0] = ψ.M
-    M .+= perturb * randn(eltype(ψ), χ, χ)
+    M += rand(eltype(ψ), χ, χ) * perturb
+    M[1:χ0, 1:χ0] = inv(Qu) * M0
 
     Ds = map(1:d) do ix
-        Ddiag = perturb*randn(eltype(ψ), χ)
-        Ddiag[1:χ0] .= diag(ψ.Ds[ix])
-        Diagonal(Ddiag)
+        Diagonal(vcat(diag(ψ.Ds[ix]), fill(perturb, 1:χ-χ0)))
     end
 
     return MultiBosonCMPSData_MDMinv(Q, M, Ds) 
