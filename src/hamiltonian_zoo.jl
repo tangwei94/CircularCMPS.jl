@@ -329,7 +329,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
     end
 end
 
-function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000)
+function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6)
     if H.L < Inf
         error("finite size not implemented yet.")
     end
@@ -381,7 +381,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
     end
 
     function _precondition_linsolve(ψ0::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
-        ϵ = max(1e-12, 1e-3*norm(dψ))
+        ϵ = max(1e-12, 1e-4*norm(dψ))
         χ, d = get_χ(ψ0), get_d(ψ0)
         function f_map(v)
             g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
@@ -395,14 +395,17 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         ϵ = max(1e-12, 1e-3*norm(dψ))
         χ, d = get_χ(ψ0), get_d(ψ0)
         P = zeros(ComplexF64, χ^2+d*χ, χ^2+d*χ)
-        v = zeros(ComplexF64, χ^2+d*χ)
-        for ix in 1:(χ^2+d*χ)
+
+        blas_num_threads = LinearAlgebra.BLAS.get_num_threads()
+        LinearAlgebra.BLAS.set_num_threads(1)
+        Threads.@threads for ix in 1:(χ^2+d*χ)
+            v = zeros(ComplexF64, χ^2+d*χ)
             v[ix] = 1
             g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
             g1 = tangent_map(ψ0, g)
             P[:, ix] = vec(g1)
-            v[ix] = 0
         end 
+        LinearAlgebra.BLAS.set_num_threads(blas_num_threads)
         Pdiag = view(P, diagind(P))
         Pdiag .+= ϵ
         vp = P \ vec(dψ)
@@ -411,7 +414,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
 
     transport!(v, x, d, α, xnew) = v
 
-    optalg_LBFGS = LBFGS(;maxiter=maxiter, gradtol=1e-8, verbosity=2)
+    optalg_LBFGS = LBFGS(;maxiter=maxiter, gradtol=gradtol, verbosity=2)
 
     if do_preconditioning
         @show "doing precondition"
@@ -421,7 +424,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         precondition = _no_precondition
     end
 
-    ψ0 = left_canonical(ψ0)
+    ψ0 = left_canonical(ψ0) # FIXME. needs to do it twice??
     ψ1, E1, grad1, numfg1, history1 = optimize(fgE, ψ0, optalg_LBFGS; retract = retract,
                                     precondition = precondition,
                                     inner = inner, transport! =transport!,
