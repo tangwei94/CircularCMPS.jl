@@ -121,6 +121,7 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, d
     (ϵ > 1e-12) && @warn "your cmps has deviated from the left canonical form, err=$ϵ"
 
     Ds = ψ.Ds .+ α .* dDs
+    X = X - tr(X) * Matrix{T}(I, size(X))
     M = exp(α * X) * ψ.M
     Minv = ψ.Minv * exp(-α * X)
 

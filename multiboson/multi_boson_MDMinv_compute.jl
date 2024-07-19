@@ -22,15 +22,17 @@ if length(ARGS) > 1
 else
     ϕ = MultiBosonCMPSData_MDMinv(rand, χ, 2)
 end
+ϕ = left_canonical(ϕ)
 
 println("doing calculation for $(χ)")
 
 res_wp = ground_state(Hm, ϕ; do_preconditioning=true, maxiter=1000);
 @save "multiboson/results/preconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res_wp
-println("with precond: E=$(res_wp[2]), gradnorm=$(norm(res_wp[3]))")
 
 res_wop = ground_state(Hm, ϕ; do_preconditioning=false, maxiter=1000);
 @save "multiboson/results/unpreconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res_wop
+
+println("with precond: E=$(res_wp[2]), gradnorm=$(norm(res_wp[3]))")
 println("without precond: E=$(res_wop[2]), gradnorm=$(norm(res_wop[3]))")
 
 Es_wp, gnorms_wp = res_wp[5][:, 1], res_wp[5][:, 2]
@@ -62,4 +64,4 @@ lines!(ax2, 1:length(gnorms_wop), gnorms_wop, label="w/o precond.")
 
 Legend(gl[1, 1], ax1, nbanks=2)
 @show fig
-save("result_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χs[end]).pdf", fig)
+save("multiboson/results/result_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).pdf", fig)
