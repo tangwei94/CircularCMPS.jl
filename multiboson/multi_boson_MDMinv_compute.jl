@@ -18,7 +18,7 @@ Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
 if length(ARGS) > 1
     Δχ = parse(Int, ARGS[2])
     @load "multiboson/results/preconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ-Δχ).jld2" res_wp
-    ϕ = expand(res_wp[1], χ; perturb=1e-6)
+    ϕ = expand(res_wp[1], χ; perturb=1e-3)
 else
     ϕ = MultiBosonCMPSData_MDMinv(rand, χ, 2)
 end

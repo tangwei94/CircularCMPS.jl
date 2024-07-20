@@ -381,7 +381,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
     end
 
     function _precondition_linsolve(ψ0::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
-        ϵ = max(1e-12, 1e-4*norm(dψ))
+        ϵ = max(1e-12, min(1, norm(dψ)^1.5))
         χ, d = get_χ(ψ0), get_d(ψ0)
         function f_map(v)
             g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)

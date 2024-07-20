@@ -6,12 +6,12 @@ mutable struct MultiBosonCMPSData_MDMinv{T<:Number} <: AbstractCMPSData
     function MultiBosonCMPSData_MDMinv(Q::Matrix{T}, M::Matrix{T}, Minv::Matrix{T}, Ds::Vector{Diagonal{T, Vector{T}}}) where T
         if !(M * Minv ≈ Matrix{T}(I, size(M))) 
             @warn "M * Minv not close to I"
-            Minv = pinv(M)
+            Minv = inv(M)
         end
         return new{T}(Q, M, Minv, Ds)
     end
     function MultiBosonCMPSData_MDMinv(Q::Matrix{T}, M::Matrix{T}, Ds::Vector{Diagonal{T, Vector{T}}}) where T
-        Minv = pinv(M)
+        Minv = inv(M)
         return new{T}(Q, M, Minv, Ds)
     end
     function MultiBosonCMPSData_MDMinv(f, χ::Integer, d::Integer)
@@ -42,7 +42,7 @@ function randomize!(ψ::MultiBosonCMPSData_MDMinv)
     T = eltype(ψ)
     map!(x -> randn(T), ψ.Q, ψ.Q)
     map!(x -> rand(T), ψ.M, ψ.M)
-    ψ.Minv .= pinv(ψ.M)
+    ψ.Minv .= inv(ψ.M)
     for ix in eachindex(ψ.Ds)
         d = view(ψ.Ds[ix], diagind(ψ.Ds[ix]))
         map!(x -> randn(T), d, d)
@@ -67,7 +67,7 @@ end
 function MultiBosonCMPSData_MDMinv(ψ::CMPSData)
     Q = ψ.Q.data
     _, M = eigen(ψ.Rs[1].data)
-    Minv = pinv(M)
+    Minv = inv(M)
   
     D0s = map(R->Minv * R.data * M, ψ.Rs)
     Ds = map(D->Diagonal(D), D0s)
@@ -121,7 +121,7 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, d
     (ϵ > 1e-12) && @warn "your cmps has deviated from the left canonical form, err=$ϵ"
 
     Ds = ψ.Ds .+ α .* dDs
-    X = X - tr(X) * Matrix{T}(I, size(X))
+    #X[diagind(X)] .- tr(X) / size(X, 1)
     M = exp(α * X) * ψ.M
     Minv = ψ.Minv * exp(-α * X)
 
@@ -146,12 +146,8 @@ function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb::Float64=1e-
     Q = diagm(vcat(Qd, fill(Qd[Qminind] - log(10), χ - χ0)))
 
     # the norm of M and Minv can be very ill-conditioned, e.g., one of them is very small and the other is very large
-    α = norm(ψ.M)*norm(ψ.Minv)
-    if norm(ψ.M) < norm(ψ.Minv)
-        M0 = ψ.M * α
-    else
-        M0 = ψ.M / α
-    end
+    α = norm(ψ.M)/norm(ψ.Minv)
+    M0 = ψ.M / sqrt(α)
 
     M = Matrix{eltype(ψ)}(I, χ, χ)
     M += rand(eltype(ψ), χ, χ) * perturb
