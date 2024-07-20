@@ -329,7 +329,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
     end
 end
 
-function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6)
+function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, precond_power=1.5)
     if H.L < Inf
         error("finite size not implemented yet.")
     end
@@ -380,19 +380,19 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         return dψ
     end
 
-    function _precondition_linsolve(ψ0::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
-        ϵ = max(1e-12, min(1, norm(dψ)^1.5))
-        χ, d = get_χ(ψ0), get_d(ψ0)
-        function f_map(v)
-            g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
-            return vec(tangent_map(ψ0, g)) + ϵ*v
-        end
+    #function _precondition_linsolve(ψ0::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
+    #    ϵ = max(1e-12, min(1, norm(dψ)^2))
+    #    χ, d = get_χ(ψ0), get_d(ψ0)
+    #    function f_map(v)
+    #        g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
+    #        return vec(tangent_map(ψ0, g)) + ϵ*v
+    #    end
 
-        vp, _ = linsolve(f_map, vec(dψ), rand(ComplexF64, χ*d+χ^2); maxiter=1000, ishermitian = true, isposdef = true, tol=ϵ)
-        return MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
-    end
+    #    vp, _ = linsolve(f_map, vec(dψ), rand(ComplexF64, χ*d+χ^2); maxiter=1000, ishermitian = true, isposdef = true, tol=ϵ)
+    #    return MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
+    #end
     function _precondition(ψ0::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
-        ϵ = max(1e-12, 1e-3*norm(dψ))
+        ϵ = max(1e-12, min(1, norm(dψ)^precond_power))# TODO
         χ, d = get_χ(ψ0), get_d(ψ0)
         P = zeros(ComplexF64, χ^2+d*χ, χ^2+d*χ)
 
