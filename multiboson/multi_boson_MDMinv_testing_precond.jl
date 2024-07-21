@@ -30,30 +30,30 @@ res_wp = ground_state(Hm, ϕ; do_preconditioning=true, maxiter=1000, precond_pow
 
 println("with precond power $(precond_power): E=$(res_wp[2]), gradnorm=$(norm(res_wp[3]))")
 
-Es_wp = res_wp[5][:, 1]
-
-fig = Figure(backgroundcolor = :white, fontsize=14, resolution= (400, 600))
-
-gf = fig[1:5, 1] = GridLayout()
-gl = fig[6, 1] = GridLayout()
-
-ax1 = Axis(gf[1, 1], 
-        xlabel = "steps",
-        ylabel = "energy",
-        )
-lin1 = lines!(ax1, 1:length(Es_wp), Es_wp, label="w/ precond. $(precond_power)")
-#axislegend(ax1, position=:rt)
-@show fig
-
-ax2 = Axis(gf[2, 1], 
-        xlabel = "steps",
-        ylabel = "gnorm",
-        yscale = log10,
-        )
-lines!(ax2, 1:length(gnorms_wp), gnorms_wp, label="w/ precond. $(precond_power)")
-#axislegend(ax2, position=:rt)
-@show fig
-
-Legend(gl[1, 1], ax1, nbanks=2)
-@show fig
-save("tmpdata/precond$(precond_power)_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).pdf", fig)
+#Es_wp = res_wp[5][:, 1]
+#
+#fig = Figure(backgroundcolor = :white, fontsize=14, resolution= (400, 600))
+#
+#gf = fig[1:5, 1] = GridLayout()
+#gl = fig[6, 1] = GridLayout()
+#
+#ax1 = Axis(gf[1, 1], 
+#        xlabel = "steps",
+#        ylabel = "energy",
+#        )
+#lin1 = lines!(ax1, 1:length(Es_wp), Es_wp, label="w/ precond. $(precond_power)")
+##axislegend(ax1, position=:rt)
+#@show fig
+#
+#ax2 = Axis(gf[2, 1], 
+#        xlabel = "steps",
+#        ylabel = "gnorm",
+#        yscale = log10,
+#        )
+#lines!(ax2, 1:length(gnorms_wp), gnorms_wp, label="w/ precond. $(precond_power)")
+##axislegend(ax2, position=:rt)
+#@show fig
+#
+#Legend(gl[1, 1], ax1, nbanks=2)
+#@show fig
+#save("tmpdata/precond$(precond_power)_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).pdf", fig)

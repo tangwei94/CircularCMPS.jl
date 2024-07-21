@@ -392,7 +392,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
     #    return MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
     #end
     function _precondition(ψ0::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
-        ϵ = max(1e-12, min(1, norm(dψ)^precond_power))# TODO
+        ϵ = max(1e-12, 1e-4 * norm(dψ)^precond_power)# TODO
         χ, d = get_χ(ψ0), get_d(ψ0)
         P = zeros(ComplexF64, χ^2+d*χ, χ^2+d*χ)
 
