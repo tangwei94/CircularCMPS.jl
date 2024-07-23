@@ -296,37 +296,30 @@ The multi-boson cMPS is parametrized with no regularity conditions. This allows 
 The regularity condition is achieved via an additional Lagrangian multiplier term `Λ [ψ1, ψ2]† [ψ1, ψ2]`.
 """
 function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Real}=sqrt(10) .^ (4:10), gradtol=1e-4, maxiter=1000)
-    if H.L == Inf
-        results = map(Λs) do Λ
-            function fE_inf(ψ::CMPSData)
-                OH = kinetic(ψ) + H.cs[1,1]* point_interaction(ψ, 1) + H.cs[2,2]* point_interaction(ψ, 2) + H.cs[1,2] * point_interaction(ψ, 1, 2) + H.cs[2,1] * point_interaction(ψ, 2, 1) - H.μs[1] * particle_density(ψ, 1) - H.μs[2] * particle_density(ψ, 2) + lagrangian_multiplier(ψ, 1, 2, Λ) 
-                TM = TransferMatrix(ψ, ψ)
-                envL = permute(left_env(TM), (), (1, 2))
-                envR = permute(right_env(TM), (2, 1), ()) 
-                return real(tr(envL * OH * envR) / tr(envL * envR))
-            end
-            printstyled("infinite system, Λ = $Λ \n"; color=:red)
-
-            res = minimize(fE_inf, ψ0, CircularCMPSRiemannian(maxiter, gradtol, 2))
-            ψ0 = res[1]
-            return res
-        end
-        return results, Λs
-    else
-        results = map(Λs) do Λ
-            function fE_finiteL(ψ::CMPSData)
-                OH = kinetic(ψ) + H.cs[1,1]* point_interaction(ψ, 1) + H.cs[2,2]* point_interaction(ψ, 2) + H.cs[1,2] * point_interaction(ψ, 1, 2) + H.cs[2,1] * point_interaction(ψ, 2, 1) - H.μs[1] * particle_density(ψ, 1) - H.μs[2] * particle_density(ψ, 2) + lagrangian_multiplier(ψ, 1, 2, Λ) 
-                expK, _ = finite_env(K_mat(ψ, ψ), H.L)
-                return real(tr(expK * OH))
-            end 
-
-            printstyled("finite system of size $(H.L), Λ = $Λ \n"; color=:red)
-            res = minimize(fE_finiteL, ψ0, CircularCMPSRiemannian(1000, gradtol, 2))
-            ψ0 = res[1]
-            return res
-        end
-        return results, Λs
+    function fE_inf(ψ::CMPSData, Λ::Real) 
+        OH = kinetic(ψ) + H.cs[1,1]* point_interaction(ψ, 1) + H.cs[2,2]* point_interaction(ψ, 2) + H.cs[1,2] * point_interaction(ψ, 1, 2) + H.cs[2,1] * point_interaction(ψ, 2, 1) - H.μs[1] * particle_density(ψ, 1) - H.μs[2] * particle_density(ψ, 2) + lagrangian_multiplier(ψ, 1, 2, Λ) 
+        TM = TransferMatrix(ψ, ψ)
+        envL = permute(left_env(TM), (), (1, 2))
+        envR = permute(right_env(TM), (2, 1), ()) 
+        return real(tr(envL * OH * envR) / tr(envL * envR))
     end
+    function fE_finiteL(ψ::CMPSData, Λ::Real)
+        OH = kinetic(ψ) + H.cs[1,1]* point_interaction(ψ, 1) + H.cs[2,2]* point_interaction(ψ, 2) + H.cs[1,2] * point_interaction(ψ, 1, 2) + H.cs[2,1] * point_interaction(ψ, 2, 1) - H.μs[1] * particle_density(ψ, 1) - H.μs[2] * particle_density(ψ, 2) + lagrangian_multiplier(ψ, 1, 2, Λ) 
+        expK, _ = finite_env(K_mat(ψ, ψ), H.L)
+        return real(tr(expK * OH))
+    end 
+    fE = (H.L == Inf) ? fE_inf : fE_finiteL
+    ψ = ψ0 
+    E, grad = withgradient(x->fE_inf(x, Λs[1]), ψ)
+    grad = grad[1]
+    total_numfg, total_history = 0, zeros(Float64, 0, 2)
+    for Λ in Λs
+        α = (Λ < Λs[end] - 1e-12) ? 10 : 1
+        ψ, E, grad, numfg, history = minimize(x->fE(x, Λs[1]), ψ0, CircularCMPSRiemannian(maxiter, gradtol, 2))
+        total_numfg += numfg
+        total_history = vcat(total_history, history)
+    end
+    return ψ, E, grad, total_numfg, total_history
 end
 
 function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->1e-3*x))
