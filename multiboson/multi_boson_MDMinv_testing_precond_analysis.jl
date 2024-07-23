@@ -21,7 +21,9 @@ Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
 Es_wp = res_wp[5][:, 1]
 gnorms_wp = res_wp[5][:, 2]
 
-as = 1.0:0.25:1.75
+as = [1]
+bs = [3]
+exs = [3, 4, 5]
 
 fig = Figure(backgroundcolor = :white, fontsize=14, size= (600, 900))
 
@@ -50,12 +52,12 @@ let res_wp0 = res_wp
     lines!(ax2, 1:length(gnorms_wp), gnorms_wp, color=:black)
     lines!(ax3, 1:length(deltas), deltas, color=:black)
     
-    for a in as
-        @load "tmpdata/option3/precond$(a)_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res_wp
+    for a in as, b in bs, ex in exs
+        @load "tmpdata/expand$(ex)_precond$(b)_$(a)-$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res_wp
         Es_wp = res_wp[5][:, 1]
         gnorms_wp = res_wp[5][:, 2]
-        deltas = 1e-3 * gnorms_wp .^ a
-        lines!(ax1, 1:length(Es_wp), Es_wp, label="δ=1e-3 * gn^$(a)")
+        deltas = 0.1^b * gnorms_wp .^ a
+        lines!(ax1, 1:length(Es_wp), Es_wp, label="ex $(ex) 1e$(-b) gn^$(a)")
         lines!(ax2, 1:length(gnorms_wp), gnorms_wp)
         lines!(ax3, 1:length(deltas), deltas)
     end

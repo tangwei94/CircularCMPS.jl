@@ -329,7 +329,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
     end
 end
 
-function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, precond_power=1.5)
+function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, precond_power=1.25, precond_prefactor=1e-3)
     if H.L < Inf
         error("finite size not implemented yet.")
     end
@@ -392,7 +392,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
     #    return MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
     #end
     function _precondition(ψ0::MultiBosonCMPSData_MDMinv, dψ::MultiBosonCMPSData_MDMinv_Grad)
-        ϵ = max(1e-12, 1e-4 * norm(dψ)^precond_power)# TODO
+        ϵ = max(1e-12, precond_prefactor * norm(dψ)^precond_power)# TODO
         χ, d = get_χ(ψ0), get_d(ψ0)
         P = zeros(ComplexF64, χ^2+d*χ, χ^2+d*χ)
 
