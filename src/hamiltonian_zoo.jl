@@ -295,7 +295,7 @@ Find the ground state of the MultiBosonLiebLiniger model with the given Hamilton
 The multi-boson cMPS is parametrized with no regularity conditions. This allows a more efficient optimization. 
 The regularity condition is achieved via an additional Lagrangian multiplier term `Λ [ψ1, ψ2]† [ψ1, ψ2]`.
 """
-function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Real}=2.0 .^ (1:10))
+function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Real}=sqrt(10) .^ (4:10), gradtol=1e-4, maxiter=1000)
     if H.L == Inf
         results = map(Λs) do Λ
             function fE_inf(ψ::CMPSData)
@@ -307,7 +307,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
             end
             printstyled("infinite system, Λ = $Λ \n"; color=:red)
 
-            res = minimize(fE_inf, ψ0, CircularCMPSRiemannian(1000, 1e-9, 2))
+            res = minimize(fE_inf, ψ0, CircularCMPSRiemannian(maxiter, gradtol, 2))
             ψ0 = res[1]
             return res
         end
@@ -321,7 +321,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
             end 
 
             printstyled("finite system of size $(H.L), Λ = $Λ \n"; color=:red)
-            res = minimize(fE_finiteL, ψ0, CircularCMPSRiemannian(1000, 1e-9, 2))
+            res = minimize(fE_finiteL, ψ0, CircularCMPSRiemannian(1000, gradtol, 2))
             ψ0 = res[1]
             return res
         end

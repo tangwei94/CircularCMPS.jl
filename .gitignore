@@ -13,5 +13,5 @@ heisenberg/results
 heisenberg/*.pdf
 rydberg/results
 ising/results
-multiboson/results
+multiboson/results*
 xxz/*.jld2
