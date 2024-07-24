@@ -14,15 +14,21 @@ c12 = 0.5
 
 Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
 
+χ, Δχ = 24, 8
+
 χ = parse(Int, ARGS[1])
-if length(ARGS) > 1
-    Δχ = parse(Int, ARGS[2])
-    @load "multiboson/results/preconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ-Δχ).jld2" res_wp
-    ϕ = expand(res_wp[1], χ; perturb=1e-3)
+Δχ = parse(Int, ARGS[2])
+if Δχ > 0 
+    @load "multiboson/results/MDMinv_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ-Δχ).jld2" res
+    ϕ = expand(res[1], χ, perturb = 1e-4);
+
+    ψ = left_canonical(CMPSData(ψ3))[2];
+    res_lm = ground_state(Hm, ψ; Λs=sqrt(10) .^ (4:10), gradtol=1e-2, maxiter=250, do_benchmark=true);
+    @save "multiboson/results/lagrangian_multiplier_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res_lm
+    ϕ = left_canonical(MultiBosonCMPSData_MDMinv(res_lm[1]));
 else
-    ϕ = MultiBosonCMPSData_MDMinv(rand, χ, 2)
+    ϕ = left_canonical(MultiBosonCMPSData_MDMinv(rand, χ, 2))
 end
-ϕ = left_canonical(ϕ)
 
 println("doing calculation for $(χ)")
 
