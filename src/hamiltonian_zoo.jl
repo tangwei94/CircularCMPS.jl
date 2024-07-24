@@ -295,7 +295,7 @@ Find the ground state of the MultiBosonLiebLiniger model with the given Hamilton
 The multi-boson cMPS is parametrized with no regularity conditions. This allows a more efficient optimization. 
 The regularity condition is achieved via an additional Lagrangian multiplier term `Λ [ψ1, ψ2]† [ψ1, ψ2]`.
 """
-function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Real}=sqrt(10) .^ (4:10), gradtol=1e-4, maxiter=1000)
+function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Real}=sqrt(10) .^ (4:10), gradtol=1e-4, maxiter=1000, do_benchmark=false)
     function fE_inf(ψ::CMPSData, Λ::Real) 
         OH = kinetic(ψ) + H.cs[1,1]* point_interaction(ψ, 1) + H.cs[2,2]* point_interaction(ψ, 2) + H.cs[1,2] * point_interaction(ψ, 1, 2) + H.cs[2,1] * point_interaction(ψ, 2, 1) - H.μs[1] * particle_density(ψ, 1) - H.μs[2] * particle_density(ψ, 2) + lagrangian_multiplier(ψ, 1, 2, Λ) 
         TM = TransferMatrix(ψ, ψ)
@@ -308,18 +308,31 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
         expK, _ = finite_env(K_mat(ψ, ψ), H.L)
         return real(tr(expK * OH))
     end 
+    function _finalize!(x, f, g, numiter)
+        x1 = left_canonical(MultiBosonCMPSData_MDMinv(x))
+        fMDMinv = (xm -> fE(CMPSData(xm), 0))
+        f1, diff1 = withgradient(fMDMinv, x1)
+        g1 = diff_to_grad(x1, diff1[1])
+        push!(E_history, f1)
+        push!(gnorm_history, norm(g1))
+        println("iter $numiter: E: $f gnorm: $(norm(g)) E1: $f1 g1norm: $(norm(g1))")
+        return x, f, g, numiter
+    end
+
     fE = (H.L == Inf) ? fE_inf : fE_finiteL
-    ψ = ψ0 
+    finalize! = do_benchmark ? _finalize! : OptimKit._finalize!
+
+    ψ = left_canonical(ψ0)[2]
     E, grad = withgradient(x->fE_inf(x, Λs[1]), ψ)
     grad = grad[1]
-    total_numfg, total_history = 0, zeros(Float64, 0, 2)
+    total_numfg = 0
+    E_history, gnorm_history = Float64[], Float64[]
+
     for Λ in Λs
-        α = (Λ < Λs[end] - 1e-12) ? 10 : 1
-        ψ, E, grad, numfg, history = minimize(x->fE(x, Λs[1]), ψ0, CircularCMPSRiemannian(maxiter, gradtol, 2))
+        ψ, E, grad, numfg, history = minimize(x->fE(x, Λ), ψ, CircularCMPSRiemannian(maxiter, gradtol, 1); finalize! = finalize!)
         total_numfg += numfg
-        total_history = vcat(total_history, history)
     end
-    return ψ, E, grad, total_numfg, total_history
+    return ψ, E, grad, total_numfg, hcat(E_history, gnorm_history)
 end
 
 function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->1e-3*x))
