@@ -309,13 +309,14 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
         return real(tr(expK * OH))
     end 
     function _finalize!(x, f, g, numiter)
-        x1 = left_canonical(MultiBosonCMPSData_MDMinv(x))
+        x1, err = convert_to_MultiBosonCMPSData_MDMinv(x)
+        x1 = left_canonical(x1)
         fMDMinv = (xm -> fE(CMPSData(xm), 0))
         f1, diff1 = withgradient(fMDMinv, x1)
         g1 = diff_to_grad(x1, diff1[1])
         push!(E_history, f1)
         push!(gnorm_history, norm(g1))
-        println("iter $numiter: E: $f gnorm: $(norm(g)) E1: $f1 g1norm: $(norm(g1))")
+        println("iter $numiter: E: $f gnorm: $(norm(g)) E1: $f1 g1norm: $(norm(g1)) err: $err")
         return x, f, g, numiter
     end
 
