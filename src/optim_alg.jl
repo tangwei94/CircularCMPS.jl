@@ -6,7 +6,7 @@ struct CircularCMPSRiemannian <: Algorithm
     verbosity::Int
 end
 
-function minimize(_f, init::CMPSData, alg::CircularCMPSRiemannian)
+function minimize(_f, init::CMPSData, alg::CircularCMPSRiemannian; finalize! = OptimKit._finalize!)
     
     function _fg(ϕ::CMPSData)
         fvalue = _f(ϕ)
@@ -59,7 +59,7 @@ function minimize(_f, init::CMPSData, alg::CircularCMPSRiemannian)
 
     init = left_canonical(init)[2] # ensure the input is left canonical
 
-    ψopt, fvalue, grad, numfg, history = optimize(_fg, init, optalg_LBFGS; retract=retract, precondition=precondition, inner=inner, transport! =transport!, scale! =scale!, add! =add!)
+    ψopt, fvalue, grad, numfg, history = optimize(_fg, init, optalg_LBFGS; retract = retract, precondition = precondition, inner = inner, transport! = transport!, scale! = scale!, add! = add!, finalize! = finalize!)
 
     return ψopt, fvalue, grad, numfg, history
 end
