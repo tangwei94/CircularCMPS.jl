@@ -27,12 +27,11 @@ println("doing calculation for $(χ)")
 
 # initialization with lagrange multipiler
 ψ = left_canonical(CMPSData(ϕ))[2];
-lgΛmin, lgΛmax, steps = 2, 6, 25
+lgΛmin, lgΛmax, steps = 2, 5, 10
 ΔlgΛ = (lgΛmax - lgΛmin) / (steps - 1)
 Λs = 10 .^ (lgΛmin:ΔlgΛ:lgΛmax)
-k = 1e-8
-res_lm = ground_state(Hm, ψ; Λs = Λs, gradtol=1e-2, maxiter=200, do_benchmark=true, fϵ=(x->k*x));
-@save "multiboson/results/lagrangian_multiplier_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-$(lgΛmin)_$(lgΛmax)_$(steps)_$(k).jld2" res_lm
+res_lm = ground_state(Hm, ψ; Λs = Λs, gradtol=1e-2, maxiter=200, do_benchmark=true);
+@save "multiboson/results/lagrangian_multiplier_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-$(lgΛmin)_$(lgΛmax)_$(steps).jld2" res_lm
 ϕ = left_canonical(res_lm[1]);
 
 # optimization
