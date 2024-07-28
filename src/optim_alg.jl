@@ -6,7 +6,7 @@ struct CircularCMPSRiemannian <: Algorithm
     verbosity::Int
 end
 
-function minimize(_f, init::CMPSData, alg::CircularCMPSRiemannian; finalize! = OptimKit._finalize!)
+function minimize(_f, init::CMPSData, alg::CircularCMPSRiemannian; finalize! = OptimKit._finalize!, fϵ=(x->x*1e-3))
     
     function _fg(ϕ::CMPSData)
         fvalue = _f(ϕ)
@@ -46,7 +46,7 @@ function minimize(_f, init::CMPSData, alg::CircularCMPSRiemannian; finalize! = O
 
         δ = inner(ϕ, dϕ, dϕ)
 
-        P = herm_reg_inv(vr, max(1e-12, 1e-3*sqrt(δ))) 
+        P = herm_reg_inv(vr, max(1e-12, fϵ(sqrt(δ)))) 
 
         Q = dϕ.Q  
         Rs = dϕ.Rs .* Ref(P)
