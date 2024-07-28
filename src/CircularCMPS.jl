@@ -78,7 +78,6 @@ include("multi_boson_cmps_MDMinv.jl");
 include("multi_boson_cmps_P.jl");
 include("transfer_matrix.jl");
 include("hamiltonian_zoo.jl")
-include("optim_state.jl")
 
 # cMPO code
 include("optim_alg.jl");
