@@ -15,22 +15,31 @@ c12 = 0.5
 Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
 
 χ = parse(Int, ARGS[1])
-if length(ARGS) > 1
-    Δχ = parse(Int, ARGS[2])
+Δχ = parse(Int, ARGS[2])
+if Δχ > 0 
     @load "multiboson/results/preconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ-Δχ).jld2" res_wp
-    ϕ = expand(res_wp[1], χ; perturb=1e-3)
+    ϕ = expand(res_wp[1], χ, perturb = 1e-4);
 else
     ϕ = MultiBosonCMPSData_MDMinv(rand, χ, 2)
 end
-ϕ = left_canonical(ϕ)
 
 println("doing calculation for $(χ)")
 
-res_wp = ground_state(Hm, ϕ; do_preconditioning=true, maxiter=1000);
-@save "multiboson/results/preconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res_wp
+# initialization with lagrange multipiler
+ψ = left_canonical(CMPSData(ϕ))[2];
+lgΛmin, lgΛmax, steps = 2, 6, 26
+ΔlgΛ = (lgΛmax - lgΛmin) / (steps - 1)
+Λs = 10 .^ (lgΛmin:ΔlgΛ:lgΛmax)
+res_lm = ground_state(Hm, ψ; Λs = Λs, gradtol=1e-2, maxiter=200, do_benchmark=true);
+@save "multiboson/results/lagrangian_multiplier_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-$(lgΛmin)_$(lgΛmax)_$(steps).jld2" res_lm
+ϕ = left_canonical(res_lm[1]);
 
-res_wop = ground_state(Hm, ϕ; do_preconditioning=false, maxiter=1000);
-@save "multiboson/results/unpreconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res_wop
+# optimization
+res_wp = ground_state(Hm, ϕ; do_preconditioning=true, maxiter=2000);
+@save "multiboson/results/preconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-$(lgΛmin)_$(lgΛmax)_$(steps).jld2" res_wp
+
+res_wop = ground_state(Hm, ϕ; do_preconditioning=false, maxiter=2000);
+@save "multiboson/results/unpreconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-$(lgΛmin)_$(lgΛmax)_$(steps).jld2" res_wop
 
 println("with precond: E=$(res_wp[2]), gradnorm=$(norm(res_wp[3]))")
 println("without precond: E=$(res_wop[2]), gradnorm=$(norm(res_wop[3]))")
@@ -64,4 +73,4 @@ lines!(ax2, 1:length(gnorms_wop), gnorms_wop, label="w/o precond.")
 
 Legend(gl[1, 1], ax1, nbanks=2)
 @show fig
-save("multiboson/results/result_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).pdf", fig)
+save("multiboson/results/result_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-$(lgΛmin)_$(lgΛmax)_$(steps).pdf", fig)

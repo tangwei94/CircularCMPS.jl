@@ -65,6 +65,7 @@ function CMPSData(ψ::MultiBosonCMPSData_MDMinv)
 end
 
 function MultiBosonCMPSData_MDMinv(ψ::CMPSData)
+    @warn "MultiBosonCMPSData_MDMinv(ψ::CMPSData) is going to be removed"
     Q = ψ.Q.data
     _, M = eigen(ψ.Rs[1].data)
     Minv = inv(M)
@@ -74,6 +75,17 @@ function MultiBosonCMPSData_MDMinv(ψ::CMPSData)
     err2 = sum(norm.(Ds .- D0s) .^ 2)
     @info "convert CMPSData to MultiBosonCMPSData_MDMinv, err = $(sqrt(err2))"
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
+end
+function convert_to_MultiBosonCMPSData_MDMinv(ψ::CMPSData)
+    Q = ψ.Q.data
+    _, M = eigen(ψ.Rs[1].data)
+    Minv = inv(M)
+  
+    D0s = map(R->Minv * R.data * M, ψ.Rs)
+    Ds = map(D->Diagonal(D), D0s)
+    err2 = sum(norm.(Ds .- D0s) .^ 2)
+    
+    return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds), sqrt(err2)
 end
 
 function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_MDMinv)

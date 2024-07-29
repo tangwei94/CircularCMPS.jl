@@ -1,3 +1,17 @@
+mutable struct OptimState{A}
+    data::A
+    preconditioner::Any
+    prev::Float64
+    df::Float64
+
+    function OptimState(data::A, preconditioner, prev::Float64, df::Float64) where A
+        return new{A}(data, preconditioner, prev, df)
+    end
+    function OptimState(data::A) where A
+        return new{A}(data, missing, NaN, NaN)
+    end
+end
+
 abstract type Algorithm end 
 
 struct CircularCMPSRiemannian <: Algorithm
@@ -6,9 +20,10 @@ struct CircularCMPSRiemannian <: Algorithm
     verbosity::Int
 end
 
-function minimize(_f, init::CMPSData, alg::CircularCMPSRiemannian)
+function minimize(_f, init::CMPSData, alg::CircularCMPSRiemannian; finalize! = OptimKit._finalize!, fϵ=identity)
     
-    function _fg(ϕ::CMPSData)
+    function _fg(x::OptimState{CMPSData})
+        ϕ = x.data
         fvalue = _f(ϕ)
         ∂ϕ = _f'(ϕ)
         dQ = zero(∂ϕ.Q) 
@@ -16,14 +31,16 @@ function minimize(_f, init::CMPSData, alg::CircularCMPSRiemannian)
 
         return fvalue, CMPSData(dQ, dRs) 
     end
-    function inner(ϕ, ϕ1::CMPSData, ϕ2::CMPSData)
+    function inner(x, ϕ1::CMPSData, ϕ2::CMPSData)
         return real(sum(dot.(ϕ1.Rs, ϕ2.Rs)))
     end
-    function retract(ϕ::CMPSData, dϕ::CMPSData, α::Real)
+    function retract(x::OptimState{CMPSData}, dϕ::CMPSData, α::Real)
+        ϕ = x.data
         Rs = ϕ.Rs .+ α .* dϕ.Rs 
         Q = ϕ.Q - α * sum(adjoint.(ϕ.Rs) .* dϕ.Rs) - 0.5 * α^2 * sum(adjoint.(dϕ.Rs) .* dϕ.Rs)
         ϕ1 = CMPSData(Q, Rs)
-        return ϕ1, dϕ
+
+        return OptimState(ϕ1, missing, x.prev, x.df), dϕ
     end
     function scale!(dϕ::CMPSData, α::Number)
         dϕ.Q = dϕ.Q * α
@@ -35,33 +52,46 @@ function minimize(_f, init::CMPSData, alg::CircularCMPSRiemannian)
         dϕ.Rs .+= dϕ1.Rs .* α
         return dϕ
     end
-    function precondition(ϕ::CMPSData, dϕ::CMPSData)
-        fK = transfer_matrix(ϕ, ϕ)
+    function precondition(x::OptimState{CMPSData}, dϕ::CMPSData)
+        ϕ = x.data
 
-        # solve the fixed point equation
-        init = similar(ϕ.Q, _firstspace(ϕ.Q)←_firstspace(ϕ.Q))
-        randomize!(init);
-        _, vrs, _ = eigsolve(fK, init, 1, :LR)
-        vr = vrs[1]
+        if ismissing(x.preconditioner)
+            δ = inner(ϕ, dϕ, dϕ)
+            ϵ = isnan(x.df) ? 1e-3*fϵ(sqrt(δ)) : fϵ(x.df)
+            ϵ = max(1e-12, ϵ)
 
-        δ = inner(ϕ, dϕ, dϕ)
+            fK = transfer_matrix(ϕ, ϕ)
 
-        P = herm_reg_inv(vr, max(1e-12, 1e-3*sqrt(δ))) 
+            # solve the fixed point equation
+            init = similar(ϕ.Q, _firstspace(ϕ.Q)←_firstspace(ϕ.Q))
+            randomize!(init);
+            _, vrs, _ = eigsolve(fK, init, 1, :LR)
+            vr = vrs[1]
+
+            x.preconditioner = herm_reg_inv(vr, ϵ) 
+        end
 
         Q = dϕ.Q  
-        Rs = dϕ.Rs .* Ref(P)
+        Rs = dϕ.Rs .* Ref(x.preconditioner)
 
         return CMPSData(Q, Rs)
     end
     transport!(v, x, d, α, xnew) = v
+
+    function finalize_wrapped!(x::OptimState{CMPSData}, f, g, numiter)
+        x.preconditioner = missing
+        x.df = abs(f - x.prev)
+        x.prev = f
+        return finalize!(x, f, g, numiter)
+    end
     
     optalg_LBFGS = LBFGS(;maxiter=alg.maxiter, gradtol=alg.tol, verbosity=alg.verbosity)
 
     init = left_canonical(init)[2] # ensure the input is left canonical
 
-    ψopt, fvalue, grad, numfg, history = optimize(_fg, init, optalg_LBFGS; retract=retract, precondition=precondition, inner=inner, transport! =transport!, scale! =scale!, add! =add!)
+    x, fvalue, grad, numfg, history = optimize(_fg, OptimState(init), optalg_LBFGS; retract = retract, precondition = precondition, inner = inner, transport! = transport!, scale! = scale!, add! = add!, finalize! = finalize_wrapped!)
 
-    return ψopt, fvalue, grad, numfg, history
+    return x.data, fvalue, grad, numfg, history
 end
 
 struct OptimNumber <: Algorithm
