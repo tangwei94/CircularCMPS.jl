@@ -27,7 +27,7 @@ println("doing calculation for $(χ)")
 
 # initialization with lagrange multipiler
 ψ = left_canonical(CMPSData(ϕ))[2];
-lgΛmin, lgΛmax, steps = 2, 5, 10
+lgΛmin, lgΛmax, steps = 2, 6, 26
 ΔlgΛ = (lgΛmax - lgΛmin) / (steps - 1)
 Λs = 10 .^ (lgΛmin:ΔlgΛ:lgΛmax)
 res_lm = ground_state(Hm, ψ; Λs = Λs, gradtol=1e-2, maxiter=200, do_benchmark=true);
@@ -35,10 +35,10 @@ res_lm = ground_state(Hm, ψ; Λs = Λs, gradtol=1e-2, maxiter=200, do_benchmark
 ϕ = left_canonical(res_lm[1]);
 
 # optimization
-res_wp = ground_state(Hm, ϕ; do_preconditioning=true, maxiter=1000);
+res_wp = ground_state(Hm, ϕ; do_preconditioning=true, maxiter=2000);
 @save "multiboson/results/preconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-$(lgΛmin)_$(lgΛmax)_$(steps).jld2" res_wp
 
-res_wop = ground_state(Hm, ϕ; do_preconditioning=false, maxiter=1000);
+res_wop = ground_state(Hm, ϕ; do_preconditioning=false, maxiter=2000);
 @save "multiboson/results/unpreconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-$(lgΛmin)_$(lgΛmax)_$(steps).jld2" res_wop
 
 println("with precond: E=$(res_wp[2]), gradnorm=$(norm(res_wp[3]))")

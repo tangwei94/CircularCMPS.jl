@@ -295,7 +295,7 @@ Find the ground state of the MultiBosonLiebLiniger model with the given Hamilton
 The multi-boson cMPS is parametrized with no regularity conditions. This allows a more efficient optimization. 
 The regularity condition is achieved via an additional Lagrangian multiplier term `Λ [ψ1, ψ2]† [ψ1, ψ2]`.
 """
-function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Real}=10 .^ (2:(1/3):5), gradtol=1e-2, maxiter=100, do_benchmark=true, fϵ=identity)
+function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Real}=10 .^ (2:(1/3):5), gradtol=1e-2, maxiter=100, do_benchmark=true, fϵ=(x->10*x))
     function fE_inf(ψ::CMPSData, Λ::Real) 
         OH = kinetic(ψ) + H.cs[1,1]* point_interaction(ψ, 1) + H.cs[2,2]* point_interaction(ψ, 2) + H.cs[1,2] * point_interaction(ψ, 1, 2) + H.cs[2,1] * point_interaction(ψ, 2, 1) - H.μs[1] * particle_density(ψ, 1) - H.μs[2] * particle_density(ψ, 2) + lagrangian_multiplier(ψ, 1, 2, Λ) 
         TM = TransferMatrix(ψ, ψ)
@@ -317,7 +317,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
         push!(E_history, f1)
         push!(gnorm_history, norm(g1))
         push!(err_history, err)
-        println("iter $numiter: E: $f gnorm: $(norm(g)) E1: $f1 g1norm: $(norm(g1)) err: $err")
+        println("$numiter: E: $f gnorm: $(norm(g)) E1: $f1 err: $err ratio $(x.df/norm(g))")
 
         if f1 < optimal_E
             optimal_solution = deepcopy(x1)
@@ -348,7 +348,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
     return optimal_solution, optimal_E, optimal_grad, total_numfg, hcat(E_history, gnorm_history, err_history)
 end
 
-function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, fϵ=identity)
+function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x))
     if H.L < Inf
         error("finite size not implemented yet.")
     end
@@ -415,8 +415,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         χ, d = get_χ(ψ), get_d(ψ)
 
         if ismissing(x.preconditioner)
-            ϵ = isnan(x.df) ? 1e-3*fϵ(norm(dψ)) : fϵ(x.df)
-            #ϵ = 1e-3*fϵ(norm(dψ)) 
+            ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
             ϵ = max(1e-12, ϵ)
 
             P = zeros(ComplexF64, χ^2+d*χ, χ^2+d*χ)
@@ -441,6 +440,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
     transport!(v, x, d, α, xnew) = v
 
     function finalize!(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, f, g, numiter) where T
+        @show x.df / norm(g)
         x.preconditioner = missing
         x.df = abs(f - x.prev)
         x.prev = f
