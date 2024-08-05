@@ -440,7 +440,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
     transport!(v, x, d, α, xnew) = v
 
     function finalize!(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, f, g, numiter) where T
-        @show x.df / norm(g)
+        @show x.df / norm(g), norm(x.data.M), norm(x.data.Minv)
         x.preconditioner = missing
         x.df = abs(f - x.prev)
         x.prev = f
