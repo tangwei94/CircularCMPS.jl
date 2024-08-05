@@ -133,7 +133,7 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, d
     (ϵ > 1e-12) && @warn "your cmps has deviated from the left canonical form, err=$ϵ"
 
     Ds = ψ.Ds .+ α .* dDs
-    #X[diagind(X)] .- tr(X) / size(X, 1)
+    X[diagind(X)] .- tr(X) / size(X, 1) # make X traceless
     M = exp(α * X) * ψ.M
     Minv = ψ.Minv * exp(-α * X)
 
@@ -210,6 +210,7 @@ function diff_to_grad(ψ::MultiBosonCMPSData_MDMinv, ∂ψ::MultiBosonCMPSData_M
 
     gDs = [Diagonal(-ψ.M' * R * ∂ψ.Q * ψ.Minv' + ∂D) for (R, ∂D) in zip(Rs, ∂ψ.Ds)]
     gX = sum([- R * ∂ψ.Q * R' + R' * R * ∂ψ.Q for R in Rs]) + ∂ψ.M * ψ.M'
+    gX[diagind(gX)] .-= tr(gX) / size(gX, 1) # make X traceless
     return MultiBosonCMPSData_MDMinv_Grad(gDs, gX)
 end
 
