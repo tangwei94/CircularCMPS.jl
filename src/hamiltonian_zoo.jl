@@ -447,7 +447,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         return x, f, g, numiter
     end
 
-    optalg_LBFGS = LBFGS(;maxiter=maxiter, gradtol=gradtol, verbosity=2)
+    optalg_LBFGS = LBFGS(;maxiter=maxiter, gradtol=gradtol, acceptfirst=false, verbosity=2)
 
     if do_preconditioning
         @show "doing precondition"
