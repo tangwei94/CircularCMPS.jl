@@ -319,11 +319,11 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
         push!(err_history, err)
         println("$numiter: E: $f gnorm: $(norm(g)) E1: $f1 err: $err ratio $(x.df/norm(g))")
 
-        if f1 < optimal_E
-            optimal_solution = deepcopy(x1)
-            optimal_E = f1
-            optimal_grad = deepcopy(g1)
-        end
+        #if f1 < optimal_E
+        #    optimal_solution = deepcopy(x1)
+        #    optimal_E = f1
+        #    optimal_grad = deepcopy(g1)
+        #end
 
         return x, f, g, numiter
     end
@@ -337,15 +337,16 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
     total_numfg = 0
     E_history, gnorm_history, err_history = Float64[], Float64[], Float64[]
 
-    optimal_solution = convert_to_MultiBosonCMPSData_MDMinv(ψ)[1]
-    optimal_E = Inf
-    optimal_grad = deepcopy(grad)
+    #optimal_solution = convert_to_MultiBosonCMPSData_MDMinv(ψ)[1]
+    #optimal_E = Inf
+    #optimal_grad = deepcopy(grad)
 
     for Λ in Λs
         ψ, E, grad, numfg, history = minimize(x->fE(x, Λ), ψ, CircularCMPSRiemannian(maxiter, gradtol, 1); finalize! = finalize!, fϵ=fϵ)
         total_numfg += numfg
     end
-    return optimal_solution, optimal_E, optimal_grad, total_numfg, hcat(E_history, gnorm_history, err_history)
+    #return optimal_solution, optimal_E, optimal_grad, total_numfg, hcat(E_history, gnorm_history, err_history)
+    return ψ, E, grad, total_numfg, hcat(E_history, gnorm_history, err_history)
 end
 
 function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x))
