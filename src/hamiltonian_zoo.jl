@@ -319,6 +319,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
         push!(err_history, err)
         println("$numiter: E: $f gnorm: $(norm(g)) E1: $f1 err: $err ratio $(x.df/norm(g))")
 
+        # NOTE. choosing optimal_solution according to the energy may end up with the input of the whole optimization process, as the lagrangian multiplier process may increase the energy
         #if f1 < optimal_E
         #    optimal_solution = deepcopy(x1)
         #    optimal_E = f1
