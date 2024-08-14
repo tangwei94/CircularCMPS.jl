@@ -351,6 +351,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
     E_history, gnorm_history, err_history = Float64[], Float64[], Float64[]
 
     for Λ in Λs
+        println("Doing simulation for lg Λ = $(log10(Λ))")
         ψ, E, grad, numfg, history = minimize(x->fE(x, Λ), ψ, CircularCMPSRiemannian(maxiter, gradtol, 1); finalize! = _finalize!, fϵ=fϵ)
         total_numfg += numfg
     end
