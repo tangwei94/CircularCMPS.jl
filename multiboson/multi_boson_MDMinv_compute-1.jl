@@ -24,22 +24,17 @@ else
     ϕ = nothing
 end
 
-# optimization 1
-#println("doing calculation for $(χ)")
-#res_wp_init = ground_state(Hm, ϕ; do_preconditioning=true, maxiter=250, gradtol=1e-2);
-#@save "multiboson/results/preconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-init.jld2" res_wp_init
-#@load "multiboson/results/preconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-init.jld2" res_wp_init
-#ϕ = res_wp_init[1]
-#E0 = res_wp_init[2]
-
-lgΛmin, lgΛmax, steps = 4, 6, 11
+lgΛmin, lgΛmax, steps = 2, 10, 81
 ΔlgΛ = (lgΛmax - lgΛmin) / (steps - 1)
 Λs = 10 .^ (lgΛmin:ΔlgΛ:lgΛmax)
 
 # initialization with lagrange multipiler
 ψ = left_canonical(CMPSData(ϕ))[2];
-#res_lm = ground_state(Hm, ψ; Λs = Λs, gradtol=1e-2, maxiter=200, do_benchmark=true);
-#@save "multiboson/results/lagrangian_multiplier_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-$(lgΛmin)_$(lgΛmax)_$(steps).jld2" res_lm
+res_lm = ground_state(Hm, ψ; Λs = Λs, gradtol=1e-2, maxiter=1000, do_prerun=true);
+@save "multiboson/results/lagrangian_multiplier_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-$(lgΛmin)_$(lgΛmax)_$(steps).jld2" res_lm
+
+#CircularCMPS.convert_to_MultiBosonCMPSData_MDMinv(res_lm[1])
+
 @load "multiboson/results/lagrangian_multiplier_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-$(lgΛmin)_$(lgΛmax)_$(steps).jld2" res_lm
 ϕ = left_canonical(MultiBosonCMPSData_MDMinv(res_lm[1]));
 
