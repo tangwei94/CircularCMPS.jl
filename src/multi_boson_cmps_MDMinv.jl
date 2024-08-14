@@ -76,7 +76,54 @@ function MultiBosonCMPSData_MDMinv(ψ::CMPSData)
     @info "convert CMPSData to MultiBosonCMPSData_MDMinv, err = $(sqrt(err2))"
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
+function convert_to_MultiBosonCMPSData_MDMinv_deprecated(ψ::CMPSData)
+    Q = ψ.Q.data
+    _, M = eigen(ψ.Rs[1].data)
+    Minv = inv(M)
+  
+    D0s = map(R->Minv * R.data * M, ψ.Rs)
+    Ds = map(D->Diagonal(D), D0s)
+    err2 = sum(norm.(Ds .- D0s) .^ 2)
+    
+    return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds), sqrt(err2)
+end
+
 function convert_to_MultiBosonCMPSData_MDMinv(ψ::CMPSData)
+
+    # FIXME. a temporary solution; only works for the case of two species of bosons
+    R1, R2 = ψ.Rs[1].data, ψ.Rs[2].data
+    function fv(v::Vector{Float64})
+        α, β = v
+        _, V1 = eigen(R1 + (α + im*β) * R2);
+        invV1 = inv(V1)
+        D1 = (inv(V1) * R1 * V1)
+        D2 = (inv(V1) * R2 * V1)
+
+        err2(D) = norm(V1 * (D - Diagonal(D)) * invV1) ^ 2
+        y = sqrt(err2(D1) + err2(D2))
+        return y
+    end
+
+    function fgv(v::Vector{Float64})
+        y = fv(v)
+        g = grad(central_fdm(5, 1), fv, v)[1]
+        return y, g
+    end
+
+    ymin, vmin = Inf, [0, 0]
+    v0 = [0.0, 0.0]
+    for _ in 1:10
+        v0 += 2 * rand(2) .- 1
+        res = optimize(fgv, v0, LBFGS(;verbosity=0, gradtol=1e-4))
+        if res[2] < ymin
+            vmin = res[1]
+            ymin = res[2]
+        end
+    end
+
+    α, β = vmin
+    _, M = eigen(R1 + (α + im*β) * R2);
+
     Q = ψ.Q.data
     _, M = eigen(ψ.Rs[1].data)
     Minv = inv(M)

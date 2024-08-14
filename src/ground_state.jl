@@ -79,13 +79,3 @@ function lieb_liniger_ground_state(c::Real, μ::Real, L::Real, ψ0::Union{CMPSDa
 
 end
 
-#c, μ, L = 1, 2, 4
-#χ, d = 4, 1
-#ψ = CMPSData(rand, χ, d)
-#ψ1, E, grad, numfg, history = lieb_liniger_ground_state(c, μ, L, ψ)
-#
-#ψ2 = expand(ψ1, 8, L)
-#ψ2, E2, grad, numfg, history = lieb_liniger_ground_state(c, μ, L, ψ2)
-#
-#ψ3 = expand(ψ2, 12, L)
-#ψ3, E3, grad, numfg, history = lieb_liniger_ground_state(c, μ, L, ψ3)

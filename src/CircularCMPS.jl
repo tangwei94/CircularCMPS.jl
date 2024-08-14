@@ -10,7 +10,7 @@ __precompile__(true)
 using Parameters
 using LinearAlgebra
 using VectorInterface, TensorKit, TensorOperations, KrylovKit, TensorKitManifolds
-using ChainRules, ChainRulesCore, Zygote
+using ChainRules, ChainRulesCore, Zygote, FiniteDifferences
 using OptimKit
 using LoopVectorization 
 using Tullio
