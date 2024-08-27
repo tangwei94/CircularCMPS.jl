@@ -14,7 +14,7 @@ c12 = 0.5
 
 Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
 
-χ, Δχ = 56, 8
+χ, Δχ = 40, 8
 
 if Δχ > 0 
     lgΛmin, lgΛmax, steps = 2, 6, 26
