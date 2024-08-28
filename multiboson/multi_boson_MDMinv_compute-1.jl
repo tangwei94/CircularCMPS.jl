@@ -14,10 +14,10 @@ c12 = 0.5
 
 Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
 
-χ, Δχ = 40, 8
+χ, Δχ = 24, 8
 
 if Δχ > 0 
-    lgΛmin, lgΛmax, steps = 2, 6, 26
+    lgΛmin, lgΛmax, steps = 2, 5, 10
     @load "multiboson/results/preconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ-Δχ)-$(lgΛmin)_$(lgΛmax)_$(steps).jld2" res_wp
     ϕ = expand(res_wp[1], χ, perturb = 1e-3);
 else

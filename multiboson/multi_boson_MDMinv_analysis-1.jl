@@ -10,7 +10,7 @@ c1, μ1 = 1., 2.
 c2, μ2 = 1.5, 2.5
 c12 = 0.5
 
-χ = 64
+χ = 40
 lgΛmin, lgΛmax, steps = 2, 10, 81
 
 # check the lagrange multiplier computation
