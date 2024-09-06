@@ -7,22 +7,22 @@ using Revise
 using CircularCMPS
 
 c1, μ1 = 1., 2.
-c2, μ2 = 1.5, 2.5
+c2, μ2 = 1., 2.
 c12 = 0.5
 #c2, μ2 = parse(Float64, ARGS[1]), parse(Float64, ARGS[2])
 #c12 = parse(Float64, ARGS[3]) 
 
 Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
 
-χ, Δχ = 16, 8
+χ, Δχ = 40, 8
 
 if Δχ > 0 
-    lgΛmin, lgΛmax, steps = 2, 5, 10
+    lgΛmin, lgΛmax, steps = 2, 10, 81
     #@load "multiboson/results/preconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ-Δχ)-$(lgΛmin)_$(lgΛmax)_$(steps).jld2" res_wp
-    @load "multiboson/results/preconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ-Δχ).jld2" res_wp
+    @load "multiboson/results/preconditioned_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ-Δχ)-$(lgΛmin)_$(lgΛmax)_$(steps).jld2" res_wp
     ϕ = expand(res_wp[1], χ, perturb = 1e-3);
 else
-    ϕ = nothing
+    ϕ = MultiBosonCMPSData_MDMinv(rand, χ, 2)
 end
 
 lgΛmin, lgΛmax, steps = 2, 10, 81
