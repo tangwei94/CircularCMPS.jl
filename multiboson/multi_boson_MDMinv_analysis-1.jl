@@ -7,10 +7,10 @@ using Revise
 using CircularCMPS
 
 c1, μ1 = 1., 2.
-c2, μ2 = 1.5, 2.5
+c2, μ2 = 1., 2.
 c12 = 0.5
 
-χ = 16
+χ = 64
 lgΛmin, lgΛmax, steps = 2, 10, 81
 
 # check the lagrange multiplier computation
