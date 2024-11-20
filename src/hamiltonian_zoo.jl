@@ -295,9 +295,10 @@ Find the ground state of the MultiBosonLiebLiniger model with the given Hamilton
 The multi-boson cMPS is parametrized with no regularity conditions. This allows a more efficient optimization. 
 The regularity condition is achieved via an additional Lagrangian multiplier term `Λ [ψ1, ψ2]† [ψ1, ψ2]`.
 """
-function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Real}=10 .^ (2:(1/3):5), gradtol=1e-2, maxiter=100, do_prerun=true, fϵ=(x->10*x))
+function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Real}=10 .^ (2:(1/3):5), gradtol=1e-2, maxiter=100, do_prerun=true, fϵ=(x->10*x), energy_prefactor=1.0)
     function fE_inf(ψ::CMPSData, Λ::Real) 
-        OH = kinetic(ψ) + H.cs[1,1]* point_interaction(ψ, 1) + H.cs[2,2]* point_interaction(ψ, 2) + H.cs[1,2] * point_interaction(ψ, 1, 2) + H.cs[2,1] * point_interaction(ψ, 2, 1) - H.μs[1] * particle_density(ψ, 1) - H.μs[2] * particle_density(ψ, 2) + lagrangian_multiplier(ψ, 1, 2, Λ) 
+        OH = kinetic(ψ) + H.cs[1,1]* point_interaction(ψ, 1) + H.cs[2,2]* point_interaction(ψ, 2) + H.cs[1,2] * point_interaction(ψ, 1, 2) + H.cs[2,1] * point_interaction(ψ, 2, 1) - H.μs[1] * particle_density(ψ, 1) - H.μs[2] * particle_density(ψ, 2)  
+        OH = energy_prefactor * OH + lagrangian_multiplier(ψ, 1, 2, Λ)
         TM = TransferMatrix(ψ, ψ)
         envL = permute(left_env(TM), (), (1, 2))
         envR = permute(right_env(TM), (2, 1), ()) 
@@ -322,7 +323,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
         push!(err_history, err)
         println("$numiter: E: $f gnorm: $(norm(g)) err: $err ratio $(x.df/norm(g))")
 
-        if numiter > 10 && err > err_history[end-1] 
+        if numiter > 10 && err > err_history[end-1] && (energy_prefactor > 1e-12)
             println("err start to increase. stop the optimization.")
             return x, f, 0*g, numiter
         end
@@ -442,10 +443,12 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
             end 
             LinearAlgebra.BLAS.set_num_threads(blas_num_threads)
             P[diagind(P)] .+= ϵ
-            x.preconditioner = P
+            x.preconditioner = qr(P)
         end
         vp = x.preconditioner \ vec(dψ)
-        return MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
+        PG = MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
+        @show sqrt(sum(norm.(PG.dDs) .^ 2))
+        return PG
     end
 
     transport!(v, x, d, α, xnew) = v

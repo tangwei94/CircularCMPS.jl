@@ -177,7 +177,7 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, d
     # check left canonical form 
     ψc = CMPSData(ψ)
     ϵ = norm(ψc.Q + ψc.Q' + sum([R' * R for R in ψc.Rs]))
-    (ϵ > 1e-12) && @warn "your cmps has deviated from the left canonical form, err=$ϵ"
+    (ϵ > 1e-10) && @warn "your cmps has deviated from the left canonical form, err=$ϵ"
 
     Ds = ψ.Ds .+ α .* dDs
     #X[diagind(X)] .- tr(X) / size(X, 1) # make X traceless
