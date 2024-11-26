@@ -121,7 +121,6 @@ end
     @test dot(g0, g1) ≈ dot(∂ψ.Q, rQ1) + sum(dot.(∂Ds, rDs1)) + dot(∂ψ.M, rM1)
 end
 
-1
 #@testset "test Kmat_pseudo_inv by numerical integration" for ix in 1:10
 #    χ, d = 4, 2
 #    ψ = MultiBosonCMPSData_P(rand, χ, d)
