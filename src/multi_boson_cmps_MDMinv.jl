@@ -256,7 +256,7 @@ function diff_to_grad(ψ::MultiBosonCMPSData_MDMinv, ∂ψ::MultiBosonCMPSData_M
     Rs = map(D->ψ.M * D * ψ.Minv, ψ.Ds)
 
     gDs = [Diagonal(-ψ.M' * R * ∂ψ.Q * ψ.Minv' + ∂D) for (R, ∂D) in zip(Rs, ∂ψ.Ds)]
-    gX = sum([- R * ∂ψ.Q * R' + R' * R * ∂ψ.Q for R in Rs]) + ∂ψ.M * ψ.M'
+    gX = ψ.M * sum([- R * ∂ψ.Q * R' + R' * R * ∂ψ.Q for R in Rs]) * ψ.Minv' + ∂ψ.M * ψ.M'
     #gX[diagind(gX)] .-= tr(gX) / size(gX, 1) # make X traceless
     return MultiBosonCMPSData_MDMinv_Grad(gDs, gX)
 end
@@ -267,20 +267,22 @@ function tangent_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv
     end
 
     Rs = map(D->ψ.M * D * ψ.Minv, ψ.Ds)
+    X1 = ψ.M * g.X * ψ.Minv
 
-    X = sum(map(zip(g.dDs, Rs)) do (dD, R)
-            g.X * R * ρR * R' - R' * g.X * R * ρR -
-            R * g.X * ρR * R' + R' * R * g.X * ρR + 
+    X1_maped = sum(map(zip(g.dDs, Rs)) do (dD, R)
+            X1 * R * ρR * R' - R' * X1 * R * ρR -
+            R * X1 * ρR * R' + R' * R * X1 * ρR + 
             ψ.M * dD * ψ.Minv * ρR * R' - R' * ψ.M * dD * ψ.Minv * ρR
         end)
+    X_mapped = ψ.Minv * X1_maped * ψ.M
 
-    dDs = map(zip(g.dDs, Rs)) do (dD, R)
-        Diagonal(ψ.M' * g.X * R * ρR * ψ.Minv' -
-            ψ.M' * R * g.X * ρR * ψ.Minv' + 
+    dDs_mapped = map(zip(g.dDs, Rs)) do (dD, R)
+        Diagonal(ψ.M' * X1 * R * ρR * ψ.Minv' -
+            ψ.M' * R * X1 * ρR * ψ.Minv' + 
             ψ.M' * ψ.M * dD * ψ.Minv * ρR * ψ.Minv')
     end
 
-    return MultiBosonCMPSData_MDMinv_Grad(dDs, X)
+    return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
 end
 
 
