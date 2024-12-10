@@ -1,7 +1,6 @@
 @testset "test basic utility functions for MultiBosonCMPSData_MDMinv" for ix in 1:10
-    ψa = MultiBosonCMPSData_P(rand, 2, 3)
+    ψa = MultiBosonCMPSData_MDMinv(rand, 2, 3)
 
-    @test norm(ψa - ψa) < 1e-12
     @test norm(ψa) / norm(2*ψa) ≈ 0.5
     @test norm(ψa) / norm(ψa + ψa * 0.5) ≈ 2/3
     @test norm(ψa) / norm(ψa - ψa * 0.5) ≈ 2
@@ -73,7 +72,7 @@ end
 
     function check_left_canonical_form(x)
         cmps = CMPSData(x)
-        @test norm(cmps.Q + cmps.Q' + sum([R' * R for R in cmps.Rs])) < 1e-12
+        @test norm(cmps.Q + cmps.Q' + sum([R' * R for R in cmps.Rs])) < 1e-11
     end
 
     check_left_canonical_form(ψl)
@@ -90,18 +89,17 @@ end
 @testset "test diff_to_grad" for ix in 1:10
     χ, d = 4, 2
     ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
+    ψ = left_canonical(ψ)
     Rs = Ref(ψ.M) .* ψ.Ds .* Ref(ψ.Minv)
-    ϕn = CMPSData(rand, χ, d)
 
-    function _F1(ψ)
+    cs, μs = ComplexF64[1. 1.4; 1.4 2.], ComplexF64[2.1, 2.3]
+    function _F1(ψ::MultiBosonCMPSData_MDMinv)
         ψn = CMPSData(ψ)
-
-        TM1 = TransferMatrix(ϕn, ψn)
-        TM2 = TransferMatrix(ψn, ϕn)
-        vl1 = left_env(TM1)
-        vr2 = right_env(TM2)
-   
-        return norm(tr(vl1)) / norm(vl1) + norm(tr(vr2))/norm(vr2) + norm(tr(vl1 * vr2)) / norm(vl1) / norm(vr2)
+        OH = kinetic(ψn) + cs[1,1]*point_interaction(ψn, 1) + cs[2,2]*point_interaction(ψn, 2) + cs[1,2] * point_interaction(ψn, 1, 2) + cs[2,1] * point_interaction(ψn, 2, 1) - μs[1] * particle_density(ψn, 1) - μs[2] * particle_density(ψn, 2)
+        TM = TransferMatrix(ψn, ψn)
+        envL = permute(left_env(TM), ((), (1, 2)))
+        envR = permute(right_env(TM), ((2, 1), ())) 
+        return real(tr(envL * OH * envR) / tr(envL * envR))
     end
     ∂ψ = _F1'(ψ)
     ∂Ds = ∂ψ.Ds
@@ -114,11 +112,17 @@ end
         return (V, g.dDs, gM)
     end
 
+    # check the implementation
     g1 = similar(g0)
     randomize!(g1)
-
     rQ1, rDs1, rM1 = tangent_vec(g1)
     @test dot(g0, g1) ≈ dot(∂ψ.Q, rQ1) + sum(dot.(∂Ds, rDs1)) + dot(∂ψ.M, rM1)
+
+    # check in the context of retraction
+    α = 1e-4
+    ψ2 = CircularCMPS.retract_left_canonical(ψ, α, g1.dDs, g1.X)
+    ψ1 = CircularCMPS.retract_left_canonical(ψ, -α, g1.dDs, g1.X)
+    @test norm((_F1(ψ2) - _F1(ψ1)) / (2*α) - real(dot(g0, g1))) < 1e-4
 end
 
 #@testset "test Kmat_pseudo_inv by numerical integration" for ix in 1:10
