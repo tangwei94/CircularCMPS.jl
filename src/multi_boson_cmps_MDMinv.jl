@@ -40,12 +40,12 @@ function Base.similar(ψ::MultiBosonCMPSData_MDMinv)
 end
 function randomize!(ψ::MultiBosonCMPSData_MDMinv)
     T = eltype(ψ)
-    map!(x -> randn(T), ψ.Q, ψ.Q)
+    map!(x -> rand(T), ψ.Q, ψ.Q)
     map!(x -> rand(T), ψ.M, ψ.M)
     ψ.Minv .= inv(ψ.M)
     for ix in eachindex(ψ.Ds)
         d = view(ψ.Ds[ix], diagind(ψ.Ds[ix]))
-        map!(x -> randn(T), d, d)
+        map!(x -> rand(T), d, d)
     end
     return ψ
 end
