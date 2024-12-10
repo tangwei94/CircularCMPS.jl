@@ -16,7 +16,7 @@ function lieb_liniger_ground_state(c::Real, μ::Real, L::Real, ψ0::Union{CMPSDa
         return E, CMPSData(dQ, dRs)
     end
 
-    function inner(ψ, ψ1::CMPSData, ψ2::CMPSData)
+    function TensorKit.inner(ψ, ψ1::CMPSData, ψ2::CMPSData)
         # be careful the cases with or without a factor of 2. depends on how to define the complex gradient
         return real(sum(dot.(ψ1.Rs, ψ2.Rs))) 
     end

@@ -31,7 +31,7 @@ function minimize(_f, init::CMPSData, alg::CircularCMPSRiemannian; finalize! = O
 
         return fvalue, CMPSData(dQ, dRs) 
     end
-    function inner(x, ϕ1::CMPSData, ϕ2::CMPSData)
+    function TensorKit.inner(x, ϕ1::CMPSData, ϕ2::CMPSData)
         return real(sum(dot.(ϕ1.Rs, ϕ2.Rs)))
     end
     function retract(x::OptimState{CMPSData}, dϕ::CMPSData, α::Real)
@@ -105,7 +105,7 @@ function minimize(_f, init::Number, alg::OptimNumber)
     function _fg(x::Number)
         return _f(x), _f'(x) 
     end
-    function inner(x, x1::Number, x2::Number)
+    function TensorKit.inner(x, x1::Number, x2::Number)
         return real(x1' * x2)
     end
     function retract(x::Number, dx::Number, α::Real)

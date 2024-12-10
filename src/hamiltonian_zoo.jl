@@ -84,7 +84,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData; do_prec
             return E, ∂ψ 
         end
     
-        function inner(ψ, ψ1::MultiBosonCMPSData, ψ2::MultiBosonCMPSData)
+        function TensorKit.inner(ψ, ψ1::MultiBosonCMPSData, ψ2::MultiBosonCMPSData)
             # be careful the cases with or without a factor of 2. depends on how to define the complex gradient
             return real(dot(ψ1, ψ2)) 
         end
@@ -201,7 +201,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_P; do_pr
             return E, ∂ψ 
         end
     
-        function inner(ψ, ψ1::MultiBosonCMPSData_P, ψ2::MultiBosonCMPSData_P)
+        function TensorKit.inner(ψ, ψ1::MultiBosonCMPSData_P, ψ2::MultiBosonCMPSData_P)
             # be careful the cases with or without a factor of 2. depends on how to define the complex gradient
             return real(dot(ψ1, ψ2)) 
         end
@@ -381,7 +381,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         return E, g
     end
     
-    function inner(x, a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad)
+    function TensorKit.inner(x, a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad)
         # be careful the cases with or without a factor of 2. depends on how to define the complex gradient
         return real(dot(a, b)) 
     end
@@ -503,7 +503,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MCMinv; 
         return E, g
     end
     
-    function inner(x, a::MultiBosonCMPSData_MCMinv_Grad, b::MultiBosonCMPSData_MCMinv_Grad)
+    function TensorKit.inner(x, a::MultiBosonCMPSData_MCMinv_Grad, b::MultiBosonCMPSData_MCMinv_Grad)
         # be careful the cases with or without a factor of 2. depends on how to define the complex gradient
         return real(dot(a, b)) 
     end
