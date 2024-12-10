@@ -49,20 +49,10 @@ end
         envR = permute(right_env(TM), ((2, 1), ())) 
         return real(tr(envL * OH * envR) / tr(envL * envR))
     end
-    #function _FE1(ψ::MultiBosonCMPSData_MDMinv)
-    #    ψn = CMPSData(ψ)
-    #    OH = kinetic(ψn) + point_interaction(ψn, cs) - particle_density(ψn, μs)
-    #    TM = TransferMatrix(ψn, ψn)
-    #    envL = permute(left_env(TM), ((), (1, 2)))
-    #    envR = permute(right_env(TM), ((2, 1), ())) 
-    #    return real(tr(envL * OH * envR) / tr(envL * envR))
-    #end
 
     test_ADgrad(_F1, ψ)
     test_ADgrad(_F2, ψ)
     test_ADgrad(_FE, ψ)
-    # TODO. _FE1 grad incorrect. why? 
-    #test_ADgrad(_FE1, ψ)
 end
 
 @testset "left canonical form MultiBosonCMPSData_MDMinv" for ix in 1:10
