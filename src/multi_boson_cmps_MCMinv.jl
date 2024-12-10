@@ -29,7 +29,7 @@ function MultiBosonCMPSData_MCMinv(f, χ::Integer, d::Integer, α::Real)
     return MultiBosonCMPSData_MCMinv(Q, M, Cs, α)
 end
 
-# operations on the data. not on the cMPS. The data lives in a linear space
+# operations on the data. not on the cMPS. The data lives in a linear parameter space
 Base.:+(ψ::MultiBosonCMPSData_MCMinv, ϕ::MultiBosonCMPSData_MCMinv) = MultiBosonCMPSData_MCMinv(ψ.Q + ϕ.Q, ψ.M + ϕ.M, ψ.Cs + ϕ.Cs, ψ.α)
 Base.:-(ψ::MultiBosonCMPSData_MCMinv, ϕ::MultiBosonCMPSData_MCMinv) = MultiBosonCMPSData_MCMinv(ψ.Q - ϕ.Q, ψ.M - ϕ.M, ψ.Cs - ϕ.Cs, ψ.α)
 Base.:*(ψ::MultiBosonCMPSData_MCMinv, x::Number) = MultiBosonCMPSData_MCMinv{ComplexF64}(ψ.Q * x, ψ.M * x, ψ.Minv / x, ψ.Cs * x, ψ.α)
@@ -45,12 +45,12 @@ function Base.similar(ψ::MultiBosonCMPSData_MCMinv)
 end
 function randomize!(ψ::MultiBosonCMPSData_MCMinv)
     T = eltype(ψ)
-    map!(x -> randn(T), ψ.Q, ψ.Q)
+    map!(x -> rand(T), ψ.Q, ψ.Q)
     map!(x -> rand(T), ψ.M, ψ.M)
     ψ.Minv .= inv(ψ.M)
     for ix in eachindex(ψ.Cs)
         c = (@view ψ.Cs[ix][:, :])
-        map!(x -> randn(T), c, c)
+        map!(x -> rand(T), c, c)
     end
     return ψ
 end
