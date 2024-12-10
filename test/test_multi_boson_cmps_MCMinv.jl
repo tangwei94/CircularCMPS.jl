@@ -19,7 +19,6 @@
         return norm(tr(vl1)) / norm(vl1) + norm(tr(vr2))/norm(vr2) + norm(tr(vl1 * vr2)) / norm(vl1) / norm(vr2)
     end
 
-    _F1(ψ_mcm)
     v, g = withgradient(_F1, ψ_mcm)
 
     ψd = MultiBosonCMPSData_MCMinv(rand, 4, 2, 1.0)

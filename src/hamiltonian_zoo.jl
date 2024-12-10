@@ -510,19 +510,19 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MCMinv; 
 
     function retract(x::OptimState{MultiBosonCMPSData_MCMinv{T}}, dψ::MultiBosonCMPSData_MCMinv_Grad, α::Real) where T
         ψ = x.data
-        ψ1 = retract_left_canonical(ψ, α, dψ.dDs, dψ.X)
+        ψ1 = retract_left_canonical(ψ, α, dψ.dCs, dψ.X)
         return OptimState(ψ1, missing, x.prev, x.df), dψ
     end
     function scale!(dψ::MultiBosonCMPSData_MCMinv_Grad, α::Number)
-        for ix in eachindex(dψ.dDs)
-            dψ.dDs[ix] .= dψ.dDs[ix] * α
+        for ix in eachindex(dψ.dCs)
+            dψ.dCs[ix] .= dψ.dCs[ix] * α
         end
         dψ.X .= dψ.X .* α
         return dψ
     end
     function add!(y::MultiBosonCMPSData_MCMinv_Grad, x::MultiBosonCMPSData_MCMinv_Grad, α::Number=1, β::Number=1)
-        for ix in eachindex(y.dDs)
-            VectorInterface.add!(y.dDs[ix], x.dDs[ix], α, β)
+        for ix in eachindex(y.dCs)
+            VectorInterface.add!(y.dCs[ix], x.dCs[ix], α, β)
         end
         VectorInterface.add!(y.X, x.X, α, β)
         return y
@@ -540,12 +540,12 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MCMinv; 
             ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
             ϵ = max(1e-12, ϵ)
 
-            P = zeros(ComplexF64, χ^2+d*χ, χ^2+d*χ)
+            P = zeros(ComplexF64, χ^2+d*χ^2, χ^2+d*χ^2)
 
             blas_num_threads = LinearAlgebra.BLAS.get_num_threads()
             LinearAlgebra.BLAS.set_num_threads(1)
-            Threads.@threads for ix in 1:(χ^2+d*χ)
-                v = zeros(ComplexF64, χ^2+d*χ)
+            Threads.@threads for ix in 1:(χ^2+d*χ^2)
+                v = zeros(ComplexF64, χ^2+d*χ^2)
                 v[ix] = 1
                 g = MultiBosonCMPSData_MCMinv_Grad(v, χ, d)
                 g1 = tangent_map(ψ, g)
@@ -557,14 +557,13 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MCMinv; 
         end
         vp = x.preconditioner \ vec(dψ)
         PG = MultiBosonCMPSData_MCMinv_Grad(vp, χ, d)
-        @show sqrt(sum(norm.(PG.dDs) .^ 2))
         return PG
     end
 
     transport!(v, x, d, α, xnew) = v
 
     function finalize!(x::OptimState{MultiBosonCMPSData_MCMinv{T}}, f, g, numiter) where T
-        @show x.df / norm(g), norm(x.data.M), norm(x.data.Minv)
+        @show x.df / norm(g), norm(x.data.Cs[1] - Diagonal(x.data.Cs[1])), norm(x.data.M), norm(x.data.Minv)
         x.preconditioner = missing
         x.df = abs(f - x.prev)
         x.prev = f

@@ -4,6 +4,9 @@ mutable struct MultiBosonCMPSData_MCMinv{T<:Number} <: AbstractCMPSData
     Minv::Matrix{T}
     Cs::Vector{Matrix{T}}
     α::Real
+    function MultiBosonCMPSData_MCMinv(Q::Matrix{T}, M::Matrix{T}, Minv::Matrix{T}, Cs::Vector{Matrix{T}}, α::Real) where T
+        return new{T}(Q, M, Minv, Cs, α)
+    end
     function MultiBosonCMPSData_MCMinv{T}(Q::Matrix{T}, M::Matrix{T}, Minv::Matrix{T}, Cs::Vector{Matrix{T}}, α::Real) where T
         if !(M * Minv ≈ Matrix{T}(I, size(M))) 
             @warn "M * Minv not close to I"
@@ -112,7 +115,7 @@ function left_canonical(ψ::MultiBosonCMPSData_MCMinv)
     M = X.data * ψ.M 
     Minv = ψ.Minv * inv(X.data)
 
-    return MultiBosonCMPSData_MCMinv(Q, M, Minv, deepcopy(ψ.Cs), α)
+    return MultiBosonCMPSData_MCMinv(Q, M, Minv, deepcopy(ψ.Cs), ψ.α)
 end
 function right_env(ψ::MultiBosonCMPSData_MCMinv)
     # transfer matrix
@@ -133,7 +136,7 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MCMinv{T}, α::Float64, d
     # check left canonical form 
     ψc = CMPSData(ψ)
     ϵ = norm(ψc.Q + ψc.Q' + sum([R' * R for R in ψc.Rs]))
-    (ϵ > 1e-9) && @warn "your cmps has deviated from the left canonical form, err=$ϵ"
+    #(ϵ > 1e-9) && @warn "your cmps has deviated from the left canonical form, err=$ϵ"
 
     Cs = ψ.Cs .+ α .* dCs
 
@@ -141,14 +144,14 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MCMinv{T}, α::Float64, d
     M = exp(α * X) * ψ.M
     Minv = ψ.Minv * exp(-α * X)
 
-    fC( C) = Diagonal(C) + ψ.α * (C - Diagonal(C)) / sqrt(tr(C' * C))
+    fC(C) = Diagonal(C) + ψ.α * (C - Diagonal(C)) / sqrt(tr(C' * C))
     Rs = [ψ.M * fC(C0) * ψ.Minv for C0 in ψ.Cs] 
     R1s = [M * fC(C) * Minv for C in Cs] 
     ΔRs = R1s .- Rs
 
     Q = ψ.Q - sum([R' * ΔR + 0.5 * ΔR' * ΔR for (R, ΔR) in zip(Rs, ΔRs)])
 
-    return MultiBosonCMPSData_MCMinv(Q, M, Minv, Ds)
+    return MultiBosonCMPSData_MCMinv(Q, M, Minv, Cs, ψ.α)
 end
 
 #function expand(ψ::MultiBosonCMPSData_MCMinv, χ::Integer; perturb::Float64=1e-3)
@@ -220,18 +223,19 @@ function tangent_map(ψ::MultiBosonCMPSData_MCMinv, g::MultiBosonCMPSData_MCMinv
         ρR = right_env(ψ)
     end
 
-    Rs = map(C->ψ.M * C * ψ.Minv, ψ.Cs)
+    fC(C) = Diagonal(C) + ψ.α * (C - Diagonal(C)) / sqrt(tr(C' * C))
+    Rs = map(C->ψ.M * fC(C) * ψ.Minv, ψ.Cs) 
 
     X = sum(map(zip(g.dCs, Rs)) do (dC, R)
             g.X * R * ρR * R' - R' * g.X * R * ρR -
             R * g.X * ρR * R' + R' * R * g.X * ρR + 
-            ψ.M * dC * ψ.Minv * ρR * R' - R' * ψ.M * dC * ψ.Minv * ρR
+            ψ.M * dC * ψ.Minv * ρR * R' - R' * ψ.M * dC * ψ.Minv * ρR # FIXME
         end)
 
     dCs = map(zip(g.dCs, Rs)) do (dC, R)
-        Diagonal(ψ.M' * g.X * R * ρR * ψ.Minv' -
+        ψ.M' * g.X * R * ρR * ψ.Minv' -
             ψ.M' * R * g.X * ρR * ψ.Minv' + 
-            ψ.M' * ψ.M * dC * ψ.Minv * ρR * ψ.Minv')
+            ψ.M' * ψ.M * dC * ψ.Minv * ρR * ψ.Minv'
     end
 
     return MultiBosonCMPSData_MCMinv_Grad(dCs, X)
