@@ -246,9 +246,9 @@ function randomize!(a::MultiBosonCMPSData_MDMinv_Grad)
     T = eltype(a)
     for ix in eachindex(a.dDs)
         v = view(a.dDs[ix], diagind(a.dDs[ix]))
-        map!(x -> randn(T), v, v)
+        map!(x -> rand(T), v, v)
     end
-    map!(x -> randn(T), a.X, a.X)
+    map!(x -> rand(T), a.X, a.X)
     return a
 end
 
