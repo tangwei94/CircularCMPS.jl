@@ -196,6 +196,7 @@ Base.:*(a::MultiBosonCMPSData_MCMinv_Grad, x::Number) = MultiBosonCMPSData_MCMin
 Base.:*(x::Number, a::MultiBosonCMPSData_MCMinv_Grad) = MultiBosonCMPSData_MCMinv_Grad(a.dCs * x, a.X * x)
 Base.eltype(a::MultiBosonCMPSData_MCMinv_Grad) = eltype(a.X)
 LinearAlgebra.dot(a::MultiBosonCMPSData_MCMinv_Grad, b::MultiBosonCMPSData_MCMinv_Grad) = sum(dot.(a.dCs, b.dCs)) + dot(a.X, b.X)
+TensorKit.inner(a::MultiBosonCMPSData_MCMinv_Grad, b::MultiBosonCMPSData_MCMinv_Grad) = real(dot(a, b))
 LinearAlgebra.norm(a::MultiBosonCMPSData_MCMinv_Grad) = sqrt(norm(dot(a, a)))
 Base.similar(a::MultiBosonCMPSData_MCMinv_Grad) = MultiBosonCMPSData_MCMinv_Grad(similar.(a.dCs), similar(a.X))
 Base.vec(a::MultiBosonCMPSData_MCMinv_Grad) = vcat(vec.(a.dCs)..., vec(a.X))
@@ -203,9 +204,9 @@ Base.vec(a::MultiBosonCMPSData_MCMinv_Grad) = vcat(vec.(a.dCs)..., vec(a.X))
 function randomize!(a::MultiBosonCMPSData_MCMinv_Grad)
     T = eltype(a)
     for ix in eachindex(a.dCs)
-        map!(x -> randn(T), a.dCs[ix], a.dCs[ix])
+        map!(x -> rand(T), a.dCs[ix], a.dCs[ix])
     end
-    map!(x -> randn(T), a.X, a.X)
+    map!(x -> rand(T), a.X, a.X)
     return a
 end
 
