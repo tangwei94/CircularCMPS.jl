@@ -115,38 +115,6 @@ end
     @test norm((_F1(ψ2) - _F1(ψ1)) / (2*α) - real(dot(g0, g1))) < 1e-4
 end
 
-#@testset "test Kmat_pseudo_inv by numerical integration" for ix in 1:10
-#    χ, d = 4, 2
-#    ψ = MultiBosonCMPSData_P(rand, χ, d)
-#
-#    ψn = CMPSData(ψ);
-#    K = K_permute(K_mat(ψn, ψn));
-#    λ, EL = left_env(K);
-#    λ, ER = right_env(K);
-#    Kinv = Kmat_pseudo_inv(K, λ);
-#
-#    VL = Tensor(rand, ComplexF64, (ℂ^(χ^d))'⊗ℂ^(χ^d))
-#    VR = Tensor(rand, ComplexF64, (ℂ^(χ^d))'⊗ℂ^(χ^d))
-#
-#    IdK = K_permute(id((ℂ^(χ^d))'⊗ℂ^(χ^d)))
-#    K_nm = K - λ * IdK
-#    K0_nm = K_permute_back(K_nm)
-#
-#    Kinf = exp(1e4*K0_nm)
-#    @test norm(Kinf) ≈ 1/norm(tr(EL * ER))
-#
-#    Λ0, U0 = eigen(K0_nm)
-#    @test norm(exp(12*K0_nm) - U0 * exp(12*Λ0) * inv(U0)) < 1e-12
-#    
-#    δ = isometry(ℂ^(χ^(2*d)), ℂ^(χ^(2*d)-1))
-#    Λr, Ur, invUr = δ' * Λ0 * δ, U0 * δ, δ' * inv(U0)
-#
-#    a1, err = quadgk(τ -> tr(VL' * Ur * exp(τ * Λr) * invUr * VR), 0, 1e4)
-#    a2 = tr(VL' * K_permute_back(Kinv) * VR)
-#    @test norm(a1 - a2) < 100 * err
-#
-#end
-
 @testset "tangent_map" for ix in 1:10
     χ, d = 4, 2
     ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
@@ -175,7 +143,8 @@ end
     randomize!(g2)
 
     function tangent_vec(g::MultiBosonCMPSData_MDMinv_Grad)
-        Ws = [g.X * R - R * g.X + ψ.M * dD * ψ.Minv for (R, dD) in zip(Rs, g.dDs)]
+        X = g.X
+        Ws = Ref(ψ.M) .* [X * D - D * X + dD for (D, dD) in zip(ψ.Ds, g.dDs)] .* Ref(ψ.Minv)
         V = - sum([R' * W for (R, W) in zip(Rs, Ws)])
         return (V, Ws)
     end

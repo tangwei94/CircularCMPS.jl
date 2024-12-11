@@ -224,14 +224,18 @@ end
 struct MultiBosonCMPSData_MDMinv_Grad{T<:Number} <: AbstractCMPSData
     dDs::Vector{Diagonal{T, Vector{T}}}
     X::Matrix{T}
-    function MultiBosonCMPSData_MDMinv_Grad(dDs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
+    function MultiBosonCMPSData_MDMinv_Grad{T}(dDs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
+        X[diagind(X)] .= 0 # force the diagonal part to be zero
         return new{T}(dDs, X)
     end
-    function MultiBosonCMPSData_MDMinv_Grad(v::Vector{T}, χ::Int, d::Int) where T
-        dDs = map(ix -> Diagonal(v[χ*(ix-1)+1:χ*ix]), 1:d)
-        X = reshape(v[χ*d+1:end], χ, χ)
-        return new{T}(dDs, X)
-    end
+end
+function MultiBosonCMPSData_MDMinv_Grad(dDs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
+    return MultiBosonCMPSData_MDMinv_Grad{T}(dDs, X)
+end
+function MultiBosonCMPSData_MDMinv_Grad(v::Vector{T}, χ::Int, d::Int) where T
+    dDs = map(ix -> Diagonal(v[χ*(ix-1)+1:χ*ix]), 1:d)
+    X = reshape(v[χ*d+1:end], χ, χ)
+    return MultiBosonCMPSData_MDMinv_Grad{T}(dDs, X)
 end
 
 Base.:+(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad) = MultiBosonCMPSData_MDMinv_Grad(a.dDs .+ b.dDs, a.X + b.X)
@@ -269,43 +273,12 @@ function tangent_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv
         ρR = right_env(ψ)
     end
 
-    Rs = map(D->ψ.M * D * ψ.Minv, ψ.Ds)
-    X1 = g.X#ψ.M * g.X * ψ.Minv
+    EL = ψ.M' * ψ.M
+    ER = ψ.Minv * ρR * ψ.Minv'
+    Ms = [EL * (g.X * D - D * g.X + dD) * ER for (dD, D) in zip(g.dDs, ψ.Ds)] 
 
-    X_mapped = sum(map(zip(g.dDs, Rs)) do (dD, R)
-            X1 * R * ρR * R' - R' * X1 * R * ρR -
-            R * X1 * ρR * R' + R' * R * X1 * ρR + 
-            ψ.M * dD * ψ.Minv * ρR * R' - R' * ψ.M * dD * ψ.Minv * ρR
-        end)
-    #X_mapped = ψ.Minv * X1_maped * ψ.M
-
-    dDs_mapped = map(zip(g.dDs, Rs)) do (dD, R)
-        Diagonal(ψ.M' * X1 * R * ρR * ψ.Minv' -
-            ψ.M' * R * X1 * ρR * ψ.Minv' + 
-            ψ.M' * ψ.M * dD * ψ.Minv * ρR * ψ.Minv')
-    end
+    X_mapped = sum([M * D' - D' * M for (M, D) in zip(Ms, ψ.Ds)])
+    dDs_mapped = Diagonal.(Ms)
 
     return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
 end
-
-
-#function tangent_map(ψm::MultiBosonCMPSData, Xm::MultiBosonCMPSData, EL::MPSBondTensor, ER::MPSBondTensor, Kinv::AbstractTensorMap{S, 2, 2}) where {S}
-#    χ = get_χ(ψm)
-#    ψ = CMPSData(ψm)
-#    X = CMPSData(Xm)
-#    Id = id(ℂ^χ)
-#
-#    ER /= tr(EL * ER)
-#
-#    K1 = K_permute(K_otimes(Id, X.Q) + sum(K_otimes.(ψ.Rs, X.Rs)))
-#    @tensor ER1[-1; -2] := Kinv[-1 4; 3 -2] * K1[3 2; 1 4] * ER[1; 2]
-#    @tensor EL1[-1; -2] := Kinv[4 -1; -2 3] * K1[2 3; 4 1] * EL[1; 2]
-#    @tensor singular = EL[1; 2] * K1[2 3; 4 1] * ER[4; 3]
-#
-#    mapped_XQ = EL * ER1 + EL1 * ER + singular * EL * ER
-#    mapped_XRs = map(zip(ψ.Rs, X.Rs)) do (R, XR)
-#        EL * XR * ER + EL1 * R * ER + EL * R * ER1 + singular * EL * R * ER
-#    end
-#
-#    return MultiBosonCMPSData(CMPSData(mapped_XQ, mapped_XRs)) 
-#end
