@@ -360,7 +360,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
     return ψ, E, grad, total_numfg, hcat(E_history, gnorm_history, err_history)
 end
 
-function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x))
+function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x), m_LBFGS::Int=8)
     if H.L < Inf
         error("finite size not implemented yet.")
     end
@@ -447,7 +447,6 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         end
         vp = x.preconditioner \ vec(dψ)
         PG = MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
-        @show sqrt(sum(norm.(PG.dDs) .^ 2))
         return PG
     end
 
@@ -461,19 +460,19 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         return x, f, g, numiter
     end
 
-    optalg_LBFGS = LBFGS(;maxiter=maxiter, gradtol=gradtol, acceptfirst=false, verbosity=2)
+    optalg_LBFGS = LBFGS(m_LBFGS; maxiter=maxiter, gradtol=gradtol, acceptfirst=false, verbosity=2)
 
     if do_preconditioning
         @show "doing precondition"
-        precondition = _precondition
+        precondition1 = _precondition
     else
         @show "no precondition"
-        precondition = _no_precondition
+        precondition1 = _no_precondition
     end
 
     x0 = OptimState(left_canonical(ψ0)) # FIXME. needs to do it twice??
     x1, E1, grad1, numfg1, history1 = optimize(fgE, x0, optalg_LBFGS; retract = retract,
-                                    precondition = precondition,
+                                    precondition = precondition1,
                                     inner = inner, transport! =transport!,
                                     scale! = scale!, add! = add!, finalize! = finalize!
                                     );
