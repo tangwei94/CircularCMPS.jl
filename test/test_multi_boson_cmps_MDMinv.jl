@@ -96,9 +96,9 @@ end
     g0 = CircularCMPS.diff_to_grad(ψ, ∂ψ)
 
     function tangent_vec(g::MultiBosonCMPSData_MDMinv_Grad)
-        Ws = [g.X * R - R * g.X + ψ.M * dD * ψ.Minv for (R, dD) in zip(Rs, g.dDs)]
+        Ws = [ψ.M * g.X * ψ.Minv * R - R * ψ.M * g.X * ψ.Minv + ψ.M * dD * ψ.Minv for (R, dD) in zip(Rs, g.dDs)]
         V = - sum([R' * W for (R, W) in zip(Rs, Ws)])
-        gM = g.X * ψ.M
+        gM = ψ.M * g.X 
         return (V, g.dDs, gM)
     end
 

@@ -181,8 +181,10 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, d
 
     Ds = ψ.Ds .+ α .* dDs
     #X[diagind(X)] .- tr(X) / size(X, 1) # make X traceless
-    M = exp(α * X) * ψ.M
-    Minv = ψ.Minv * exp(-α * X)
+    #M = exp(α * X) * ψ.M
+    #Minv = ψ.Minv * exp(-α * X)
+    M = ψ.M * exp(α * X)
+    Minv = exp(-α * X) * ψ.Minv
 
     Rs = [ψ.M * D0 * ψ.Minv for D0 in ψ.Ds] 
     R1s = [M * D * Minv for D in Ds] 
@@ -238,6 +240,7 @@ Base.:*(a::MultiBosonCMPSData_MDMinv_Grad, x::Number) = MultiBosonCMPSData_MDMin
 Base.:*(x::Number, a::MultiBosonCMPSData_MDMinv_Grad) = MultiBosonCMPSData_MDMinv_Grad(a.dDs * x, a.X * x)
 Base.eltype(a::MultiBosonCMPSData_MDMinv_Grad) = eltype(a.X)
 LinearAlgebra.dot(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad) = sum(dot.(a.dDs, b.dDs)) + dot(a.X, b.X)
+TensorKit.inner(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad) = real(dot(a, b))
 LinearAlgebra.norm(a::MultiBosonCMPSData_MDMinv_Grad) = sqrt(norm(dot(a, a)))
 Base.similar(a::MultiBosonCMPSData_MDMinv_Grad) = MultiBosonCMPSData_MDMinv_Grad(similar.(a.dDs), similar(a.X))
 Base.vec(a::MultiBosonCMPSData_MDMinv_Grad) = vcat(diag.(a.dDs)..., vec(a.X))
@@ -256,7 +259,7 @@ function diff_to_grad(ψ::MultiBosonCMPSData_MDMinv, ∂ψ::MultiBosonCMPSData_M
     Rs = map(D->ψ.M * D * ψ.Minv, ψ.Ds)
 
     gDs = [Diagonal(-ψ.M' * R * ∂ψ.Q * ψ.Minv' + ∂D) for (R, ∂D) in zip(Rs, ∂ψ.Ds)]
-    gX = sum([- R * ∂ψ.Q * R' + R' * R * ∂ψ.Q for R in Rs]) + ∂ψ.M * ψ.M'
+    gX = ψ.M' * sum([- R * ∂ψ.Q * R' + R' * R * ∂ψ.Q for R in Rs]) * ψ.Minv' + ψ.M' * ∂ψ.M 
     #gX[diagind(gX)] .-= tr(gX) / size(gX, 1) # make X traceless
     return MultiBosonCMPSData_MDMinv_Grad(gDs, gX)
 end
