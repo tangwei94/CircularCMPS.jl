@@ -3,25 +3,29 @@ mutable struct MultiBosonCMPSData_MDMinv{T<:Number} <: AbstractCMPSData
     M::Matrix{T}
     Minv::Matrix{T}
     Ds::Vector{Diagonal{T, Vector{T}}}
-    function MultiBosonCMPSData_MDMinv(Q::Matrix{T}, M::Matrix{T}, Minv::Matrix{T}, Ds::Vector{Diagonal{T, Vector{T}}}) where T
+    function MultiBosonCMPSData_MDMinv{T}(Q::Matrix{T}, M::Matrix{T}, Minv::Matrix{T}, Ds::Vector{Diagonal{T, Vector{T}}}) where T
         if !(M * Minv ≈ Matrix{T}(I, size(M))) 
             @warn "M * Minv not close to I"
             Minv = inv(M)
         end
         return new{T}(Q, M, Minv, Ds)
     end
-    function MultiBosonCMPSData_MDMinv(Q::Matrix{T}, M::Matrix{T}, Ds::Vector{Diagonal{T, Vector{T}}}) where T
-        Minv = inv(M)
-        return new{T}(Q, M, Minv, Ds)
-    end
-    function MultiBosonCMPSData_MDMinv(f, χ::Integer, d::Integer)
-        Q = f(ComplexF64, χ, χ)
-        M, _ = qr(f(ComplexF64, χ, χ))
+end
+function MultiBosonCMPSData_MDMinv(Q::Matrix{T}, M::Matrix{T}, Minv::Matrix{T}, Ds::Vector{Diagonal{T, Vector{T}}}) where T
+    return MultiBosonCMPSData_MDMinv{T}(Q, M, Minv, Ds)
+end
+function MultiBosonCMPSData_MDMinv(Q::Matrix{T}, M::Matrix{T}, Ds::Vector{Diagonal{T, Vector{T}}}) where T
+    Minv = inv(M)
+    return MultiBosonCMPSData_MDMinv{T}(Q, M, Minv, Ds)
+end
+function MultiBosonCMPSData_MDMinv(f, χ::Integer, d::Integer)
+    Q = f(ComplexF64, χ, χ)
+    K = f(ComplexF64, χ, χ)
+    M = exp(im * (K+K'))
+    Minv = exp(-im * (K+K'))
 
-        Minv = M'
-        Ds = map(ix -> Diagonal(randn(ComplexF64, χ)), 1:d)
-        return new{ComplexF64}(Q, M, Minv, Ds)
-    end
+    Ds = map(ix -> Diagonal(f(ComplexF64, χ)), 1:d)
+    return MultiBosonCMPSData_MDMinv{ComplexF64}(Q, M, Minv, Ds)
 end
 
 # operations on the data. not on the cMPS
