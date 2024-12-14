@@ -76,7 +76,7 @@ end
 function extract_block_matrix(A::Matrix{<:Number}, d::Integer, ix::Integer)
     χ = size(A, 1)
     χb = Int(round(χ^(1/d)))
-    Ablks = reshape(A, Tuple(repeat([2], 2*d)))
+    Ablks = reshape(A, Tuple(repeat([χb], 2*d)))
 
     indices = repeat(1:d, 2)
     indices[d+1-ix] = -1 
@@ -84,7 +84,7 @@ function extract_block_matrix(A::Matrix{<:Number}, d::Integer, ix::Integer)
     B = @ncon((Ablks, ), (indices, ))
     return B 
 end
-function extract_block_matrix(As::Vector{Matrix{<:Number}})
+function extract_block_matrix(As::Vector{Matrix{T}}) where T<:Number
     d = length(As)
     return map(ix -> extract_block_matrix(As[ix], d, ix), 1:d)
 end
@@ -139,11 +139,11 @@ function right_env(ψ::MultiBosonCMPSData_tnp)
     return U * Diagonal(S) * U'
 end
 
-function retract_left_canonical(ψ::MultiBosonCMPSData_tnp{T}, α::Float64, dBs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
+function retract_left_canonical(ψ::MultiBosonCMPSData_tnp{T}, α::Float64, dBs::Vector{Matrix{T}}, X::Matrix{T}) where T
     # check left canonical form 
     ψc = CMPSData(ψ)
     ϵ = norm(ψc.Q + ψc.Q' + sum([R' * R for R in ψc.Rs]))
-    (ϵ > 1e-10) && @warn "your cmps has deviated from the left canonical form, err=$ϵ"
+    (ϵ > 1e-9) && @warn "your cmps has deviated from the left canonical form, err=$ϵ"
 
     Bs = ψ.Bs .+ α .* dBs
     #X[diagind(X)] .- tr(X) / size(X, 1) # make X traceless
@@ -152,8 +152,8 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_tnp{T}, α::Float64, dBs:
     M = ψ.M * exp(α * X)
     Minv = exp(-α * X) * ψ.Minv
 
-    Rs = [ψ.M * D0 * ψ.Minv for D0 in ψ.Bs] 
-    R1s = [M * D * Minv for D in Bs] 
+    Rs = Ref(ψ.M) .* construct_full_block_matrix(ψ.Bs) .* Ref(ψ.Minv)  
+    R1s = Ref(M) .* construct_full_block_matrix(Bs) .* Ref(Minv)  
     ΔRs = R1s .- Rs
 
     Q = ψ.Q - sum([R' * ΔR + 0.5 * ΔR' * ΔR for (R, ΔR) in zip(Rs, ΔRs)])
@@ -188,7 +188,7 @@ end
 #end
 
 struct MultiBosonCMPSData_tnp_Grad{T<:Number} <: AbstractCMPSData
-    dBs::Vector{Diagonal{T, Vector{T}}}
+    dBs::Vector{Matrix{T}}
     X::Matrix{T}
     #function MultiBosonCMPSData_tnp_Grad{T}(dBs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
     #    X[diagind(X)] .= 0 # force the diagonal part to be zero
@@ -200,8 +200,8 @@ function MultiBosonCMPSData_tnp_Grad(dBs::Vector{Diagonal{T, Vector{T}}}, X::Mat
 end
 function MultiBosonCMPSData_tnp_Grad(v::Vector{T}, χb::Int, d::Int) where T
     χ = χb^d
-    dBs = map(ix -> Diagonal(v[(χb^2)*(ix-1)+1:(χb^2)*ix]), 1:d)
-    X = reshape(v[d*χb^2+1:end], χ, χ)
+    dBs = map(ix -> reshape(v[(χb^2)*(ix-1)+1:(χb^2)*ix], χb, χb), 1:d)
+    X = reshape(v[d*(χb^2)+1:end], χ, χ)
     return MultiBosonCMPSData_tnp_Grad{T}(dBs, X)
 end
 
@@ -214,7 +214,7 @@ LinearAlgebra.dot(a::MultiBosonCMPSData_tnp_Grad, b::MultiBosonCMPSData_tnp_Grad
 TensorKit.inner(a::MultiBosonCMPSData_tnp_Grad, b::MultiBosonCMPSData_tnp_Grad) = real(dot(a, b))
 LinearAlgebra.norm(a::MultiBosonCMPSData_tnp_Grad) = sqrt(norm(dot(a, a)))
 Base.similar(a::MultiBosonCMPSData_tnp_Grad) = MultiBosonCMPSData_tnp_Grad(similar.(a.dBs), similar(a.X))
-Base.vec(a::MultiBosonCMPSData_tnp_Grad) = vcat(diag.(a.dBs)..., vec(a.X))
+Base.vec(a::MultiBosonCMPSData_tnp_Grad) = vcat(vec.(a.dBs)..., vec(a.X))
 
 function randomize!(a::MultiBosonCMPSData_tnp_Grad)
     T = eltype(a)
@@ -226,9 +226,9 @@ function randomize!(a::MultiBosonCMPSData_tnp_Grad)
 end
 
 function diff_to_grad(ψ::MultiBosonCMPSData_tnp, ∂ψ::MultiBosonCMPSData_tnp)
-    Rs = map(D->ψ.M * D * ψ.Minv, ψ.Bs)
+    Rs = map(C->ψ.M * C * ψ.Minv, construct_full_block_matrix(ψ.Bs))
 
-    gBs = extract_block_matrix(-Ref(ψ.M') .* Rs .* Ref(∂ψ.Q) * Ref(ψ.Minv')) .+ ∂ψ.Bs
+    gBs = ∂ψ.Bs .- extract_block_matrix(Ref(ψ.M') .* Rs .* Ref(∂ψ.Q) .* Ref(ψ.Minv'))
     gX = ψ.M' * sum([- R * ∂ψ.Q * R' + R' * R * ∂ψ.Q for R in Rs]) * ψ.Minv' + ψ.M' * ∂ψ.M 
     #gX[diagind(gX)] .-= tr(gX) / size(gX, 1) # make X traceless
     return MultiBosonCMPSData_tnp_Grad(gBs, gX)

@@ -42,6 +42,9 @@ export MultiBosonCMPSData, tangent_map
 # multi_boson_cmps_MDMinv.jl
 export MultiBosonCMPSData_MDMinv, MultiBosonCMPSData_MDMinv_Grad
 
+# multi_boson_cmps_tnp.jl
+export MultiBosonCMPSData_tnp, MultiBosonCMPSData_tnp_Grad
+
 # multi_boson_cmps_MCMinv.jl
 #export MultiBosonCMPSData_MCMinv#, MultiBosonCMPSData_MCMinv_Grad
 
@@ -78,6 +81,7 @@ include("ground_state.jl")
 include("excited_state.jl");
 include("multi_boson_cmps.jl");
 include("multi_boson_cmps_MDMinv.jl");
+include("multi_boson_cmps_tnp.jl");
 #include("multi_boson_cmps_MCMinv.jl");
 include("multi_boson_cmps_P.jl");
 include("transfer_matrix.jl");
