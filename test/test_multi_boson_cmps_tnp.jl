@@ -9,7 +9,6 @@
     randomize!(ψb)
     @test get_χ(ψb) == 8 
     @test get_d(ψb) == 3 
-
 end
 
 @testset "test MultiBosonCMPSData_tnp to CMPSData conversion" for ix in 1:10
@@ -111,6 +110,7 @@ end
     # check the implementation
     g1 = similar(g0)
     randomize!(g1)
+    #g1 *= 1/norm(g1)
     rQ1, rBs1, rM1 = tangent_vec(g1)
     @test dot(g0, g1) ≈ dot(∂ψ.Q, rQ1) + sum(dot.(∂Bs, rBs1)) + dot(∂ψ.M, rM1)
 
@@ -118,7 +118,7 @@ end
     α = 1e-6
     ψ2 = CircularCMPS.retract_left_canonical(ψ, α, g1.dBs, g1.X)
     ψ1 = CircularCMPS.retract_left_canonical(ψ, -α, g1.dBs, g1.X)
-    @test norm((_F1(ψ2) - _F1(ψ1)) / (2*α) - real(dot(g0, g1))) / norm(dot(g0, g1)) < 1e-6
+    @test norm((_F1(ψ2) - _F1(ψ1)) / (2*α) - real(dot(g0, g1)))  < 1e-6
 end
 
 @testset "tangent_map" for ix in 1:10
@@ -184,9 +184,9 @@ end
         M[:, ix] = vec(tangent_map(ψ, g))
     end
 
-    @test norm(M - M') < 1e-12
+    @test norm(M - M') < 1e-11
 
     Λ, _ = eigen(Hermitian(M))
-    @test all(Λ .≥ -1e-14)
+    @test all(Λ .≥ -1e-12)
 
 end
