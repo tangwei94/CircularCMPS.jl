@@ -360,7 +360,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
     return ψ, E, grad, total_numfg, hcat(E_history, gnorm_history, err_history)
 end
 
-function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x), m_LBFGS::Int=8)
+function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x), m_LBFGS::Int=8, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
     if H.L < Inf
         error("finite size not implemented yet.")
     end
@@ -457,6 +457,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         x.preconditioner = missing
         x.df = abs(f - x.prev)
         x.prev = f
+        _finalize!(x, f, g, numiter)
         return x, f, g, numiter
     end
 
