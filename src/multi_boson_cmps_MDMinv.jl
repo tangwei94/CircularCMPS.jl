@@ -1,3 +1,14 @@
+"""
+    MultiBosonCMPSData_MDMinv{T<:Number} <: AbstractCMPSData
+
+A type representing a multi-boson continuous matrix product states (cMPS) with R matrices parameterized as M*D*Minv.
+
+# Fields
+- `Q::Matrix{T}`: The Q matrix of the cMPS
+- `M::Matrix{T}`: The M matrix used in the MDMinv parameterization
+- `Minv::Matrix{T}`: The inverse of M matrix
+- `Ds::Vector{Diagonal{T, Vector{T}}}`: Vector of diagonal matrices 
+"""
 mutable struct MultiBosonCMPSData_MDMinv{T<:Number} <: AbstractCMPSData
     Q::Matrix{T}
     M::Matrix{T}
@@ -11,13 +22,33 @@ mutable struct MultiBosonCMPSData_MDMinv{T<:Number} <: AbstractCMPSData
         return new{T}(Q, M, Minv, Ds)
     end
 end
+
+"""
+    MultiBosonCMPSData_MDMinv(Q::Matrix{T}, M::Matrix{T}, Minv::Matrix{T}, Ds::Vector{Diagonal{T, Vector{T}}}) where T
+
+Construct a MultiBosonCMPSData_MDMinv with given Q, M, Minv matrices and diagonal matrices Ds.
+Verifies that M * Minv ≈ I, and recomputes Minv if necessary.
+"""
 function MultiBosonCMPSData_MDMinv(Q::Matrix{T}, M::Matrix{T}, Minv::Matrix{T}, Ds::Vector{Diagonal{T, Vector{T}}}) where T
     return MultiBosonCMPSData_MDMinv{T}(Q, M, Minv, Ds)
 end
+
+"""
+    MultiBosonCMPSData_MDMinv(Q::Matrix{T}, M::Matrix{T}, Ds::Vector{Diagonal{T, Vector{T}}}) where T
+
+Construct a MultiBosonCMPSData_MDMinv by computing Minv from M.
+"""
 function MultiBosonCMPSData_MDMinv(Q::Matrix{T}, M::Matrix{T}, Ds::Vector{Diagonal{T, Vector{T}}}) where T
     Minv = inv(M)
     return MultiBosonCMPSData_MDMinv{T}(Q, M, Minv, Ds)
 end
+
+"""
+    MultiBosonCMPSData_MDMinv(f, χ::Integer, d::Integer)
+
+Initialize a random MultiBosonCMPSData_MDMinv with bond dimension χ and d boson species.
+The function f is used to generate random matrices and vectors.
+"""
 function MultiBosonCMPSData_MDMinv(f, χ::Integer, d::Integer)
     Q = f(ComplexF64, χ, χ)
     K = f(ComplexF64, χ, χ)
@@ -58,6 +89,11 @@ end
 @inline get_d(ψ::MultiBosonCMPSData_MDMinv) = length(ψ.Ds)
 TensorKit.space(ψ::MultiBosonCMPSData_MDMinv) = ℂ^(get_χ(ψ))
 
+"""
+    CMPSData(ψ::MultiBosonCMPSData_MDMinv)
+
+Convert MultiBosonCMPSData_MDMinv to standard CMPSData format.
+"""
 function CMPSData(ψ::MultiBosonCMPSData_MDMinv)
     χ, d = get_χ(ψ), get_d(ψ)
     
@@ -68,6 +104,11 @@ function CMPSData(ψ::MultiBosonCMPSData_MDMinv)
     return CMPSData(Q, Rs)
 end
 
+"""
+    MultiBosonCMPSData_MDMinv(ψ::CMPSData)
+
+Convert CMPSData to MultiBosonCMPSData_MDMinv format. This function is deprecated.
+"""
 function MultiBosonCMPSData_MDMinv(ψ::CMPSData)
     @warn "MultiBosonCMPSData_MDMinv(ψ::CMPSData) is going to be removed"
     Q = ψ.Q.data
@@ -80,6 +121,13 @@ function MultiBosonCMPSData_MDMinv(ψ::CMPSData)
     @info "convert CMPSData to MultiBosonCMPSData_MDMinv, err = $(sqrt(err2))"
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
+
+"""
+    convert_to_MultiBosonCMPSData_MDMinv_deprecated(ψ::CMPSData)
+
+Deprecated conversion function from CMPSData to MultiBosonCMPSData_MDMinv.
+Returns the converted state and the conversion error.
+"""
 function convert_to_MultiBosonCMPSData_MDMinv_deprecated(ψ::CMPSData)
     Q = ψ.Q.data
     _, M = eigen(ψ.Rs[1].data)
@@ -92,6 +140,12 @@ function convert_to_MultiBosonCMPSData_MDMinv_deprecated(ψ::CMPSData)
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds), sqrt(err2)
 end
 
+"""
+    convert_to_MultiBosonCMPSData_MDMinv(ψ::CMPSData)
+
+Convert CMPSData to MultiBosonCMPSData_MDMinv format. Uses optimization to find the best M matrix
+that diagonalizes the R matrices.
+"""
 function convert_to_MultiBosonCMPSData_MDMinv(ψ::CMPSData)
 
     # FIXME. a temporary solution; only works for the case of two species of bosons
@@ -152,6 +206,11 @@ function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_MDMinv)
     return CMPSData(ψ), CMPSData_pushback
 end
 
+"""
+    left_canonical(ψ::MultiBosonCMPSData_MDMinv)
+
+Transform the state into left canonical form where Q + Q' + ∑ᵢRᵢ'Rᵢ = 0.
+"""
 function left_canonical(ψ::MultiBosonCMPSData_MDMinv)
     ψc = CMPSData(ψ)
 
@@ -162,6 +221,12 @@ function left_canonical(ψ::MultiBosonCMPSData_MDMinv)
 
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, deepcopy(ψ.Ds))
 end
+
+"""
+    right_env(ψ::MultiBosonCMPSData_MDMinv)
+
+Compute the right environment matrix (fixed point of the transfer matrix).
+"""
 function right_env(ψ::MultiBosonCMPSData_MDMinv)
     # transfer matrix
     ψc = CMPSData(ψ)
@@ -177,6 +242,12 @@ function right_env(ψ::MultiBosonCMPSData_MDMinv)
     return U * Diagonal(S) * U'
 end
 
+"""
+    retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, dDs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
+
+Retract the state in the left canonical form along the tangent direction specified by dDs and X with step size α.
+Maintains the left canonical form constraint.
+"""
 function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, dDs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
     # check left canonical form 
     ψc = CMPSData(ψ)
@@ -199,6 +270,17 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, d
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
 
+"""
+    expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb::Float64=1e-3)
+
+Expand the bond dimension of the state from χ₀ to χ > χ₀.
+The new components are initialized with small perturbations around the smallest eigenvalues.
+
+# Arguments
+- `ψ`: The state to expand
+- `χ`: New bond dimension
+- `perturb`: Scale of random perturbations for initialization
+"""
 function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb::Float64=1e-3)
     χ0, d = get_χ(ψ), get_d(ψ)
     if χ <= χ0
@@ -208,23 +290,46 @@ function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb::Float64=1e-
 
     Qd, Qu = eigen(ψ.Q)
     _, Qminind = findmin(real.(Qd))
-    Q = diagm(vcat(Qd, fill(Qd[Qminind] - log(10), χ - χ0)))
+    Qu_new = Matrix{ComplexF64}(I, χ, χ)
+    Qu_new[1:χ0, 1:χ0] = Qu
+    Q = Qu_new * diagm(vcat(Qd, fill(Qd[Qminind], χ - χ0))) * inv(Qu_new)
 
     # the norm of M and Minv can be very ill-conditioned, e.g., one of them is very small and the other is very large
-    α = norm(ψ.M)/norm(ψ.Minv)
+    α = norm(ψ.M) / norm(ψ.Minv)
     M0 = ψ.M / sqrt(α)
 
-    M = Matrix{eltype(ψ)}(I, χ, χ)
-    M += rand(eltype(ψ), χ, χ) * perturb
-    M[1:χ0, 1:χ0] = inv(Qu) * M0
+    M = Matrix{ComplexF64}(I, χ, χ)
+    M[1:χ0, 1:χ0] = M0
+    K = rand(ComplexF64, χ, χ)
+    K = K + K'
+    M = M * exp(im * K)
 
     Ds = map(1:d) do ix
-        Diagonal(vcat(diag(ψ.Ds[ix]), fill(perturb, 1:χ-χ0)))
+        Dmin, _ = findmin(norm.(diag(ψ.Ds[ix])))
+        @show Dmin
+        Diagonal(vcat(diag(ψ.Ds[ix]), fill(Dmin, 1:χ-χ0)))
     end
 
     return MultiBosonCMPSData_MDMinv(Q, M, Ds) 
 end
 
+"""
+    MultiBosonCMPSData_MDMinv_Grad{T<:Number} <: AbstractCMPSData
+
+A type representing the gradient of a multi-boson continuous matrix product state (cMPS) with R matrices parameterized as M*D*Minv.
+
+# Fields
+- `dDs::Vector{Diagonal{T, Vector{T}}}`: Gradient components for the diagonal matrices D
+- `X::Matrix{T}`: Gradient component for the M matrix
+
+# Type Parameters
+- `T`: The numeric type used for the gradient components (e.g., Float64, ComplexF64)
+
+# Retraction
+The gradient is used in retractions as follows:
+- D -> D + a * dD, where a is a small step size
+- M -> M * exp(a * X), where exp is the matrix exponential
+"""
 struct MultiBosonCMPSData_MDMinv_Grad{T<:Number} <: AbstractCMPSData
     dDs::Vector{Diagonal{T, Vector{T}}}
     X::Matrix{T}
@@ -233,6 +338,14 @@ struct MultiBosonCMPSData_MDMinv_Grad{T<:Number} <: AbstractCMPSData
         return new{T}(dDs, X)
     end
 end
+
+"""
+    MultiBosonCMPSData_MDMinv_Grad(dDs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
+    MultiBosonCMPSData_MDMinv_Grad(v::Vector{T}, χ::Int, d::Int) where T
+
+Constructors for MultiBosonCMPSData_MDMinv_Grad. The second form constructs from a vector representation
+where the first χ*d elements are for dDs and the remaining for X.
+"""
 function MultiBosonCMPSData_MDMinv_Grad(dDs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
     return MultiBosonCMPSData_MDMinv_Grad{T}(dDs, X)
 end
@@ -242,17 +355,46 @@ function MultiBosonCMPSData_MDMinv_Grad(v::Vector{T}, χ::Int, d::Int) where T
     return MultiBosonCMPSData_MDMinv_Grad{T}(dDs, X)
 end
 
+"""
+    Base.:+(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad)
+    Base.:-(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad)
+    Base.:*(a::MultiBosonCMPSData_MDMinv_Grad, x::Number)
+    Base.:*(x::Number, a::MultiBosonCMPSData_MDMinv_Grad)
+
+Basic arithmetic operations for gradient vectors.
+"""
 Base.:+(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad) = MultiBosonCMPSData_MDMinv_Grad(a.dDs .+ b.dDs, a.X + b.X)
 Base.:-(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad) = MultiBosonCMPSData_MDMinv_Grad(a.dDs .- b.dDs, a.X - b.X)
 Base.:*(a::MultiBosonCMPSData_MDMinv_Grad, x::Number) = MultiBosonCMPSData_MDMinv_Grad(a.dDs * x, a.X * x)
 Base.:*(x::Number, a::MultiBosonCMPSData_MDMinv_Grad) = MultiBosonCMPSData_MDMinv_Grad(a.dDs * x, a.X * x)
+
+"""
+    Base.eltype(a::MultiBosonCMPSData_MDMinv_Grad)
+    LinearAlgebra.dot(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad)
+    TensorKit.inner(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad)
+    LinearAlgebra.norm(a::MultiBosonCMPSData_MDMinv_Grad)
+
+Linear algebra operations for gradient vectors.
+"""
 Base.eltype(a::MultiBosonCMPSData_MDMinv_Grad) = eltype(a.X)
 LinearAlgebra.dot(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad) = sum(dot.(a.dDs, b.dDs)) + dot(a.X, b.X)
 TensorKit.inner(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad) = real(dot(a, b))
 LinearAlgebra.norm(a::MultiBosonCMPSData_MDMinv_Grad) = sqrt(norm(dot(a, a)))
+
+"""
+    Base.similar(a::MultiBosonCMPSData_MDMinv_Grad)
+    Base.vec(a::MultiBosonCMPSData_MDMinv_Grad)
+
+Utility functions to create similar gradient vectors and convert to vector form.
+"""
 Base.similar(a::MultiBosonCMPSData_MDMinv_Grad) = MultiBosonCMPSData_MDMinv_Grad(similar.(a.dDs), similar(a.X))
 Base.vec(a::MultiBosonCMPSData_MDMinv_Grad) = vcat(diag.(a.dDs)..., vec(a.X))
 
+"""
+    randomize!(a::MultiBosonCMPSData_MDMinv_Grad)
+
+Fill a gradient vector with random values.
+"""
 function randomize!(a::MultiBosonCMPSData_MDMinv_Grad)
     T = eltype(a)
     for ix in eachindex(a.dDs)
@@ -263,6 +405,11 @@ function randomize!(a::MultiBosonCMPSData_MDMinv_Grad)
     return a
 end
 
+"""
+    diff_to_grad(ψ::MultiBosonCMPSData_MDMinv, ∂ψ::MultiBosonCMPSData_MDMinv)
+
+Convert the partial derivative of a state to a gradient vector in the tangent space.
+"""
 function diff_to_grad(ψ::MultiBosonCMPSData_MDMinv, ∂ψ::MultiBosonCMPSData_MDMinv)
     Rs = map(D->ψ.M * D * ψ.Minv, ψ.Ds)
 
@@ -272,6 +419,11 @@ function diff_to_grad(ψ::MultiBosonCMPSData_MDMinv, ∂ψ::MultiBosonCMPSData_M
     return MultiBosonCMPSData_MDMinv_Grad(gDs, gX)
 end
 
+"""
+    tangent_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing)
+
+Apply the tangent map to a gradient vector. If ρR is not provided, it will be computed using right_env.
+"""
 function tangent_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing)
     if isnothing(ρR)
         ρR = right_env(ψ)
