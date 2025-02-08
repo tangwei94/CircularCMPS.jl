@@ -26,11 +26,11 @@ abstract type AbstractCoeffs end
 
 struct Coeff2 <: AbstractCoeffs
     θs::Matrix{<:Number}
-    U::TensorMap{ComplexSpace}
-    Uinv::TensorMap{ComplexSpace}
+    U::TensorMap
+    Uinv::TensorMap
 end
 
-function Coeff2(T::TensorMap{ComplexSpace}, p1::Real, L::Real)
+function Coeff2(T::TensorMap, p1::Real, L::Real)
     Λ, U = eig(T)
     Uinv = inv(U)
     Λs = diag(Λ.data)
@@ -40,7 +40,7 @@ function Coeff2(T::TensorMap{ComplexSpace}, p1::Real, L::Real)
     return Coeff2(θs, U, Uinv)
 end
 
-function (C2::Coeff2)(A1::TensorMap{ComplexSpace}, A2::TensorMap{ComplexSpace})
+function (C2::Coeff2)(A1::TensorMap, A2::TensorMap)
     Ã1data = (C2.Uinv * A1 * C2.U).data 
     Ã2data = (C2.Uinv * A2 * C2.U).data 
 
@@ -50,11 +50,11 @@ end
 
 struct Coeff3 <: AbstractCoeffs 
     θs::Array{<:Number, 3}
-    U::TensorMap{ComplexSpace}
-    Uinv::TensorMap{ComplexSpace}
+    U::TensorMap
+    Uinv::TensorMap
 end
 
-function Coeff3(T::TensorMap{ComplexSpace}, p1::Real, p2::Real, L::Real)
+function Coeff3(T::TensorMap, p1::Real, p2::Real, L::Real)
     Λ, U = eig(T)
     Uinv = inv(U)
     Λs = diag(Λ.data)
@@ -64,7 +64,7 @@ function Coeff3(T::TensorMap{ComplexSpace}, p1::Real, p2::Real, L::Real)
     return Coeff3(θs, U, Uinv)
 end
 
-function (C3::Coeff3)(A1::TensorMap{ComplexSpace}, A2::TensorMap{ComplexSpace}, A3::TensorMap{ComplexSpace})
+function (C3::Coeff3)(A1::TensorMap, A2::TensorMap, A3::TensorMap)
     Ã1data = (C3.Uinv * A1 * C3.U).data 
     Ã2data = (C3.Uinv * A2 * C3.U).data 
     Ã3data = (C3.Uinv * A3 * C3.U).data 

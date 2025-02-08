@@ -35,7 +35,7 @@ function get_χs(index)
     for β in βs1
         @load "heisenberg/results/cooling/heisenberg_hz$(hz)_beta$(β)-$(index).jld2" ψ
 
-        push!(χs, size(ψ.Q.data, 1))
+        push!(χs, size(convert(Array, ψ.Q), 1))
     end
     return χs
 end

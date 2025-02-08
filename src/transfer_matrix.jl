@@ -147,21 +147,21 @@ function ChainRulesCore.rrule(::Type{TransferMatrix}, ψu::CMPSData, ψd::CMPSDa
 end
 
 
-function right_env(K::AbstractTensorMap{S, 2, 2}) where {S} 
+function right_env(K::AbstractTensorMap{T, S, 2, 2}) where {T,S} 
     init = similar(K, _firstspace(K)←_lastspace(K)')
     randomize!(init);
     λrs, vrs, _ = eigsolve(v -> Kact_R(K, v), init, 1, :LR)
     return λrs[1], vrs[1]
 end
 
-function left_env(K::AbstractTensorMap{S, 2, 2}) where {S}
+function left_env(K::AbstractTensorMap{T, S, 2, 2}) where {T,S}
     init = similar(K, _lastspace(K)'←_firstspace(K))
     randomize!(init);
     λls, vls, _ = eigsolve(v -> Kact_L(K, v), init, 1, :LR)
     return λls[1], vls[1]
 end
 
-function Kmat_pseudo_inv(K::AbstractTensorMap{S, 2, 2}, λ::Number) where {S}
+function Kmat_pseudo_inv(K::AbstractTensorMap{T, S, 2, 2}, λ::Number) where {T,S}
     χ = dim(_firstspace(K))
     IdK = id((ℂ^χ)'⊗ℂ^χ)
     K1 = K_permute_back(K) - λ * IdK # normalize

@@ -116,12 +116,12 @@ function ChainRulesCore.rrule(::typeof(K_mat), ϕ::CMPSData, ψ::CMPSData)
 end
 
 """
-    rrule(::typeof(finite_env), t::TensorMap{ComplexSpace}, L::Real)
+    rrule(::typeof(finite_env), K::AbstractTensorMap{T, S, 2, 2}, L::Real)
 
     Backward rule for `finite_env`.
     See https://math.stackexchange.com/a/3868894/488003 and https://doi.org/10.1006/aama.1995.1017 for the gradient of exp(t)
 """
-function ChainRulesCore.rrule(::typeof(finite_env), K::TensorMap{ComplexSpace}, L::Real)
+function ChainRulesCore.rrule(::typeof(finite_env), K::AbstractTensorMap{T, S, 2, 2}, L::Real) where {T, S}
     W, UR = eig(K)
     UL = inv(UR)
     Ws = []
@@ -168,7 +168,7 @@ function ChainRulesCore.rrule(::typeof(finite_env), K::TensorMap{ComplexSpace}, 
     end 
     return (expK, ln_of_norm), finite_env_pushback
 end
-#function ChainRulesCore.rrule(::typeof(finite_env), K::TensorMap{ComplexSpace}, L::Real)
+#function ChainRulesCore.rrule(::typeof(finite_env), K::AbstractTensorMap{T, S, 2, 2}, L::Real) where {T, S}
 #    # TODO. gaussian quadrature. not efficient. parallelize?
 #    expK, ln_norm = finite_env(K, L)
 #

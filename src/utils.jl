@@ -1,7 +1,7 @@
 # copied from MPSKit.jl
-const MPSBondTensor{S} = AbstractTensorMap{S,1,1} where {S}
-const GenericMPSTensor{S,N} = AbstractTensorMap{S,N,1} where {S,N} 
-const MPSTensor{S} = GenericMPSTensor{S,2} where {S}
+const MPSBondTensor{T,S} = AbstractTensorMap{T,S,1,1} 
+const GenericMPSTensor{T,S,N} = AbstractTensorMap{T,S,N,1}  
+const MPSTensor{T,S} = GenericMPSTensor{T,S,2} 
 
 _firstspace(t::AbstractTensorMap) = space(t, 1)
 _lastspace(t::AbstractTensorMap) = space(t, numind(t))
@@ -22,11 +22,11 @@ end
 randomize!(a::TensorMap) = fill_data!(a,randn)
 
 # default permutation of K matrix 
-function K_permute(K::AbstractTensorMap{S, 2, 2}) where {S}
+function K_permute(K::AbstractTensorMap{T, S, 2, 2}) where {T,S}
     return permute(K, (2, 3), (4, 1))
 end
 
-function K_permute_back(K::AbstractTensorMap{S, 2, 2}) where {S}
+function K_permute_back(K::AbstractTensorMap{T, S, 2, 2}) where {T,S}
     return permute(K, (4, 1), (2, 3))
 end
 
@@ -35,12 +35,12 @@ function K_otimes(A::MPSBondTensor, B::MPSBondTensor)
     return Abar_otimes_B
 end
 
-function Kact_R(K::AbstractTensorMap{S, 2, 2}, v::MPSBondTensor) where {S}
+function Kact_R(K::AbstractTensorMap{T, S, 2, 2}, v::MPSBondTensor) where {T, S}
     @tensor Kr[-1; -2] := K[-1 2; 1 -2] * v[1; 2]
     return Kr
 end
 
-function Kact_L(K::AbstractTensorMap{S, 2, 2}, v::MPSBondTensor) where {S}
+function Kact_L(K::AbstractTensorMap{T, S, 2, 2}, v::MPSBondTensor) where {T, S}
     @tensor Kl[-1; -2] := K[1 -1; -2 2] * v[2; 1]
     return Kl
 end
@@ -48,7 +48,7 @@ end
 function herm_reg_inv(A::AbstractTensorMap, δ::Real)
     # A is Hermitian up to a phase
 
-    _, S, V = svd(A)
+    _, S, V = tsvd(A)
     Id = id(_firstspace(S))
     Ainv = V' * (inv(S + δ*Id)) * V
 

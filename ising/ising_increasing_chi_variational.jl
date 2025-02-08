@@ -26,7 +26,7 @@ ax1 = Axis(fig[1, 1],
         )
 ΔEs = map(χs) do χ
     @load "ising/results/ising_Gamma$(Γ)_beta$(β)-chi$(χ).jld2" ψ
-    Es = eigvals(K_mat(ψ, ψ).data)
+    Es = eigvals(convert(Array, K_mat(ψ, ψ)))
     abs(Es[end-1] - Es[end])
 end
 scatterlines!(ax1, χs, β .* ΔEs, label="β=$β")
@@ -45,7 +45,7 @@ ax1 = Axis(fig[1, 1],
 for β in βs
     ΔEs = map(χs) do χ
         @load "ising/results/ising_Gamma$(Γ)_beta$(β)-chi$(χ).jld2" ψ
-        Es = eigvals(K_mat(ψ, ψ).data)
+        Es = eigvals(convert(Array, K_mat(ψ, ψ)))
         a = abs(Es[end-1] - Es[end])
         b = abs(Es[end-2] - Es[end])
         @show b, a, b/a
@@ -68,7 +68,7 @@ ax1 = Axis(fig[1, 1],
 for ix in 1:5
     ΔEs = map(χs) do χ
         @load "ising/results/ising_Gamma$(Γ)_beta$(β)-chi$(χ).jld2" ψ 
-        Es = eigvals(K_mat(ψ, ψ).data)
+        Es = eigvals(convert(Array, K_mat(ψ, ψ)))
         a = abs(Es[end-ix] - Es[end])
         return a
     end

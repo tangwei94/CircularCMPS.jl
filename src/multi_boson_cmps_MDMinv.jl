@@ -55,7 +55,7 @@ function MultiBosonCMPSData_MDMinv(f, χ::Integer, d::Integer)
     M = exp(im * (K+K'))
     Minv = exp(-im * (K+K'))
 
-    Ds = map(ix -> Diagonal(f(ComplexF64, χ)), 1:d)
+    Ds = map(ix -> Diagonal(exp.(π * im * f(Float64, χ))), 1:d)
     return MultiBosonCMPSData_MDMinv{ComplexF64}(Q, M, Minv, Ds)
 end
 
@@ -111,11 +111,11 @@ Convert CMPSData to MultiBosonCMPSData_MDMinv format. This function is deprecate
 """
 function MultiBosonCMPSData_MDMinv(ψ::CMPSData)
     @warn "MultiBosonCMPSData_MDMinv(ψ::CMPSData) is going to be removed"
-    Q = ψ.Q.data
-    _, M = eigen(ψ.Rs[1].data)
+    Q = convert(Array, ψ.Q)
+    _, M = eigen(convert(Array, ψ.Rs[1]))
     Minv = inv(M)
   
-    D0s = map(R->Minv * R.data * M, ψ.Rs)
+    D0s = map(R->Minv * convert(Array, R) * M, ψ.Rs)
     Ds = map(D->Diagonal(D), D0s)
     err2 = sum(norm.(Ds .- D0s) .^ 2)
     @info "convert CMPSData to MultiBosonCMPSData_MDMinv, err = $(sqrt(err2))"
@@ -129,11 +129,11 @@ Deprecated conversion function from CMPSData to MultiBosonCMPSData_MDMinv.
 Returns the converted state and the conversion error.
 """
 function convert_to_MultiBosonCMPSData_MDMinv_deprecated(ψ::CMPSData)
-    Q = ψ.Q.data
-    _, M = eigen(ψ.Rs[1].data)
+    Q = convert(Array, ψ.Q)
+    _, M = eigen(convert(Array, ψ.Rs[1]))
     Minv = inv(M)
   
-    D0s = map(R->Minv * R.data * M, ψ.Rs)
+    D0s = map(R->Minv * convert(Array, R) * M, ψ.Rs)
     Ds = map(D->Diagonal(D), D0s)
     err2 = sum(norm.(Ds .- D0s) .^ 2)
     
@@ -149,7 +149,7 @@ that diagonalizes the R matrices.
 function convert_to_MultiBosonCMPSData_MDMinv(ψ::CMPSData)
 
     # FIXME. a temporary solution; only works for the case of two species of bosons
-    R1, R2 = ψ.Rs[1].data, ψ.Rs[2].data
+    R1, R2 = convert(Array, ψ.Rs[1]), convert(Array, ψ.Rs[2])
     function fv(v::Vector{Float64})
         α, β = v
         _, V1 = eigen(R1 + (α + im*β) * R2);
@@ -182,11 +182,11 @@ function convert_to_MultiBosonCMPSData_MDMinv(ψ::CMPSData)
     α, β = vmin
     _, M = eigen(R1 + (α + im*β) * R2);
 
-    Q = ψ.Q.data
-    _, M = eigen(ψ.Rs[1].data)
+    Q = convert(Array, ψ.Q)
+    _, M = eigen(convert(Array, ψ.Rs[1]))
     Minv = inv(M)
   
-    D0s = map(R->Minv * R.data * M, ψ.Rs)
+    D0s = map(R->Minv * convert(Array, R) * M, ψ.Rs)
     Ds = map(D->Diagonal(D), D0s)
     err2 = sum(norm.(Ds .- D0s) .^ 2)
     
@@ -197,10 +197,10 @@ function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_MDMinv)
     M, Minv = ψ.M, ψ.Minv
     Ds = ψ.Ds
     function CMPSData_pushback(∂ψ)
-        ∂Q = ∂ψ.Q.data
-        ∂Ds = map(∂R -> Diagonal(M' * ∂R.data * Minv'), ∂ψ.Rs)
-        ∂M = sum([∂R.data * Minv' * D' for (∂R, D) in zip(∂ψ.Rs, Ds)]) - 
-             sum([Minv' * D' * M' * ∂R.data * Minv' for (∂R, D) in zip(∂ψ.Rs, Ds)])
+        ∂Q = convert(Array, ∂ψ.Q)
+        ∂Ds = map(∂R -> Diagonal(M' * convert(Array, ∂R) * Minv'), ∂ψ.Rs)
+        ∂M = sum([convert(Array, ∂R) * Minv' * D' for (∂R, D) in zip(∂ψ.Rs, Ds)]) - 
+             sum([Minv' * D' * M' * convert(Array, ∂R) * Minv' for (∂R, D) in zip(∂ψ.Rs, Ds)])
         return NoTangent(), MultiBosonCMPSData_MDMinv(∂Q, ∂M, ∂Ds) 
     end
     return CMPSData(ψ), CMPSData_pushback
@@ -215,9 +215,9 @@ function left_canonical(ψ::MultiBosonCMPSData_MDMinv)
     ψc = CMPSData(ψ)
 
     X, ψcl = left_canonical(ψc)
-    Q = ψcl.Q.data 
-    M = X.data * ψ.M 
-    Minv = ψ.Minv * inv(X.data)
+    Q = convert(Array, ψcl.Q) 
+    M = convert(Array, X) * ψ.M 
+    Minv = ψ.Minv * inv(convert(Array, X))
 
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, deepcopy(ψ.Ds))
 end
@@ -238,7 +238,7 @@ function right_env(ψ::MultiBosonCMPSData_MDMinv)
     _, vls, _ = eigsolve(fK, init, 1, :LR)
     vl = vls[1]
     
-    U, S, _ = svd(vl.data)
+    U, S, _ = svd(convert(Array, vl))
     return U * Diagonal(S) * U'
 end
 
@@ -248,13 +248,23 @@ end
 Retract the state in the left canonical form along the tangent direction specified by dDs and X with step size α.
 Maintains the left canonical form constraint.
 """
-function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, dDs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
+function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, dDs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}; do_polar_retraction::Bool=false) where T
     # check left canonical form 
     ψc = CMPSData(ψ)
     ϵ = norm(ψc.Q + ψc.Q' + sum([R' * R for R in ψc.Rs]))
     (ϵ > 1e-10) && @warn "your cmps has deviated from the left canonical form, err=$ϵ"
-
-    Ds = ψ.Ds .+ α .* dDs
+   
+    if do_polar_retraction
+        function polar_retraction(a::Number, b::Number, α::Real)
+            jac = [real(a) -imag(a) ; imag(a) real(a)]
+            κ, ϕ = jac \ [real(b); imag(b)]
+            return a * exp(α * (κ + im * ϕ))
+        end
+        Ds = map((D, dD)->Diagonal(polar_retraction.(diag(D), diag(dD), α)), ψ.Ds, dDs)
+    else
+        Ds = ψ.Ds .+ α .* dDs
+    end
+    
     #X[diagind(X)] .- tr(X) / size(X, 1) # make X traceless
     #M = exp(α * X) * ψ.M
     #Minv = ψ.Minv * exp(-α * X)
@@ -279,36 +289,42 @@ The new components are initialized with small perturbations around the smallest 
 # Arguments
 - `ψ`: The state to expand
 - `χ`: New bond dimension
-- `perturb`: Scale of random perturbations for initialization
+- `perturb`: Scale of perturbations for initialization
 """
-function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb::Float64=1e-3)
+function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb::Float64=3.0)
     χ0, d = get_χ(ψ), get_d(ψ)
     if χ <= χ0
         @warn "new χ not bigger than χ0"
         return ψ
     end
-
-    Qd, Qu = eigen(ψ.Q)
-    _, Qminind = findmin(real.(Qd))
-    Qu_new = Matrix{ComplexF64}(I, χ, χ)
-    Qu_new[1:χ0, 1:χ0] = Qu
-    Q = Qu_new * diagm(vcat(Qd, fill(Qd[Qminind], χ - χ0))) * inv(Qu_new)
-
-    # the norm of M and Minv can be very ill-conditioned, e.g., one of them is very small and the other is very large
-    α = norm(ψ.M) / norm(ψ.Minv)
-    M0 = ψ.M / sqrt(α)
-
+   
+    Q = rand(ComplexF64, χ, χ)
+    Q = im*(Q + Q')
+    Q ./= norm(Q)
     M = Matrix{ComplexF64}(I, χ, χ)
-    M[1:χ0, 1:χ0] = M0
-    K = rand(ComplexF64, χ, χ)
-    K = K + K'
-    M = M * exp(im * K)
-
     Ds = map(1:d) do ix
-        Dmin, _ = findmin(norm.(diag(ψ.Ds[ix])))
-        @show Dmin
-        Diagonal(vcat(diag(ψ.Ds[ix]), fill(Dmin, 1:χ-χ0)))
+        Diagonal(zeros(ComplexF64, χ))
     end
+
+    Λs = zeros(ComplexF64, d)
+    for ix in 1:d
+        Ddiag = view(Ds[ix], diagind(Ds[ix]))
+        Ddiag[1:χ0] = diag(ψ.Ds[ix])
+        
+        perm = sortperm(norm.(Ddiag[1:χ0]))
+        phases = angle.(Ddiag[perm]) 
+        
+        Λs[ix] = perturb * maximum(norm.(Ddiag[perm])) * exp(im * sum(phases[1:2]) / 2)
+        Ddiag[χ0+1:χ] .= Λs[ix]
+    end
+    @show Λs
+    Q0view = view(Q, 1:χ0, 1:χ0)
+    Q0view .+= ψ.Q
+    Qdiag = view(Q, diagind(Q))
+    Qdiag[χ0+1:χ] .-= sum(norm.(Λs) .^ 2) / 2
+
+    M0view = view(M, 1:χ0, 1:χ0)
+    M0view .= ψ.M
 
     return MultiBosonCMPSData_MDMinv(Q, M, Ds) 
 end
@@ -410,12 +426,29 @@ end
 
 Convert the partial derivative of a state to a gradient vector in the tangent space.
 """
-function diff_to_grad(ψ::MultiBosonCMPSData_MDMinv, ∂ψ::MultiBosonCMPSData_MDMinv)
+function diff_to_grad(ψ::MultiBosonCMPSData_MDMinv, ∂ψ::MultiBosonCMPSData_MDMinv; do_polar_retraction = false)
     Rs = map(D->ψ.M * D * ψ.Minv, ψ.Ds)
 
     gDs = [Diagonal(-ψ.M' * R * ∂ψ.Q * ψ.Minv' + ∂D) for (R, ∂D) in zip(Rs, ∂ψ.Ds)]
     gX = ψ.M' * sum([- R * ∂ψ.Q * R' + R' * R * ∂ψ.Q for R in Rs]) * ψ.Minv' + ψ.M' * ∂ψ.M 
     #gX[diagind(gX)] .-= tr(gX) / size(gX, 1) # make X traceless
+    if do_polar_retraction
+        function polar_compression(a::Number, b::Number, ϵ::Real)
+            jac = [real(a) -imag(a) ; imag(a) real(a)]
+            κ, ϕ = jac \ [real(b); imag(b)]
+            κ = ϵ * κ
+            return complex((jac * [κ; ϕ])...)
+        end
+        function polar_compression!(a::Diagonal{ComplexF64, Vector{ComplexF64}}, b::Diagonal{ComplexF64, Vector{ComplexF64}}, ϵ::Real)
+            adiag = a[diagind(a)]
+            bdiag = b[diagind(b)]
+            bdiag .= polar_compression.(adiag, bdiag, ϵ)
+            return b
+        end
+        for ix in eachindex(gDs)
+            polar_compression!(ψ.Ds[ix], gDs[ix], 0)
+        end
+    end
     return MultiBosonCMPSData_MDMinv_Grad(gDs, gX)
 end
 

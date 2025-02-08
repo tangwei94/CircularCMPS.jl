@@ -268,6 +268,7 @@ function direct_sum(A::MPSBondTensor, B::MPSBondTensor)
     χA, χB = dim(_firstspace(A)), dim(_firstspace(B))
 
     A_oplus_B = TensorMap(zeros, ComplexF64, ℂ^(χA+χB), ℂ^(χA+χB))
+    # FIXME!!!
     A_oplus_B.data[1:χA, 1:χA] = A.data
     A_oplus_B.data[1+χA:end, 1+χA:end] = B.data
     return A_oplus_B

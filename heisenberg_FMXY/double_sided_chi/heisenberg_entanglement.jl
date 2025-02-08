@@ -35,7 +35,7 @@ function get_χs(index)
     for β in βs1
         @load "heisenberg_FMXY/double_sided_chi/data/heisenberg_hz$(hz)_beta$(β)-$(index).jld2" ψ
 
-        push!(χs, size(ψ.Q.data, 1))
+        push!(χs, dim(space(ψ.Q, 1)))
     end
     return χs
 end

@@ -1,5 +1,5 @@
 using LinearAlgebra, TensorKit, KrylovKit
-using TensorKitAD, ChainRules, Zygote 
+using ChainRules, Zygote 
 using CairoMakie
 using JLD2 
 using OptimKit
@@ -15,6 +15,9 @@ H2 = SingleBosonLiebLiniger(c2, μ2, Inf)
 ϕ_χ4 = CMPSData(rand, 4, 1)
 
 res1_χ4 = ground_state(H1, ϕ_χ4)
+eigvals(convert(Array, res1_χ4[1].Rs[1]))
+
+
 res1_χ8 = ground_state(H1, expand(res1_χ4[1], 8, 100))
 
 res2_χ4 = ground_state(H2, ϕ_χ4)
