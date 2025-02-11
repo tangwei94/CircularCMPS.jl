@@ -248,22 +248,13 @@ end
 Retract the state in the left canonical form along the tangent direction specified by dDs and X with step size α.
 Maintains the left canonical form constraint.
 """
-function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, dDs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}; do_polar_retraction::Bool=false) where T
+function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, dDs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
     # check left canonical form 
     ψc = CMPSData(ψ)
     ϵ = norm(ψc.Q + ψc.Q' + sum([R' * R for R in ψc.Rs]))
     (ϵ > 1e-10) && @warn "your cmps has deviated from the left canonical form, err=$ϵ"
    
-    if do_polar_retraction
-        function polar_retraction(a::Number, b::Number, α::Real)
-            jac = [real(a) -imag(a) ; imag(a) real(a)]
-            κ, ϕ = jac \ [real(b); imag(b)]
-            return a * exp(α * (κ + im * ϕ))
-        end
-        Ds = map((D, dD)->Diagonal(polar_retraction.(diag(D), diag(dD), α)), ψ.Ds, dDs)
-    else
-        Ds = ψ.Ds .+ α .* dDs
-    end
+    Ds = ψ.Ds .+ α .* dDs
     
     #X[diagind(X)] .- tr(X) / size(X, 1) # make X traceless
     #M = exp(α * X) * ψ.M
@@ -430,29 +421,13 @@ end
 
 Convert the partial derivative of a state to a gradient vector in the tangent space.
 """
-function diff_to_grad(ψ::MultiBosonCMPSData_MDMinv, ∂ψ::MultiBosonCMPSData_MDMinv; do_polar_retraction = false)
+function diff_to_grad(ψ::MultiBosonCMPSData_MDMinv, ∂ψ::MultiBosonCMPSData_MDMinv)
     Rs = map(D->ψ.M * D * ψ.Minv, ψ.Ds)
 
     gDs = [Diagonal(-ψ.M' * R * ∂ψ.Q * ψ.Minv' + ∂D) for (R, ∂D) in zip(Rs, ∂ψ.Ds)]
     gX = ψ.M' * sum([- R * ∂ψ.Q * R' + R' * R * ∂ψ.Q for R in Rs]) * ψ.Minv' + ψ.M' * ∂ψ.M 
     #gX[diagind(gX)] .-= tr(gX) / size(gX, 1) # make X traceless
-    if do_polar_retraction
-        function polar_compression(a::Number, b::Number, ϵ::Real)
-            jac = [real(a) -imag(a) ; imag(a) real(a)]
-            κ, ϕ = jac \ [real(b); imag(b)]
-            κ = ϵ * κ
-            return complex((jac * [κ; ϕ])...)
-        end
-        function polar_compression!(a::Diagonal{ComplexF64, Vector{ComplexF64}}, b::Diagonal{ComplexF64, Vector{ComplexF64}}, ϵ::Real)
-            adiag = a[diagind(a)]
-            bdiag = b[diagind(b)]
-            bdiag .= polar_compression.(adiag, bdiag, ϵ)
-            return b
-        end
-        for ix in eachindex(gDs)
-            polar_compression!(ψ.Ds[ix], gDs[ix], 0)
-        end
-    end
+
     return MultiBosonCMPSData_MDMinv_Grad(gDs, gX)
 end
 
@@ -474,4 +449,36 @@ function tangent_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv
     dDs_mapped = Diagonal.(Ms)
 
     return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
+end
+
+function precondition_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing, ϵ = 1e-10)
+    if isnothing(ρR)
+        ρR = right_env(ψ)
+    end
+
+    ρRinv = inv(ρR + ϵ * id(space(ρR, 1)))
+
+    PL = ψ.Minv * ψ.Minv'
+    PR = ψ.M' * convert(Array, ρRinv) * ψ.M
+
+    Cs_mapped = [PL * (g.X * D - D * g.X + dD) * PR for (dD, D) in zip(g.dDs, ψ.Ds)]
+
+    dDs_mapped = Diagonal.(Cs_mapped)
+    X_mapped = projection_X(g.dDs, Cs_mapped)
+
+    return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
+    
+end
+
+function projection_X(offdiags::Vector{Matrix{T}}, Ds::Vector{Diagonal{T, Vector{T}}}) where T
+    # min ‖ sum([X * D - D * X - offdiag for (D, offdiag) in zip(Ds, offdiags)]) ‖
+    χ = size(Ds[1], 1)
+
+    projected_X = zeros(T, χ, χ)
+    for ix in 1:χ, iy in 1:χ
+        up = sum([dot(D[iy, iy] - D[ix, ix], offdiag[ix, iy]) for (D, offdiag) in zip(Ds, offdiags)])
+        dn = sum([dot(D[iy, iy] - D[ix, ix], D[iy, iy] - D[ix, ix]) for D in Ds])
+        projected_X[ix, iy] = (ix == iy) ? 0 : up / dn
+    end
+    return projected_X
 end

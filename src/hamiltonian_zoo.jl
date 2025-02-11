@@ -360,7 +360,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
     return ψ, E, grad, total_numfg, hcat(E_history, gnorm_history, err_history)
 end
 
-function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x), m_LBFGS::Int=8, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter), do_polar_retraction::Bool=false)
+function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x), m_LBFGS::Int=8, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
     if H.L < Inf
         error("finite size not implemented yet.")
     end
@@ -377,7 +377,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
     function fgE(x::OptimState{MultiBosonCMPSData_MDMinv{T}}) where T
         ψ = x.data
         E, ∂ψ = withgradient(fE_inf, ψ)
-        g = diff_to_grad(ψ, ∂ψ[1]; do_polar_retraction=do_polar_retraction)
+        g = diff_to_grad(ψ, ∂ψ[1])
         return E, g
     end
     
@@ -388,7 +388,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
 
     function retract(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad, α::Real) where T
         ψ = x.data
-        ψ1 = retract_left_canonical(ψ, α, dψ.dDs, dψ.X; do_polar_retraction=do_polar_retraction)
+        ψ1 = retract_left_canonical(ψ, α, dψ.dDs, dψ.X)
         return OptimState(ψ1, missing, x.prev, x.df), dψ
     end
     function scale!(dψ::MultiBosonCMPSData_MDMinv_Grad, α::Number)
@@ -448,23 +448,6 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
         vp = x.preconditioner \ vec(dψ)
         PG = MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
 
-        if do_polar_retraction
-            function polar_compression(a::Number, b::Number, ϵ::Real)
-                jac = [real(a) -imag(a) ; imag(a) real(a)]
-                κ, ϕ = jac \ [real(b); imag(b)]
-                κ = ϵ * κ
-                return complex((jac * [κ; ϕ])...)
-            end
-            function polar_compression!(a::Diagonal{ComplexF64, Vector{ComplexF64}}, b::Diagonal{ComplexF64, Vector{ComplexF64}}, ϵ::Real)
-                adiag = a[diagind(a)]
-                bdiag = b[diagind(b)]
-                bdiag .= polar_compression.(adiag, bdiag, ϵ)
-                return b
-            end
-            for ix in eachindex(PG.dDs)
-                polar_compression!(x.data.Ds[ix], PG.dDs[ix], 0)
-            end
-        end
         return PG
     end
 

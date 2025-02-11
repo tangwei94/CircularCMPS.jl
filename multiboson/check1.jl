@@ -6,8 +6,8 @@ using OptimKit
 using Revise 
 using CircularCMPS 
 
-c1, μ1 = 1, 1. 
-c2, μ2 = 1, 1. 
+c1, μ1 = 1, 2. 
+c2, μ2 = 1, 2. 
 c12 = 0.5 
 
 Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf) 
@@ -18,123 +18,31 @@ jχ = 0
 
 ################# computation ####################
 
-recorderD11 = ComplexF64[]
-recorderD22 = ComplexF64[]
-recorderD33 = ComplexF64[]
-recorderD44 = ComplexF64[]
-function myfinalize!(x, f, g, numiter)
-    if numiter == 1
-        empty!(recorderD11)
-        empty!(recorderD22)
-        empty!(recorderD33)
-        empty!(recorderD44)
-    end
-    push!(recorderD11, x.data.Ds[1][1, 1])
-    push!(recorderD22, x.data.Ds[1][2, 2])
-    push!(recorderD33, x.data.Ds[1][3, 3])
-    push!(recorderD44, x.data.Ds[1][4, 4])
-end
-
 ψ0 = MultiBosonCMPSData_MDMinv(rand, χ, 2);
 ψ0 = left_canonical(ψ0);
 ψ0.Ds[1]
 
-resa = ground_state(Hm, ψ0; gradtol=1e-8, maxiter=400, _finalize! = myfinalize!, do_polar_retraction=true); 
-resd = ground_state(Hm, ψ0; gradtol=1e-8, maxiter=400, _finalize! = myfinalize!, do_polar_retraction=false);
-@show norm(resa[3])
-@show norm(resd[3])
+res0 = ground_state(Hm, ψ0; gradtol=1e-8, maxiter=400, do_polar_retraction=false);
 
-ψ0 = resa[1]
+ψ0 = res0[1]
 Q0 = ψ0.Q
 R0s = Ref(ψ0.M) .* ψ0.Ds .* Ref(ψ0.Minv)
 Q0 + Q0' + sum([R' * R for R in R0s])
 
-ψ1 = expand(resa[1], χ+4; perturb = 1.0);
+ψ1 = expand(res0[1], 2*χ);
 Q1 = ψ1.Q
 R1s = Ref(ψ1.M) .* ψ1.Ds .* Ref(ψ1.Minv)
 Q1 + Q1' + sum([R' * R for R in R1s]) |> norm
-resa[2]
+res0[2]
 
 left_canonical(ψ1)
-resd2 = ground_state(Hm, ψ1; gradtol=1e-8, maxiter=1000, _finalize! = myfinalize!, do_polar_retraction=false);
+res1 = ground_state(Hm, left_canonical(ψ1); gradtol=1e-8, maxiter=1000, do_polar_retraction=false);
+res1[2]
 
-norm.(ψ1.Ds[1])
-as = angle.(diag(ψ1.Ds[1]))
-(as[1] + as[3]) / 2
-norm.(ψ1.Ds[2])
-as = angle.(diag(ψ1.Ds[2]))
-(as[1] + as[3]) / 2
-
-fig = Figure(size=(600, 600))
-ax = Axis(fig[1, 1], 
-        xlabel = "Re Dᵃᵢᵢ",
-        ylabel = "Im Dᵃᵢᵢ",
-        )
-lines!(ax, real.(cos.(0:0.01:2*π)), sin.(0:0.01:2*π), color=:grey)
-scatter!(ax, real.(recorderD11[1:end]), imag.(recorderD11[1:end]), label="D11")
-scatter!(ax, real.(recorderD22[1:end]), imag.(recorderD22[1:end]), label="D22")
-scatter!(ax, real.(recorderD33[1:end]), imag.(recorderD33[1:end]), label="D33")
-scatter!(ax, real.(recorderD44[1:end]), imag.(recorderD44[1:end]), label="D44")
-scatter!(ax, real(recorderD11[end]), imag(recorderD11[end]), marker=:star5, color=:red)
-scatter!(ax, real(recorderD22[end]), imag(recorderD22[end]), marker=:star5, color=:red)
-scatter!(ax, real(recorderD33[end]), imag(recorderD33[end]), marker=:star5, color=:red)
-scatter!(ax, real(recorderD44[end]), imag(recorderD44[end]), marker=:star5, color=:red)
-#axislegend(ax, position=:rt)
-@show fig
-
-recorderD11[end] |> norm
-recorderD22[end] |> norm
-recorderD33[end] |> norm
-recorderD44[end] |> norm
-
-perm = sortperm(diag(norm.(resa[1].Ds[1])))
-a = diag(resa[1].Ds[1])[perm]
-@show norm.(a[1:2:end])
-@show angle(a[2]/a[1]) 
-@show angle(a[4]/a[3]) 
-
-fig = Figure(backgroundcolor = :white, fontsize=14, resolution= (800, 400))
-ax1 = Axis(fig[1, 1], 
-        xlabel = "Re Dᵃᵢᵢ",
-        ylabel = "Im Dᵃᵢᵢ",
-        )
-ax2 = Axis(fig[1, 2], 
-        xlabel = "Re Dᵇᵢᵢ",
-        ylabel = "Im Dᵇᵢᵢ",
-        )
-
-ψ2 = resa[1]
-norm.(diag(ψ2.Ds[1]))
-θs = 0:0.01:2*π
-for ix in 1:2
-    r = norm.(diag(ψ2.Ds[1]))[2*ix]
-    @show r 
-    lines!(ax1, r*cos.(θs), r*sin.(θs))
-end
-scatter!(ax1, real.(diag(ψ2.Ds[1])), imag.(diag(ψ2.Ds[1])), color=:black, label="Dᵃ")
-
-for ix in 1:2
-    r = norm.(diag(ψ2.Ds[2]))[2*ix]
-    @show r 
-    lines!(ax2, r*cos.(θs), r*sin.(θs))
-end
-scatter!(ax2, real.(diag(ψ2.Ds[2])), imag.(diag(ψ2.Ds[2])), color=:black, label="Dᵃ")
-
-@show fig
-
-eigvals(ψ2.Minv * ψ2.Q * ψ2.M)
-
-ψ2 = MultiBosonCMPSData_MDMinv(rand, 6, 2);
-ψ2 = left_canonical(ψ2);
-ψ2 = resc[1];
-resc = ground_state(Hm, ψ2; gradtol=1e-8, maxiter=500);
-ψ3 = resc[1];
-
-norm.(diag(resc[1].Ds[1]))
-norm.(diag(resc[1].Ds[2]))
-
-
-
+ψ2 = expand(res1[1], 3*χ);
+res2 = ground_state(Hm, ψ2; gradtol=1e-8, maxiter=1000, do_polar_retraction=false);
+res2a = ground_state(Hm, res2[1]; gradtol=1e-8, maxiter=1000, do_polar_retraction=false);
+res2[2]
 
 ψ2 = MultiBosonCMPSData_P(rand, χb, 2);
 res = ground_state(Hm, ψ2; gradtol=1e-8, maxiter=1000); 
@@ -236,10 +144,3 @@ Legend(gl[1, 1], ax1, nbanks=2)
 @show fig
 save("multiboson/results/result_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).pdf", fig)
 
-
-
-function polar_retraction(a::Number, b::Number, α::Real)
-    jac = [real(a) -imag(a) ; imag(a) real(a)]
-    κ, ϕ = jac \ [real(b); imag(b)]
-    return a * exp(α * (κ + im * ϕ))
-end
