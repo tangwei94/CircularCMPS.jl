@@ -567,7 +567,8 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_tnp; do_
         χb, χ, d = get_χb(ψ), get_χ(ψ), get_d(ψ)
 
         if ismissing(x.preconditioner)
-            ϵ = fϵ(norm(dψ)^2)#isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
+            #ϵ = fϵ(norm(dψ)^2)#
+            ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
             ϵ = max(1e-12, ϵ)
 
             P = zeros(ComplexF64, χ^2+d*(χb^2), χ^2+d*(χb^2))

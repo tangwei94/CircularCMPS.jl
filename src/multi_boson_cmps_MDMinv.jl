@@ -291,12 +291,13 @@ The new components are initialized with small perturbations around the smallest 
 - `χ`: New bond dimension
 - `perturb`: Scale of perturbations for initialization
 """
-function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb::Float64=3.0)
+function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb = 1e-2)
     χ0, d = get_χ(ψ), get_d(ψ)
     if χ <= χ0
         @warn "new χ not bigger than χ0"
         return ψ
     end
+    Δχ = χ - χ0
    
     Q = rand(ComplexF64, χ, χ)
     Q = im*(Q + Q')
@@ -307,6 +308,7 @@ function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb::Float64=3.0
     end
 
     Λs = zeros(ComplexF64, d)
+    newphases = [1e-2 .* (1:(Δχ÷2)) ; -1e-2 .* (1:(Δχ÷2)) ]
     for ix in 1:d
         Ddiag = view(Ds[ix], diagind(Ds[ix]))
         Ddiag[1:χ0] = diag(ψ.Ds[ix])
@@ -314,19 +316,21 @@ function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb::Float64=3.0
         perm = sortperm(norm.(Ddiag[1:χ0]))
         phases = angle.(Ddiag[perm]) 
         
-        Λs[ix] = perturb * maximum(norm.(Ddiag[perm])) * exp(im * sum(phases[1:2]) / 2)
-        Ddiag[χ0+1:χ] .= Λs[ix]
+        Λs[ix] = maximum(norm.(Ddiag[perm])) * exp(im * sum(phases[1:2]) / 2)
+        Ddiag[χ0+1:χ] .= Λs[ix] * exp.(im * newphases)
     end
-    @show Λs
     Q0view = view(Q, 1:χ0, 1:χ0)
     Q0view .+= ψ.Q
     Qdiag = view(Q, diagind(Q))
     Qdiag[χ0+1:χ] .-= sum(norm.(Λs) .^ 2) / 2
 
     M0view = view(M, 1:χ0, 1:χ0)
-    M0view .= ψ.M
+    M0view .= ψ.M * sqrt(norm(ψ.Minv) / norm(ψ.M))
 
-    return MultiBosonCMPSData_MDMinv(Q, M, Ds) 
+    Q .+= perturb * rand(ComplexF64, χ, χ)
+    M .+= perturb * rand(ComplexF64, χ, χ)
+
+    return left_canonical(MultiBosonCMPSData_MDMinv(Q, M, Ds)) 
 end
 
 """
