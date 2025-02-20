@@ -79,14 +79,14 @@ include("cmpsAD.jl");
 include("operators.jl");
 include("ground_state.jl")
 include("excited_state.jl");
-include("multi_boson_cmps.jl");
-include("multi_boson_cmps_MDMinv.jl");
-include("multi_boson_cmps_tnp.jl");
-#include("multi_boson_cmps_MCMinv.jl");
-include("multi_boson_cmps_P.jl");
+include("continuous_bosons/multi_boson_cmps.jl");
+include("continuous_bosons/multi_boson_cmps_MDMinv.jl");
+include("continuous_bosons/multi_boson_cmps_tnp.jl");
+#include("continuous_bosons/multi_boson_cmps_MCMinv.jl");
+include("continuous_bosons/hamiltonian_zoo.jl")
+include("continuous_bosons/multi_boson_cmps_P.jl");
 include("transfer_matrix.jl");
 include("optim_alg.jl");
-include("hamiltonian_zoo.jl")
 
 # cMPO code
 include("cmpo.jl");

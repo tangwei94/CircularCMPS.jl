@@ -36,24 +36,6 @@ struct MultiBosonLiebLiniger <: AbstractHamiltonian
     L::Real
 end
 
-#struct MultiBosonCMPSState
-#    ψ::MultiBosonCMPSData
-#    envL::MPSBondTensor
-#    envR::MPSBondTensor
-#    λ::Number
-#    K::AbstractTensorMap
-#    Kinv::AbstractTensorMap
-#end
-
-#function MultiBosonCMPSState(ψ::MultiBosonCMPSData)
-#    ψn = CMPSData(ψ0)
-#    K = K_permute(K_mat(ψn, ψn))
-#    λ, EL = left_env(K)
-#    λ, ER = right_env(K)
-#    Kinv = Kmat_pseudo_inv(K, λ)
-#    return MultiBosonCMPSState(ψ, EL, ER, λ, K, Kinv)
-#end
-
 function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData; do_preconditioning::Bool=true, maxiter::Int=10000)
     if H.L == Inf
         cs = Matrix{ComplexF64}(H.cs)

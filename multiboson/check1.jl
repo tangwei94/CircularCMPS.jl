@@ -33,22 +33,12 @@ res_lm = ground_state(Hm, ψ; Λs = Λs, gradtol=1e-2, maxiter=1000, do_prerun=t
 ϕ = left_canonical(MultiBosonCMPSData_MDMinv(res_lm[1]));
 res1 = ground_state(Hm, left_canonical(ϕ); gradtol=1e-6, maxiter=1000, preconditioner_type=1);
 
-@load "P.jld2" P Pinv
-sp = eigvals(Hermitian(P))[χ+1:end]
-eigvals(Hermitian(Pinv))[χ+1:end]
-s = eigvals(Hermitian(sqrt(P) * Pinv * sqrt(P)))[χ+1:end]
-
 ψ1 = expand(res1[1], 2*χ);
 ψ1 = left_canonical(CMPSData(ψ1))[2];
 
 res_lm = ground_state(Hm, ψ1; Λs = Λs, gradtol=1e-2, maxiter=1000, do_prerun=true);
 ϕ1 = left_canonical(MultiBosonCMPSData_MDMinv(res_lm[1]));
 res2 = ground_state(Hm, ϕ1; gradtol=1e-6, maxiter=1000, preconditioner_type=1);
-
-@load "P.jld2" P Pinv
-sp = eigvals(Hermitian(P))[2*χ+1:end]
-eigvals(Hermitian(Pinv))[2*χ+1:end]
-s = eigvals(Hermitian(Pinv * sqrt(P)))[2*χ+1:end]
 
 ψ2 = expand(res2[1], 3*χ);
 ψ2 = left_canonical(CMPSData(ψ2))[2];
