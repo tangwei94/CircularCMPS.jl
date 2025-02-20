@@ -6,15 +6,14 @@ using OptimKit
 using Revise 
 using CircularCMPS 
 
-c1, μ1 = 1, 2. 
-c2, μ2 = 1, 2. 
+c1, μ1 = 1, 2 
+c2, μ2 = 1, 2 
 c12 = 0.5 
 
 Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf) 
 
 χb = 2
 χ = 4
-jχ = 0
 
 ################# computation ####################
 
@@ -22,125 +21,116 @@ jχ = 0
 ψ0 = left_canonical(ψ0);
 ψ0.Ds[1]
 
-res0 = ground_state(Hm, ψ0; gradtol=1e-8, maxiter=400, do_polar_retraction=false);
+lgΛmin, lgΛmax, steps = 2, 6, 5
+ΔlgΛ = (lgΛmax - lgΛmin) / (steps - 1)
+Λs = 10 .^ (lgΛmin:ΔlgΛ:lgΛmax)
 
-ψ0 = res0[1]
-Q0 = ψ0.Q
-R0s = Ref(ψ0.M) .* ψ0.Ds .* Ref(ψ0.Minv)
-Q0 + Q0' + sum([R' * R for R in R0s])
+# initialization with lagrange multipiler
+ψ = left_canonical(CMPSData(ψ0))[2];
+res_lm = ground_state(Hm, ψ; Λs = Λs, gradtol=1e-2, maxiter=1000, do_prerun=true);
+#@save "multiboson/results/lagrangian_multiplier_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-$(lgΛmin)_$(lgΛmax)_$(steps).jld2" res_lm
 
-ψ1 = expand(res0[1], 2*χ);
-Q1 = ψ1.Q
-R1s = Ref(ψ1.M) .* ψ1.Ds .* Ref(ψ1.Minv)
-Q1 + Q1' + sum([R' * R for R in R1s]) |> norm
-res0[2]
+ϕ = left_canonical(MultiBosonCMPSData_MDMinv(res_lm[1]));
+res1 = ground_state(Hm, left_canonical(ϕ); gradtol=1e-6, maxiter=1000, preconditioner_type=1);
 
-left_canonical(ψ1)
-res1 = ground_state(Hm, left_canonical(ψ1); gradtol=1e-8, maxiter=1000, do_polar_retraction=false);
-res1[2]
+@load "P.jld2" P Pinv
+sp = eigvals(Hermitian(P))[χ+1:end]
+eigvals(Hermitian(Pinv))[χ+1:end]
+s = eigvals(Hermitian(sqrt(P) * Pinv * sqrt(P)))[χ+1:end]
 
-ψ2 = expand(res1[1], 3*χ);
-res2 = ground_state(Hm, ψ2; gradtol=1e-8, maxiter=1000, do_polar_retraction=false);
-res2a = ground_state(Hm, res2[1]; gradtol=1e-8, maxiter=1000, do_polar_retraction=false);
-res2[2]
+ψ1 = expand(res1[1], 2*χ);
+ψ1 = left_canonical(CMPSData(ψ1))[2];
 
-ψ2 = MultiBosonCMPSData_P(rand, χb, 2);
-res = ground_state(Hm, ψ2; gradtol=1e-8, maxiter=1000); 
-#res_wop = ground_state(Hm, ψ1; do_preconditioning = false, gradtol=1e-8, maxiter=250, m_LBFGS=25); 
-@save "multiboson/results/MDMinv_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res
-@save "multiboson/results/MDMinv_wop_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res_wop
+res_lm = ground_state(Hm, ψ1; Λs = Λs, gradtol=1e-2, maxiter=1000, do_prerun=true);
+ϕ1 = left_canonical(MultiBosonCMPSData_MDMinv(res_lm[1]));
+res2 = ground_state(Hm, ϕ1; gradtol=1e-6, maxiter=1000, preconditioner_type=1);
 
-χ = 8
-ψ1 = MultiBosonCMPSData_MDMinv(rand, χ, 2);
-res = ground_state(Hm, ψ1; gradtol=1e-8, maxiter=250); 
+@load "P.jld2" P Pinv
+sp = eigvals(Hermitian(P))[2*χ+1:end]
+eigvals(Hermitian(Pinv))[2*χ+1:end]
+s = eigvals(Hermitian(Pinv * sqrt(P)))[2*χ+1:end]
 
-χ = 16
-@load "multiboson/results/MDMinv_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_8.jld2" res
-ψ3 = expand(res[1], χ, perturb = 1e-4);
-ϕ3 = left_canonical(CMPSData(ψ3))[2];
-res_lm = ground_state(Hm, ϕ3; Λs=sqrt(10) .^ (4:10), gradtol=1e-2, do_benchmark=true);
-@save "multiboson/results/lagrangian_multiplier_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res_lm
+ψ2 = expand(res2[1], 3*χ);
+ψ2 = left_canonical(CMPSData(ψ2))[2];
 
-ψ3 = MultiBosonCMPSData_MDMinv(res_lm[1]);
-res = ground_state(Hm, ψ3; gradtol=1e-8, maxiter=1000); 
-res_wop = ground_state(Hm, ψ3; do_preconditioning=false, gradtol=1e-8, maxiter=1000); 
-@save "multiboson/results/MDMinv_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res
-@save "multiboson/results/MDMinv_wop_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res_wop
+res_lm2 = ground_state(Hm, ψ2; Λs = Λs, gradtol=1e-2, maxiter=1000, do_prerun=true);
+ϕ2 = left_canonical(MultiBosonCMPSData_MDMinv(res_lm2[1]));
+res3 = ground_state(Hm, ϕ2; gradtol=1e-6, maxiter=1000, preconditioner_type=1);
 
-################# analysis 1: benchmark MDMinv ####################
-χ = 16
-@load "multiboson/results/MDMinv_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res
-@load "multiboson/results/MDMinv_wop_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res_wop
-#@load "multiboson/results/lagrange_multiplier_further_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res_lagrange
-Es, gnorms = res[5][:, 1], res[5][:, 2]
-Es_wop, gnorms_wop = res_wop[5][:, 1], res_wop[5][:, 2]
-#Es_lagrange, gnorms_lagrange = res_lagrange[5][:, 1], res_lagrange[5][:, 2]
+ψ3 = expand(res3[1], 4*χ);
+ψ3 = left_canonical(CMPSData(ψ3))[2];
 
-fig = Figure(backgroundcolor = :white, fontsize=14, resolution= (600, 600))
+res_lm3 = ground_state(Hm, ψ3; Λs = Λs, gradtol=1e-2, maxiter=1000, do_prerun=true);
+ϕ3 = left_canonical(MultiBosonCMPSData_MDMinv(res_lm3[1]));
+res4 = ground_state(Hm, ϕ3; gradtol=1e-6, maxiter=1000, preconditioner_type=1);
 
-gf = fig[1:5, 1] = GridLayout()
-gl = fig[6, 1] = GridLayout()
 
-ax1 = Axis(gf[1, 1], 
-        xlabel = "steps",
-        ylabel = "energy",
-        )
-lines!(ax1, 1:length(Es), Es, label="w/ precond.")
-lines!(ax1, 1:length(Es_wop), Es_wop, label="w/o  precond.")
-#lines!(ax1, 1:length(Es_lagrange), Es_lagrange, label="further increasing Λ")
-@show fig
+res1[2], norm(res1[3])
+ψ1 = expand(res1[1], 2*χ);
+res2 = ground_state(Hm, left_canonical(ψ1); gradtol=1e-6, maxiter=1000, preconditioner_type=1);
+res2[2], norm(res2[3])
 
-ax2 = Axis(gf[2, 1], 
-        xlabel = "steps",
-        ylabel = "gnorm",
-        yscale = log10,
-        )
-lines!(ax2, 1:length(gnorms), gnorms, label="w/ precond.")
-lines!(ax2, 1:length(gnorms_wop), gnorms_wop, label="w/o precond.")
-#lines!(ax2, 1:length(gnorms_lagrange), gnorms_lagrange, label="further increasing Λ")
-#axislegend(ax2, position=:rb)
-@show fig
+H = Hm
+function fE_inf(ψ::MultiBosonCMPSData_MDMinv)
+    ψn = CMPSData(ψ)
+    OH = kinetic(ψn) + H.cs[1,1]* point_interaction(ψn, 1) + H.cs[2,2]* point_interaction(ψn, 2) + H.cs[1,2] * point_interaction(ψn, 1, 2) + H.cs[2,1] * point_interaction(ψn, 2, 1) - H.μs[1] * particle_density(ψn, 1) - H.μs[2] * particle_density(ψn, 2)
+    TM = TransferMatrix(ψn, ψn)
+    envL = permute(left_env(TM), (), (1, 2))
+    envR = permute(right_env(TM), (2, 1), ()) 
+    return real(tr(envL * OH * envR) / tr(envL * envR))
+end
 
-Legend(gl[1, 1], ax1, nbanks=2)
-@show fig
-save("multiboson/results/result_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).pdf", fig)
+g = fE_inf'(ψ0)
+g1 = CircularCMPS.diff_to_grad(ψ0, g)
+ρR = right_env(ψ0)
+cond(res1[1].M)
 
-####### analysis 2: benchmark the Lagrange multiplier step ############
-χ = 8
-@load "multiboson/results/lagrangian_multiplier_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).jld2" res_lm
-@load "multiboson/results/lagrangian_multiplier_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-1.jld2" res_lm1
-@load "multiboson/results/lagrangian_multiplier_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ)-2.jld2" res_lm2
-Es, gnorms = res_lm[5][:, 1], res_lm[5][:, 2]
-Es1, gnorms1 = res_lm1[5][:, 1], res_lm1[5][:, 2]
-Es2, gnorms2 = res_lm2[5][:, 1], res_lm2[5][:, 2]
+CircularCMPS.tangent_map1(ψ0, g1)
+eigvals(ρR)
+eigvals(res1[1].M)
 
-fig = Figure(backgroundcolor = :white, fontsize=14, resolution= (400, 600))
+ψ0.Ds[1] .= ψ0.Ds[2]
 
-gf = fig[1:5, 1] = GridLayout()
-gl = fig[6, 1] = GridLayout()
+function tangent_map_preconditioner(ψ::MultiBosonCMPSData_MDMinv{T}, _g::MultiBosonCMPSData_MDMinv_Grad{T}; κ::Int = -1) where T
 
-ax1 = Axis(gf[1, 1], 
-        xlabel = "steps",
-        ylabel = "energy",
-        )
-ylims!(ax1, -2.13, -2.00)
-lines!(ax1, 1:length(Es), Es, label="Λ=1e2->1e5, tol=1e-2")
-lines!(ax1, 1:length(Es1), Es1, label="Λ=1e5, tol=1e-2")
-lines!(ax1, 1:length(Es2), Es2, label="Λ=1e2->1e5, tol=1e-4")
-@show fig
+    ρR = right_env(ψ)
+    χ = size(ψ.M, 1)
+    d = length(ψ.Ds)
 
-ax2 = Axis(gf[2, 1], 
-        xlabel = "steps",
-        ylabel = "gnorm",
-        yscale = log10,
-        )
-lines!(ax2, 1:length(gnorms),  gnorms, label="Λ=1e2->1e5, tol=1e-2")
-lines!(ax2, 1:length(gnorms1), gnorms1, label="Λ=1e5, tol=1e-2")
-lines!(ax2, 1:length(gnorms2), gnorms2, label="Λ=1e2->1e5, tol=1e-4")
-#axislegend(ax2, position=:rb)
-@show fig
+    EL = ψ.M' * ψ.M
+    ER = ψ.Minv * ρR * ψ.Minv'
 
-Legend(gl[1, 1], ax1, nbanks=2)
-@show fig
-save("multiboson/results/result_$(c1)_$(c2)_$(c12)_$(μ1)_$(μ2)_$(χ).pdf", fig)
+    ΔDs = map(1:d) do jx
+        ΔD = zeros(ComplexF64, χ, χ)
+        for ix in axes(ΔD, 1), iy in axes(ΔD, 2)
+            ΔD[ix, iy] = (ix == iy) ? 1 : (ψ.Ds[jx][iy, iy] - ψ.Ds[jx][ix, ix]) 
+        end
+        ΔD
+    end 
+    
+    Ms = map(1:d) do jx
+        M = _g.X + ΔDs[jx]
+        if κ == 1
+            M .= M .* ΔDs[jx]
+            M = EL * M * ER
+            M .= M .* conj.(ΔDs[jx])
+        else
+            M .= M .* conj.(ΔDs[jx])
+            M = inv(EL) * M * inv(ER)
+            M .= M .* ΔDs[jx]
+        end
+        M
+    end
 
+    X_mapped = sum(Ms) / d
+    dDs_mapped = Diagonal.(Ms)
+
+    return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
+end
+
+g2 = tangent_map_preconditioner(ψ0, g1; κ = 1);
+g3 = tangent_map_preconditioner(ψ0, g2; κ = -1);
+
+@load "preconditioner_P.jld2" P
+P
+eigvals(Hermitian(P))[13:end]

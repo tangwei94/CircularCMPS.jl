@@ -289,10 +289,39 @@ function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb = 1e-2)
         return ψ
     end
     Δχ = χ - χ0
+
+    Qd0 = ψ.Minv * ψ.Q * ψ.M
+    Λ = maximum(norm.(eigvals(Qd0)))
    
-    Q = rand(ComplexF64, χ, χ)
-    Q = im*(Q + Q')
-    Q ./= norm(Q)
+    Ds = map(1:d) do ix
+        Diagonal(zeros(ComplexF64, χ))
+    end
+    for ix in 1:d 
+        Ddiag = view(Ds[ix], diagind(Ds[ix]))
+        Ddiag[1:χ0] .= diag(ψ.Ds[ix])
+        Ddiag[χ0+1:χ] .= maximum(norm.(Ddiag[1:χ0])) * (1 .+ rand(ComplexF64, Δχ))
+    end
+    Qd = perturb * rand(ComplexF64, χ, χ)
+    Qd[1:χ0, 1:χ0] .= Qd0
+    Qd[diagind(Qd)][χ0+1:χ] .-= 2*Λ
+    
+    M = Matrix{ComplexF64}(I, χ, χ)
+    Minv = Matrix{ComplexF64}(I, χ, χ)
+
+    return left_canonical(MultiBosonCMPSData_MDMinv(Qd, M, Minv, Ds))
+end
+
+function expand0(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb = 1e-2)
+    χ0, d = get_χ(ψ), get_d(ψ)
+    if χ <= χ0
+        @warn "new χ not bigger than χ0"
+        return ψ
+    end
+    Δχ = χ - χ0
+   
+    Q = zeros(ComplexF64, χ, χ)
+    #Q = im*(Q + Q')
+    #Q ./= norm(Q)
     M = Matrix{ComplexF64}(I, χ, χ)
     Ds = map(1:d) do ix
         Diagonal(zeros(ComplexF64, χ))
@@ -391,6 +420,68 @@ Base.eltype(a::MultiBosonCMPSData_MDMinv_Grad) = eltype(a.X)
 LinearAlgebra.dot(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad) = sum(dot.(a.dDs, b.dDs)) + dot(a.X, b.X)
 TensorKit.inner(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad) = real(dot(a, b))
 LinearAlgebra.norm(a::MultiBosonCMPSData_MDMinv_Grad) = sqrt(norm(dot(a, a)))
+function LinearAlgebra.lmul!(a::Number, g::MultiBosonCMPSData_MDMinv_Grad)
+    map(dD -> lmul!(a, dD), g.dDs)
+    g.X .*= a
+    return g
+end
+function LinearAlgebra.rmul!(g::MultiBosonCMPSData_MDMinv_Grad, a::Number)
+    map(dD -> rmul!(dD, a), g.dDs)
+    g.X .*= a
+    return g
+end
+function LinearAlgebra.axpy!(a, x::MultiBosonCMPSData_MDMinv_Grad, y::MultiBosonCMPSData_MDMinv_Grad)
+    map((xd, yd) -> axpy!(a, xd, yd), x.dDs, y.dDs)  # Handle diagonal components
+    axpy!(a, x.X, y.X)  # Handle matrix component
+    return y
+end
+
+function VectorInterface.scalartype(a::MultiBosonCMPSData_MDMinv_Grad)
+    return eltype(a.X)
+end
+function VectorInterface.zerovector(a::MultiBosonCMPSData_MDMinv_Grad)
+    return MultiBosonCMPSData_MDMinv_Grad(zerovector(a.dDs), zerovector(a.X))
+end
+function VectorInterface.zerovector!(a::MultiBosonCMPSData_MDMinv_Grad)
+    zerovector!(a.dDs)
+    zerovector!(a.X)
+    return a
+end
+function VectorInterface.zerovector!!(a::MultiBosonCMPSData_MDMinv_Grad)
+    zerovector!!(a.dDs)
+    zerovector!!(a.X)
+    return a
+end
+function VectorInterface.scale(a::MultiBosonCMPSData_MDMinv_Grad, α::Number)
+    dDs = scale(a.dDs, α)
+    X = scale(a.X, α)
+    return MultiBosonCMPSData_MDMinv_Grad(dDs, X)
+end
+function VectorInterface.scale!(a::MultiBosonCMPSData_MDMinv_Grad, α::Number)
+    scale!(a.dDs, α)
+    scale!(a.X, α)
+    return a
+end
+function VectorInterface.scale!!(a::MultiBosonCMPSData_MDMinv_Grad, α::Number)
+    scale!!(a.dDs, α)
+    scale!!(a.X, α)
+    return a
+end
+function VectorInterface.add(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad, α::Number=1, β::Number=1)
+    dDs = VectorInterface.add(a.dDs, b.dDs, α, β)
+    X = VectorInterface.add(a.X, b.X, α, β)
+    return MultiBosonCMPSData_MDMinv_Grad(dDs, X)
+end
+function VectorInterface.add!(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad, α::Number=1, β::Number=1)
+    VectorInterface.add!(a.dDs, b.dDs, α, β)
+    VectorInterface.add!(a.X, b.X, α, β)
+    return a
+end
+function VectorInterface.add!!(a::MultiBosonCMPSData_MDMinv_Grad, b::MultiBosonCMPSData_MDMinv_Grad, α::Number=1, β::Number=1)
+    VectorInterface.add!!(a.dDs, b.dDs, α, β)
+    VectorInterface.add!!(a.X, b.X, α, β)
+    return a
+end
 
 """
     Base.similar(a::MultiBosonCMPSData_MDMinv_Grad)
@@ -451,23 +542,79 @@ function tangent_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv
     return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
 end
 
-function precondition_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing, ϵ = 1e-10)
+function tangent_map1(ψ::MultiBosonCMPSData_MDMinv{T}, g::MultiBosonCMPSData_MDMinv_Grad{T}; ρR = nothing, ϵ = 1e-10) where T
     if isnothing(ρR)
         ρR = right_env(ψ)
     end
 
-    ρRinv = inv(ρR + ϵ * id(space(ρR, 1)))
+    Id = Matrix{eltype(ρR)}(I, size(ρR))
+    ρRinv = inv(ρR + ϵ * Id)
 
-    PL = ψ.Minv * ψ.Minv'
-    PR = ψ.M' * convert(Array, ρRinv) * ψ.M
+    EL = ψ.Minv * ψ.Minv' + sqrt(ϵ) * Id
+    ER = ψ.M' * ρRinv * ψ.M + sqrt(ϵ) * Id
+    Ms = [EL * (g.X * D - D * g.X + dD) * ER for (dD, D) in zip(g.dDs, ψ.Ds)] 
 
-    Cs_mapped = [PL * (g.X * D - D * g.X + dD) * PR for (dD, D) in zip(g.dDs, ψ.Ds)]
-
-    dDs_mapped = Diagonal.(Cs_mapped)
-    X_mapped = projection_X(g.dDs, Cs_mapped)
+    X_mapped = sum([M * D' - D' * M for (M, D) in zip(Ms, ψ.Ds)])
+    dDs_mapped = Diagonal.(Ms)
 
     return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
+end
+
+function preconditioner_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing, ϵ = 1e-10)
+    if isnothing(ρR)
+        ρR = right_env(ψ)
+    end
+    χ = size(ψ.M, 1)
+
+    function _f(gx::MultiBosonCMPSData_MDMinv_Grad, ::Val{true})
+        return tangent_map(ψ, gx; ρR = ρR) + ϵ * gx
+    end
+    function _f(gx::MultiBosonCMPSData_MDMinv_Grad, ::Val{false})
+        return tangent_map(ψ, gx; ρR = ρR) + ϵ * gx
+    end
+
+    g_mapped, _ = lssolve(_f, g; verbosity = 0, tol=1e-12, maxiter=χ^3)
+    return g_mapped
+end
+
+function preconditioner_map1(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ϵ = 1e-10, ρR = nothing)
+    if isnothing(ρR)
+        ρR = right_env(ψ)
+    end
+
+    Id = Matrix{eltype(ρR)}(I, size(ρR))
+    ρRinv = inv(ρR + ϵ * Id)
+
+    Ws_mapped = [ψ.M * (g.X * D - D * g.X + dD) * ψ.Minv * ρRinv for (dD, D) in zip(g.dDs, ψ.Ds)]
+    function _f(gx::MultiBosonCMPSData_MDMinv_Grad, ::Val{false})
+        return [ψ.M * (gx.X * D - D * gx.X + dD) * ψ.Minv for (dD, D) in zip(gx.dDs, ψ.Ds)]
+    end 
+    function _f(Ws::Vector{Matrix{T}}, ::Val{true}) where T
+        Cs = [ψ.M' * W * ψ.Minv' for W in Ws]
+        dDs_mapped = Diagonal.(Cs)
+        X_mapped = sum([M * D' - D' * M for (M, D) in zip(Ws, ψ.Ds)])
+
+        return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
+    end
     
+    χ = size(ψ.M, 1)
+    g_mapped, _ = lssolve(_f, Ws_mapped; verbosity = 1, tol=1e-12, maxiter=χ^3)
+    return g_mapped
+end
+
+function preconditioner_map2(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ϵ = 1e-10, ρR = nothing)
+    if isnothing(ρR)
+        ρR = right_env(ψ)
+    end
+
+    Id = Matrix{eltype(ρR)}(I, size(ρR))
+    ρRinv = inv(ρR)
+
+    C0s = [(g.X * D - D * g.X + dD) for (dD, D) in zip(g.dDs, ψ.Ds)]
+    Cs = [ψ.M' * ψ.M * C0 * ψ.Minv * ρRinv * ψ.Minv' + ϵ * C0 for C0 in C0s]
+    dDs = Diagonal.(Cs)
+    X = projection_X(Cs, ψ.Ds)
+    return MultiBosonCMPSData_MDMinv_Grad(dDs, X)
 end
 
 function projection_X(offdiags::Vector{Matrix{T}}, Ds::Vector{Diagonal{T, Vector{T}}}) where T
@@ -480,5 +627,8 @@ function projection_X(offdiags::Vector{Matrix{T}}, Ds::Vector{Diagonal{T, Vector
         dn = sum([dot(D[iy, iy] - D[ix, ix], D[iy, iy] - D[ix, ix]) for D in Ds])
         projected_X[ix, iy] = (ix == iy) ? 0 : up / dn
     end
+    residual = sum(norm(projected_X * D - D * projected_X - (offdiag - Diagonal(offdiag))) for (D, offdiag) in zip(Ds, offdiags))
+    @info "residual, $residual, norm of projected_X, $(norm(projected_X))"
     return projected_X
 end
+

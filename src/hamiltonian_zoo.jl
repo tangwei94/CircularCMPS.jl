@@ -360,7 +360,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Rea
     return ψ, E, grad, total_numfg, hcat(E_history, gnorm_history, err_history)
 end
 
-function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x), m_LBFGS::Int=8, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
+function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; preconditioner_type::Int=1, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x), m_LBFGS::Int=8, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
     if H.L < Inf
         error("finite size not implemented yet.")
     end
@@ -425,28 +425,89 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
     function _precondition(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
         ψ = x.data
         χ, d = get_χ(ψ), get_d(ψ)
+        ρR = right_env(ψ)
 
         if ismissing(x.preconditioner)
+            @show x.df, norm(dψ) # FIXME. norm(dψ) here is very large. why?
             ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
             ϵ = max(1e-12, ϵ)
 
             P = zeros(ComplexF64, χ^2+d*χ, χ^2+d*χ)
+            Pinv = zeros(ComplexF64, χ^2+d*χ, χ^2+d*χ)
 
             blas_num_threads = LinearAlgebra.BLAS.get_num_threads()
             LinearAlgebra.BLAS.set_num_threads(1)
+
             Threads.@threads for ix in 1:(χ^2+d*χ)
                 v = zeros(ComplexF64, χ^2+d*χ)
                 v[ix] = 1
                 g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
                 g1 = tangent_map(ψ, g)
                 P[:, ix] = vec(g1)
+
+                ginv = preconditioner_map2(ψ, g; ϵ = ϵ, ρR = ρR)
+                Pinv[:, ix] = vec(ginv)
             end 
             LinearAlgebra.BLAS.set_num_threads(blas_num_threads)
+                        
             P[diagind(P)] .+= ϵ
+            Pinv[diagind(Pinv)] .+= ϵ
+            @save "P.jld2" P Pinv
+
             x.preconditioner = qr(P)
         end
         vp = x.preconditioner \ vec(dψ)
         PG = MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
+
+        return PG
+    end
+    function _precondition1(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
+        ψ = x.data
+        χ, d = get_χ(ψ), get_d(ψ)
+
+        ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
+        ϵ = max(1e-12, ϵ)
+        PG = precondition_map(ψ, dψ; ϵ = ϵ)
+
+        return PG
+    end
+    function _precondition2(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
+        ψ = x.data
+        χ, d = get_χ(ψ), get_d(ψ)
+
+        ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
+        ϵ = max(1e-12, ϵ)
+        PG = precondition_map_1(ψ, dψ; ϵ = ϵ)
+
+        return PG
+    end
+    function _precondition4(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
+        ψ = x.data
+        ρR = right_env(ψ)
+
+        ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
+        ϵ = max(1e-12, ϵ)
+        PG = preconditioner_map(ψ, dψ; ρR = ρR, ϵ = ϵ)
+
+        return PG
+    end
+    function _precondition5(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
+        ψ = x.data
+        ρR = right_env(ψ)
+
+        ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
+        ϵ = max(1e-12, ϵ)
+        PG = tangent_map1(ψ, dψ; ρR = ρR, ϵ = ϵ)
+
+        return PG
+    end
+    function _precondition6(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
+        ψ = x.data
+        ρR = right_env(ψ)
+
+        ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
+        ϵ = max(1e-12, ϵ)
+        PG = preconditioner_map1(ψ, dψ; ρR = ρR, ϵ = ϵ)
 
         return PG
     end
@@ -464,12 +525,29 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
 
     optalg_LBFGS = LBFGS(m_LBFGS; maxiter=maxiter, gradtol=gradtol, acceptfirst=false, verbosity=2)
 
-    if do_preconditioning
-        @show "doing precondition"
+    if preconditioner_type == 1
+        @show "using preconditioner 1"
         precondition1 = _precondition
-    else
+    elseif preconditioner_type == 2
+        @show "using preconditioner 2"
+        precondition1 = _precondition1
+    elseif preconditioner_type == 3
+        @show "using preconditioner 2"
+        precondition1 = _precondition2
+    elseif preconditioner_type == 4
+        @show "using preconditioner 4"
+        precondition1 = _precondition4
+    elseif preconditioner_type == 5
+        @show "using preconditioner 5"
+        precondition1 = _precondition5
+    elseif preconditioner_type == 6
+        @show "using preconditioner 6"
+        precondition1 = _precondition6
+    elseif preconditioner_type == 0
         @show "no precondition"
         precondition1 = _no_precondition
+    else
+        error("preconditioner type not supported")
     end
 
     x0 = OptimState(left_canonical(ψ0)) # FIXME. needs to do it twice??
