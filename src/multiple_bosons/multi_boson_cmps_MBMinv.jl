@@ -208,15 +208,15 @@ function MultiBosonCMPSData_MBMinv_Grad(v::Vector{T}, χb::Int, d::Int) where T
     return MultiBosonCMPSData_MBMinv_Grad{T}(dBs, X)
 end
 
-Base.:+(a::MultiBosonCMPSData_MBMinv_Grad, b::MultiBosonCMPSData_tnp_Grad) = MultiBosonCMPSData_tnp_Grad(a.dBs .+ b.dBs, a.X + b.X)
-Base.:-(a::MultiBosonCMPSData_MBMinv_Grad, b::MultiBosonCMPSData_tnp_Grad) = MultiBosonCMPSData_tnp_Grad(a.dBs .- b.dBs, a.X - b.X)
-Base.:*(a::MultiBosonCMPSData_MBMinv_Grad, x::Number) = MultiBosonCMPSData_tnp_Grad(a.dBs * x, a.X * x)
-Base.:*(x::Number, a::MultiBosonCMPSData_MBMinv_Grad) = MultiBosonCMPSData_tnp_Grad(a.dBs * x, a.X * x)
+Base.:+(a::MultiBosonCMPSData_MBMinv_Grad, b::MultiBosonCMPSData_MBMinv_Grad) = MultiBosonCMPSData_MBMinv_Grad(a.dBs .+ b.dBs, a.X + b.X)
+Base.:-(a::MultiBosonCMPSData_MBMinv_Grad, b::MultiBosonCMPSData_MBMinv_Grad) = MultiBosonCMPSData_MBMinv_Grad(a.dBs .- b.dBs, a.X - b.X)
+Base.:*(a::MultiBosonCMPSData_MBMinv_Grad, x::Number) = MultiBosonCMPSData_MBMinv_Grad(a.dBs * x, a.X * x)
+Base.:*(x::Number, a::MultiBosonCMPSData_MBMinv_Grad) = MultiBosonCMPSData_MBMinv_Grad(a.dBs * x, a.X * x)
 Base.eltype(a::MultiBosonCMPSData_MBMinv_Grad) = eltype(a.X)
-LinearAlgebra.dot(a::MultiBosonCMPSData_MBMinv_Grad, b::MultiBosonCMPSData_tnp_Grad) = sum(dot.(a.dBs, b.dBs)) + dot(a.X, b.X)
-TensorKit.inner(a::MultiBosonCMPSData_MBMinv_Grad, b::MultiBosonCMPSData_tnp_Grad) = real(dot(a, b))
+LinearAlgebra.dot(a::MultiBosonCMPSData_MBMinv_Grad, b::MultiBosonCMPSData_MBMinv_Grad) = sum(dot.(a.dBs, b.dBs)) + dot(a.X, b.X)
+TensorKit.inner(a::MultiBosonCMPSData_MBMinv_Grad, b::MultiBosonCMPSData_MBMinv_Grad) = real(dot(a, b))
 LinearAlgebra.norm(a::MultiBosonCMPSData_MBMinv_Grad) = sqrt(norm(dot(a, a)))
-Base.similar(a::MultiBosonCMPSData_MBMinv_Grad) = MultiBosonCMPSData_tnp_Grad(similar.(a.dBs), similar(a.X))
+Base.similar(a::MultiBosonCMPSData_MBMinv_Grad) = MultiBosonCMPSData_MBMinv_Grad(similar.(a.dBs), similar(a.X))
 Base.vec(a::MultiBosonCMPSData_MBMinv_Grad) = vcat(vec.(a.dBs)..., vec(a.X))
 
 function randomize!(a::MultiBosonCMPSData_MBMinv_Grad)
@@ -237,7 +237,7 @@ function diff_to_grad(ψ::MultiBosonCMPSData_MBMinv, ∂ψ::MultiBosonCMPSData_t
     return MultiBosonCMPSData_MBMinv_Grad(gBs, gX)
 end
 
-function tangent_map(ψ::MultiBosonCMPSData_MBMinv, g::MultiBosonCMPSData_tnp_Grad; ρR = nothing)
+function tangent_map(ψ::MultiBosonCMPSData_MBMinv, g::MultiBosonCMPSData_MBMinv_Grad; ρR = nothing)
     if isnothing(ρR)
         ρR = right_env(ψ)
     end

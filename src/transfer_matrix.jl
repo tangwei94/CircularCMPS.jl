@@ -162,8 +162,8 @@ function left_env(K::AbstractTensorMap{T, S, 2, 2}) where {T,S}
 end
 
 function Kmat_pseudo_inv(K::AbstractTensorMap{T, S, 2, 2}, λ::Number) where {T,S}
-    χ = dim(_firstspace(K))
-    IdK = id((ℂ^χ)'⊗ℂ^χ)
+    χ = dim(_firstspace(K)) # FIXME. not compactible with symmetric tensor
+    IdK = id((ℂ^χ)'⊗ℂ^χ) # FIXME. not compactible with symmetric tensor
     K1 = K_permute_back(K) - λ * IdK # normalize
 
     Λ, U = eigen(K1)

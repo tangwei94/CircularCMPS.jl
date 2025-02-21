@@ -5,9 +5,6 @@ struct MultiBosonCMPSData_diag{T<:Number} <: AbstractCMPSData
     Λs::Matrix{T}
 end
 
-function MultiBosonCMPSData_diag(Q::Matrix{T}, Λs::Matrix{T}) where T<:Number
-    return MultiBosonCMPSData_diag{T}(Q, Λs)
-end
 function MultiBosonCMPSData_diag(f, χ::Integer, d::Integer)
     Q = f(ComplexF64, χ, χ)
     Λs = f(ComplexF64, χ, d)
@@ -147,7 +144,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; do
             envR = permute(right_env(TM), (2, 1), ()) 
             return real(tr(envL * OH * envR) / tr(envL * envR))
         end
-        #function fE_inf(ψm::MultiBosonCMPSData)
+        #function fE_inf(ψm::MultiBosonCMPSData_diag)
         #    ψ = CMPSData(ψm)
         #    OH = kinetic(ψ) + point_interaction(ψ, cs) - particle_density(ψ, μs)
 
@@ -189,11 +186,11 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; do
         end
 
         # only for comparison
-        function _no_precondition(ψ::MultiBosonCMPSData, dψ::MultiBosonCMPSData)
+        function _no_precondition(ψ::MultiBosonCMPSData_diag, dψ::MultiBosonCMPSData_diag)
             return dψ
         end
 
-        function _precondition(ψ0::MultiBosonCMPSData, dψ::MultiBosonCMPSData)
+        function _precondition(ψ0::MultiBosonCMPSData_diag, dψ::MultiBosonCMPSData_diag)
             # TODO. avoid the re-computation of K, λ, EL, ER, Kinv
             ψn = CMPSData(ψ0)
             K = K_permute(K_mat(ψn, ψn))

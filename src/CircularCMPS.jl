@@ -81,11 +81,12 @@ include("ground_state.jl")
 include("excited_state.jl");
 include("optim_alg.jl");
 include("transfer_matrix.jl");
+include("multiple_bosons/hamiltonian_zoo.jl");
+include("multiple_bosons/multi_boson_cmps_via_penalty.jl");
 include("multiple_bosons/multi_boson_cmps_diag.jl");
 include("multiple_bosons/multi_boson_cmps_tnp.jl");
 include("multiple_bosons/multi_boson_cmps_MBMinv.jl");
 include("multiple_bosons/multi_boson_cmps_MDMinv.jl");
-include("multiple_bosons/hamiltonian_zoo.jl")
 #include("multiple_bosons/multi_boson_cmps_MCMinv.jl");
 
 # cMPO code

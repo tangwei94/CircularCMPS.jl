@@ -12,8 +12,8 @@ c12 = 0.5
 
 Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf) 
 
-χb = 2
-χ = 4
+χb = 2 
+χ = 4 
 
 ################# computation ####################
 
