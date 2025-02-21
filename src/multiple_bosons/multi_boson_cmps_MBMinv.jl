@@ -1,9 +1,12 @@
-mutable struct MultiBosonCMPSData_tnp{T<:Number} <: AbstractCMPSData
+# multi-boson cMPS with MBMinv parameterization
+# The R matrices are parameterized as M * (I ⊗ ... ⊗ B ⊗ I ⊗ ... ⊗ I) * Minv
+
+mutable struct MultiBosonCMPSData_MBMinv{T<:Number} <: AbstractCMPSData
     Q::Matrix{T}
     M::Matrix{T}
     Minv::Matrix{T}
     Bs::Vector{Matrix{T}}
-    function MultiBosonCMPSData_tnp{T}(Q::Matrix{T}, M::Matrix{T}, Minv::Matrix{T}, Bs::Vector{Matrix{T}}) where T
+    function MultiBosonCMPSData_MBMinv{T}(Q::Matrix{T}, M::Matrix{T}, Minv::Matrix{T}, Bs::Vector{Matrix{T}}) where T
         sizes_B = size.(Bs, 1)
         if !(size(Q, 1) == size(M, 1) == size(Minv, 1) == prod(sizes_B))
             throw(ArgumentError("size(Q, 1) == size(M, 1) == size(Minv, 1) == prod(sizes_B)"))
@@ -16,14 +19,14 @@ mutable struct MultiBosonCMPSData_tnp{T<:Number} <: AbstractCMPSData
     end
 end
 
-function MultiBosonCMPSData_tnp(Q::Matrix{T}, M::Matrix{T}, Minv::Matrix{T}, Bs::Vector{Matrix{T}}) where T
-    return MultiBosonCMPSData_tnp{T}(Q, M, Minv, Bs)
+function MultiBosonCMPSData_MBMinv(Q::Matrix{T}, M::Matrix{T}, Minv::Matrix{T}, Bs::Vector{Matrix{T}}) where T
+    return MultiBosonCMPSData_MBMinv{T}(Q, M, Minv, Bs)
 end
-function MultiBosonCMPSData_tnp(Q::Matrix{T}, M::Matrix{T}, Bs::Vector{Matrix{T}}) where T
+function MultiBosonCMPSData_MBMinv(Q::Matrix{T}, M::Matrix{T}, Bs::Vector{Matrix{T}}) where T
     Minv = inv(M)
-    return MultiBosonCMPSData_tnp{T}(Q, M, Minv, Bs)
+    return MultiBosonCMPSData_MBMinv{T}(Q, M, Minv, Bs)
 end
-function MultiBosonCMPSData_tnp(f, χb::Integer, d::Integer)
+function MultiBosonCMPSData_MBMinv(f, χb::Integer, d::Integer)
     χ = χb^d
     Q = f(ComplexF64, χ, χ)
     K = f(ComplexF64, χ, χ)
@@ -31,24 +34,24 @@ function MultiBosonCMPSData_tnp(f, χb::Integer, d::Integer)
     Minv = exp(-im * (K + K'))
 
     Bs = map(ix -> f(ComplexF64, χb, χb), 1:d)
-    return MultiBosonCMPSData_tnp(Q, M, Minv, Bs) 
+    return MultiBosonCMPSData_MBMinv(Q, M, Minv, Bs) 
 end
 
 # operations on the data. not on the cMPS
-Base.:+(ψ::MultiBosonCMPSData_tnp, ϕ::MultiBosonCMPSData_tnp) = MultiBosonCMPSData_tnp(ψ.Q + ϕ.Q, ψ.M + ϕ.M, ψ.Bs + ϕ.Bs)
-Base.:-(ψ::MultiBosonCMPSData_tnp, ϕ::MultiBosonCMPSData_tnp) = MultiBosonCMPSData_tnp(ψ.Q - ϕ.Q, ψ.M - ϕ.M, ψ.Bs - ϕ.Bs)
-Base.:*(ψ::MultiBosonCMPSData_tnp, x::Number) = MultiBosonCMPSData_tnp(ψ.Q * x, ψ.M * x, ψ.Minv / x, ψ.Bs * x)
-Base.:*(x::Number, ψ::MultiBosonCMPSData_tnp) = MultiBosonCMPSData_tnp(ψ.Q * x, ψ.M * x, ψ.Minv / x, ψ.Bs * x)
-Base.eltype(ψ::MultiBosonCMPSData_tnp) = eltype(ψ.Q)
-LinearAlgebra.dot(ψ1::MultiBosonCMPSData_tnp, ψ2::MultiBosonCMPSData_tnp) = dot(ψ1.Q, ψ2.Q) + dot(ψ1.M, ψ2.M) + sum(dot.(ψ1.Bs, ψ2.Bs))
-LinearAlgebra.norm(ψ::MultiBosonCMPSData_tnp) = sqrt(norm(dot(ψ, ψ)))
+Base.:+(ψ::MultiBosonCMPSData_MBMinv, ϕ::MultiBosonCMPSData_tnp) = MultiBosonCMPSData_tnp(ψ.Q + ϕ.Q, ψ.M + ϕ.M, ψ.Bs + ϕ.Bs)
+Base.:-(ψ::MultiBosonCMPSData_MBMinv, ϕ::MultiBosonCMPSData_tnp) = MultiBosonCMPSData_tnp(ψ.Q - ϕ.Q, ψ.M - ϕ.M, ψ.Bs - ϕ.Bs)
+Base.:*(ψ::MultiBosonCMPSData_MBMinv, x::Number) = MultiBosonCMPSData_tnp(ψ.Q * x, ψ.M * x, ψ.Minv / x, ψ.Bs * x)
+Base.:*(x::Number, ψ::MultiBosonCMPSData_MBMinv) = MultiBosonCMPSData_tnp(ψ.Q * x, ψ.M * x, ψ.Minv / x, ψ.Bs * x)
+Base.eltype(ψ::MultiBosonCMPSData_MBMinv) = eltype(ψ.Q)
+LinearAlgebra.dot(ψ1::MultiBosonCMPSData_MBMinv, ψ2::MultiBosonCMPSData_tnp) = dot(ψ1.Q, ψ2.Q) + dot(ψ1.M, ψ2.M) + sum(dot.(ψ1.Bs, ψ2.Bs))
+LinearAlgebra.norm(ψ::MultiBosonCMPSData_MBMinv) = sqrt(norm(dot(ψ, ψ)))
 
-function Base.similar(ψ::MultiBosonCMPSData_tnp) 
+function Base.similar(ψ::MultiBosonCMPSData_MBMinv) 
     Q = similar(ψ.Q)
     Bs = similar.(ψ.Bs)
-    return MultiBosonCMPSData_tnp(Q, copy(ψ.M), copy(ψ.Minv), Bs)
+    return MultiBosonCMPSData_MBMinv(Q, copy(ψ.M), copy(ψ.Minv), Bs)
 end
-function randomize!(ψ::MultiBosonCMPSData_tnp)
+function randomize!(ψ::MultiBosonCMPSData_MBMinv)
     T = eltype(ψ)
     map!(x -> rand(T), ψ.Q, ψ.Q)
     map!(x -> rand(T), ψ.M, ψ.M)
@@ -59,9 +62,9 @@ function randomize!(ψ::MultiBosonCMPSData_tnp)
     return ψ
 end
 
-@inline get_χ(ψ::MultiBosonCMPSData_tnp) = size(ψ.Q, 1)
-@inline get_χb(ψ::MultiBosonCMPSData_tnp) = size(ψ.Bs[1], 1)
-@inline get_d(ψ::MultiBosonCMPSData_tnp) = length(ψ.Bs)
+@inline get_χ(ψ::MultiBosonCMPSData_MBMinv) = size(ψ.Q, 1)
+@inline get_χb(ψ::MultiBosonCMPSData_MBMinv) = size(ψ.Bs[1], 1)
+@inline get_d(ψ::MultiBosonCMPSData_MBMinv) = length(ψ.Bs)
 
 function construct_full_block_matrix(B::Matrix{T}, d::Integer, ix::Integer) where T
     χb = size(B, 1)
@@ -88,7 +91,7 @@ function extract_block_matrix(As::Vector{Matrix{T}}) where T<:Number
     d = length(As)
     return map(ix -> extract_block_matrix(As[ix], d, ix), 1:d)
 end
-function CMPSData(ψ::MultiBosonCMPSData_tnp)
+function CMPSData(ψ::MultiBosonCMPSData_MBMinv)
     χ, d = get_χ(ψ), get_d(ψ)
     Q = TensorMap(ψ.Q, ℂ^χ, ℂ^χ)
     Rs = map(1:d) do ix
@@ -98,7 +101,7 @@ function CMPSData(ψ::MultiBosonCMPSData_tnp)
     return CMPSData(Q, Rs)
 end
 
-function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_tnp) 
+function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_MBMinv) 
     d = get_d(ψ)
     M, Minv = ψ.M, ψ.Minv 
     Bs = ψ.Bs 
@@ -109,12 +112,12 @@ function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_tnp)
         ∂M = sum(map(1:d) do ix
             ∂ψ.Rs[ix].data * Minv' * Cs[ix]' - Minv' * Cs[ix]' * M' * ∂ψ.Rs[ix].data * Minv'
         end)
-        return NoTangent(), MultiBosonCMPSData_tnp(∂Q, ∂M, ∂Bs) 
+        return NoTangent(), MultiBosonCMPSData_MBMinv(∂Q, ∂M, ∂Bs) 
     end
     return CMPSData(ψ), CMPSData_pushback
 end
 
-function left_canonical(ψ::MultiBosonCMPSData_tnp)
+function left_canonical(ψ::MultiBosonCMPSData_MBMinv)
     ψc = CMPSData(ψ)
 
     X, ψcl = left_canonical(ψc)
@@ -122,9 +125,9 @@ function left_canonical(ψ::MultiBosonCMPSData_tnp)
     M = X.data * ψ.M 
     Minv = ψ.Minv * inv(X.data)
 
-    return MultiBosonCMPSData_tnp(Q, M, Minv, deepcopy(ψ.Bs))
+    return MultiBosonCMPSData_MBMinv(Q, M, Minv, deepcopy(ψ.Bs))
 end
-function right_env(ψ::MultiBosonCMPSData_tnp)
+function right_env(ψ::MultiBosonCMPSData_MBMinv)
     # transfer matrix
     ψc = CMPSData(ψ)
     fK = transfer_matrix(ψc, ψc)
@@ -139,7 +142,7 @@ function right_env(ψ::MultiBosonCMPSData_tnp)
     return U * Diagonal(S) * U'
 end
 
-function retract_left_canonical(ψ::MultiBosonCMPSData_tnp{T}, α::Float64, dBs::Vector{Matrix{T}}, X::Matrix{T}) where T
+function retract_left_canonical(ψ::MultiBosonCMPSData_MBMinv{T}, α::Float64, dBs::Vector{Matrix{T}}, X::Matrix{T}) where T
     # check left canonical form 
     ψc = CMPSData(ψ)
     ϵ = norm(ψc.Q + ψc.Q' + sum([R' * R for R in ψc.Rs]))
@@ -158,10 +161,10 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_tnp{T}, α::Float64, dBs:
 
     Q = ψ.Q - sum([R' * ΔR + 0.5 * ΔR' * ΔR for (R, ΔR) in zip(Rs, ΔRs)])
 
-    return MultiBosonCMPSData_tnp(Q, M, Minv, Bs)
+    return MultiBosonCMPSData_MBMinv(Q, M, Minv, Bs)
 end
 
-#function expand(ψ::MultiBosonCMPSData_tnp, χ::Integer; perturb::Float64=1e-3)
+#function expand(ψ::MultiBosonCMPSData_MBMinv, χ::Integer; perturb::Float64=1e-3)
 #    χ0, d = get_χ(ψ), get_d(ψ)
 #    if χ <= χ0
 #        @warn "new χ not bigger than χ0"
@@ -184,39 +187,39 @@ end
 #        Diagonal(vcat(diag(ψ.Bs[ix]), fill(perturb, 1:χ-χ0)))
 #    end
 #
-#    return MultiBosonCMPSData_tnp(Q, M, Bs) 
+#    return MultiBosonCMPSData_MBMinv(Q, M, Bs) 
 #end
 
-struct MultiBosonCMPSData_tnp_Grad{T<:Number} <: AbstractCMPSData
+struct MultiBosonCMPSData_MBMinv_Grad{T<:Number} <: AbstractCMPSData
     dBs::Vector{Matrix{T}}
     X::Matrix{T}
-    #function MultiBosonCMPSData_tnp_Grad{T}(dBs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
+    #function MultiBosonCMPSData_MBMinv_Grad{T}(dBs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
     #    X[diagind(X)] .= 0 # force the diagonal part to be zero
     #    return new{T}(dBs, X)
     #end
 end
-function MultiBosonCMPSData_tnp_Grad(dBs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
-    return MultiBosonCMPSData_tnp_Grad{T}(dBs, X)
+function MultiBosonCMPSData_MBMinv_Grad(dBs::Vector{Diagonal{T, Vector{T}}}, X::Matrix{T}) where T
+    return MultiBosonCMPSData_MBMinv_Grad{T}(dBs, X)
 end
-function MultiBosonCMPSData_tnp_Grad(v::Vector{T}, χb::Int, d::Int) where T
+function MultiBosonCMPSData_MBMinv_Grad(v::Vector{T}, χb::Int, d::Int) where T
     χ = χb^d
     dBs = map(ix -> reshape(v[(χb^2)*(ix-1)+1:(χb^2)*ix], χb, χb), 1:d)
     X = reshape(v[d*(χb^2)+1:end], χ, χ)
-    return MultiBosonCMPSData_tnp_Grad{T}(dBs, X)
+    return MultiBosonCMPSData_MBMinv_Grad{T}(dBs, X)
 end
 
-Base.:+(a::MultiBosonCMPSData_tnp_Grad, b::MultiBosonCMPSData_tnp_Grad) = MultiBosonCMPSData_tnp_Grad(a.dBs .+ b.dBs, a.X + b.X)
-Base.:-(a::MultiBosonCMPSData_tnp_Grad, b::MultiBosonCMPSData_tnp_Grad) = MultiBosonCMPSData_tnp_Grad(a.dBs .- b.dBs, a.X - b.X)
-Base.:*(a::MultiBosonCMPSData_tnp_Grad, x::Number) = MultiBosonCMPSData_tnp_Grad(a.dBs * x, a.X * x)
-Base.:*(x::Number, a::MultiBosonCMPSData_tnp_Grad) = MultiBosonCMPSData_tnp_Grad(a.dBs * x, a.X * x)
-Base.eltype(a::MultiBosonCMPSData_tnp_Grad) = eltype(a.X)
-LinearAlgebra.dot(a::MultiBosonCMPSData_tnp_Grad, b::MultiBosonCMPSData_tnp_Grad) = sum(dot.(a.dBs, b.dBs)) + dot(a.X, b.X)
-TensorKit.inner(a::MultiBosonCMPSData_tnp_Grad, b::MultiBosonCMPSData_tnp_Grad) = real(dot(a, b))
-LinearAlgebra.norm(a::MultiBosonCMPSData_tnp_Grad) = sqrt(norm(dot(a, a)))
-Base.similar(a::MultiBosonCMPSData_tnp_Grad) = MultiBosonCMPSData_tnp_Grad(similar.(a.dBs), similar(a.X))
-Base.vec(a::MultiBosonCMPSData_tnp_Grad) = vcat(vec.(a.dBs)..., vec(a.X))
+Base.:+(a::MultiBosonCMPSData_MBMinv_Grad, b::MultiBosonCMPSData_tnp_Grad) = MultiBosonCMPSData_tnp_Grad(a.dBs .+ b.dBs, a.X + b.X)
+Base.:-(a::MultiBosonCMPSData_MBMinv_Grad, b::MultiBosonCMPSData_tnp_Grad) = MultiBosonCMPSData_tnp_Grad(a.dBs .- b.dBs, a.X - b.X)
+Base.:*(a::MultiBosonCMPSData_MBMinv_Grad, x::Number) = MultiBosonCMPSData_tnp_Grad(a.dBs * x, a.X * x)
+Base.:*(x::Number, a::MultiBosonCMPSData_MBMinv_Grad) = MultiBosonCMPSData_tnp_Grad(a.dBs * x, a.X * x)
+Base.eltype(a::MultiBosonCMPSData_MBMinv_Grad) = eltype(a.X)
+LinearAlgebra.dot(a::MultiBosonCMPSData_MBMinv_Grad, b::MultiBosonCMPSData_tnp_Grad) = sum(dot.(a.dBs, b.dBs)) + dot(a.X, b.X)
+TensorKit.inner(a::MultiBosonCMPSData_MBMinv_Grad, b::MultiBosonCMPSData_tnp_Grad) = real(dot(a, b))
+LinearAlgebra.norm(a::MultiBosonCMPSData_MBMinv_Grad) = sqrt(norm(dot(a, a)))
+Base.similar(a::MultiBosonCMPSData_MBMinv_Grad) = MultiBosonCMPSData_tnp_Grad(similar.(a.dBs), similar(a.X))
+Base.vec(a::MultiBosonCMPSData_MBMinv_Grad) = vcat(vec.(a.dBs)..., vec(a.X))
 
-function randomize!(a::MultiBosonCMPSData_tnp_Grad)
+function randomize!(a::MultiBosonCMPSData_MBMinv_Grad)
     T = eltype(a)
     for ix in eachindex(a.dBs)
         map!(x -> rand(T), a.dBs[ix], a.dBs[ix])
@@ -225,16 +228,16 @@ function randomize!(a::MultiBosonCMPSData_tnp_Grad)
     return a
 end
 
-function diff_to_grad(ψ::MultiBosonCMPSData_tnp, ∂ψ::MultiBosonCMPSData_tnp)
+function diff_to_grad(ψ::MultiBosonCMPSData_MBMinv, ∂ψ::MultiBosonCMPSData_tnp)
     Rs = map(C->ψ.M * C * ψ.Minv, construct_full_block_matrix(ψ.Bs))
 
     gBs = ∂ψ.Bs .- extract_block_matrix(Ref(ψ.M') .* Rs .* Ref(∂ψ.Q) .* Ref(ψ.Minv'))
     gX = ψ.M' * sum([- R * ∂ψ.Q * R' + R' * R * ∂ψ.Q for R in Rs]) * ψ.Minv' + ψ.M' * ∂ψ.M 
     #gX[diagind(gX)] .-= tr(gX) / size(gX, 1) # make X traceless
-    return MultiBosonCMPSData_tnp_Grad(gBs, gX)
+    return MultiBosonCMPSData_MBMinv_Grad(gBs, gX)
 end
 
-function tangent_map(ψ::MultiBosonCMPSData_tnp, g::MultiBosonCMPSData_tnp_Grad; ρR = nothing)
+function tangent_map(ψ::MultiBosonCMPSData_MBMinv, g::MultiBosonCMPSData_tnp_Grad; ρR = nothing)
     if isnothing(ρR)
         ρR = right_env(ψ)
     end
@@ -248,5 +251,5 @@ function tangent_map(ψ::MultiBosonCMPSData_tnp, g::MultiBosonCMPSData_tnp_Grad;
     X_mapped = sum([M * C' - C' * M for (M, C) in zip(Ms, Cs)])
     dBs_mapped = extract_block_matrix(Ms)
 
-    return MultiBosonCMPSData_tnp_Grad(dBs_mapped, X_mapped)
+    return MultiBosonCMPSData_MBMinv_Grad(dBs_mapped, X_mapped)
 end

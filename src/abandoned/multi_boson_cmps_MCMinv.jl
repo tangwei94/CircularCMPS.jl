@@ -1,3 +1,9 @@
+# multi-boson cMPS 
+# the R matrices are parameterized as M * C1 * Minv, where C1 = D + α * C / ||C||, C is a off-diagonal matrix, D is a diagonal matrix
+# abandoned. The Riemannian optimization is too complicated
+
+# originally was put in src/continuous_bosons/multi_boson_cmps_MCMinv.jl
+
 mutable struct MultiBosonCMPSData_MCMinv{T<:Number} <: AbstractCMPSData
     Q::Matrix{T}
     M::Matrix{T}

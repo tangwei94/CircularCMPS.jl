@@ -7,7 +7,7 @@ struct SingleBosonLiebLiniger <: AbstractHamiltonian
 end
 
 function ground_state(H::SingleBosonLiebLiniger, ψ0::CMPSData)
-    if H.L == Inf
+    if H.L == Inf 
         function fE_inf(ψ::CMPSData)
             OH = kinetic(ψ) + H.c*point_interaction(ψ) - H.μ * particle_density(ψ)
             TM = TransferMatrix(ψ, ψ)
@@ -153,12 +153,12 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData; do_prec
     end
 end
 
-function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_P; gradtol::Float64=1e-8, do_preconditioning::Bool=true, maxiter::Int=10000)
+function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_tnp; gradtol::Float64=1e-8, do_preconditioning::Bool=true, maxiter::Int=10000)
     if H.L == Inf
         cs = Matrix{ComplexF64}(H.cs)
         μs = Vector{ComplexF64}(H.μs)
 
-        function fE_inf(ψ::MultiBosonCMPSData_P)
+        function fE_inf(ψ::MultiBosonCMPSData_tnp)
             ψn = CMPSData(ψ)
             OH = kinetic(ψn) + H.cs[1,1]* point_interaction(ψn, 1) + H.cs[2,2]* point_interaction(ψn, 2) + H.cs[1,2] * point_interaction(ψn, 1, 2) + H.cs[2,1] * point_interaction(ψn, 2, 1) - H.μs[1] * particle_density(ψn, 1) - H.μs[2] * particle_density(ψn, 2)
             TM = TransferMatrix(ψn, ψn)
@@ -177,42 +177,42 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_P; gradt
         #end
         @show "infinite system"
     
-        function fgE(ψ::MultiBosonCMPSData_P)
+        function fgE(ψ::MultiBosonCMPSData_tnp)
             E = fE_inf(ψ)
             ∂ψ = fE_inf'(ψ) 
             return E, ∂ψ 
         end
     
-        function inner(ψ, ψ1::MultiBosonCMPSData_P, ψ2::MultiBosonCMPSData_P)
+        function inner(ψ, ψ1::MultiBosonCMPSData_tnp, ψ2::MultiBosonCMPSData_tnp)
             # be careful the cases with or without a factor of 2. depends on how to define the complex gradient
             return real(dot(ψ1, ψ2)) 
         end
 
-        function retract(ψ::MultiBosonCMPSData_P, dψ::MultiBosonCMPSData_P, α::Real)
+        function retract(ψ::MultiBosonCMPSData_tnp, dψ::MultiBosonCMPSData_tnp, α::Real)
             Ms = ψ.Ms .+ α .* dψ.Ms 
             Q = ψ.Q + α * dψ.Q
-            ψ1 = MultiBosonCMPSData_P(Q, Ms)
+            ψ1 = MultiBosonCMPSData_tnp(Q, Ms)
             return ψ1, dψ
         end
 
-        function scale!(dψ::MultiBosonCMPSData_P, α::Number)
+        function scale!(dψ::MultiBosonCMPSData_tnp, α::Number)
             dψ.Q = dψ.Q * α
             dψ.Ms .= dψ.Ms .* α
             return dψ
         end
 
-        function add!(dψ::MultiBosonCMPSData_P, dψ1::MultiBosonCMPSData_P, α::Number) 
+        function add!(dψ::MultiBosonCMPSData_tnp, dψ1::MultiBosonCMPSData_tnp, α::Number) 
             dψ.Q += dψ1.Q * α
             dψ.Ms .+= dψ1.Ms .* α
             return dψ
         end
 
         # only for comparison
-        function _no_precondition(ψ::MultiBosonCMPSData_P, dψ::MultiBosonCMPSData_P)
+        function _no_precondition(ψ::MultiBosonCMPSData_tnp, dψ::MultiBosonCMPSData_tnp)
             return dψ
         end
 
-        function _precondition(ψ0::MultiBosonCMPSData_P, dψ::MultiBosonCMPSData_P)
+        function _precondition(ψ0::MultiBosonCMPSData_tnp, dψ::MultiBosonCMPSData_tnp)
             # TODO. avoid the re-computation of K, λ, EL, ER, Kinv
             ψn = CMPSData(ψ0)
             K = K_permute(K_mat(ψn, ψn))
@@ -543,12 +543,12 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; 
     return res
 end
 
-function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_tnp; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x), m_LBFGS::Int=8)
+function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MBMinv; do_preconditioning::Bool=true, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x), m_LBFGS::Int=8)
     if H.L < Inf
         error("finite size not implemented yet.")
     end
 
-    function fE_inf(ψ::MultiBosonCMPSData_tnp)
+    function fE_inf(ψ::MultiBosonCMPSData_MBMinv)
         ψn = CMPSData(ψ)
         OH = kinetic(ψn) + H.cs[1,1]* point_interaction(ψn, 1) + H.cs[2,2]* point_interaction(ψn, 2) + H.cs[1,2] * point_interaction(ψn, 1, 2) + H.cs[2,1] * point_interaction(ψn, 2, 1) - H.μs[1] * particle_density(ψn, 1) - H.μs[2] * particle_density(ψn, 2)
         TM = TransferMatrix(ψn, ψn)
@@ -557,31 +557,31 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_tnp; do_
         return real(tr(envL * OH * envR) / tr(envL * envR))
     end
     
-    function fgE(x::OptimState{MultiBosonCMPSData_tnp{T}}) where T
+    function fgE(x::OptimState{MultiBosonCMPSData_MBMinv{T}}) where T
         ψ = x.data
         E, ∂ψ = withgradient(fE_inf, ψ)
         g = diff_to_grad(ψ, ∂ψ[1])
         return E, g
     end
     
-    function inner(x, a::MultiBosonCMPSData_tnp_Grad, b::MultiBosonCMPSData_tnp_Grad)
+    function inner(x, a::MultiBosonCMPSData_MBMinv_Grad, b::MultiBosonCMPSData_MBMinv_Grad)
         # be careful the cases with or without a factor of 2. depends on how to define the complex gradient
         return real(dot(a, b)) 
     end
 
-    function retract(x::OptimState{MultiBosonCMPSData_tnp{T}}, dψ::MultiBosonCMPSData_tnp_Grad, α::Real) where T
+    function retract(x::OptimState{MultiBosonCMPSData_MBMinv{T}}, dψ::MultiBosonCMPSData_MBMinv_Grad, α::Real) where T
         ψ = x.data
         ψ1 = retract_left_canonical(ψ, α, dψ.dBs, dψ.X)
         return OptimState(ψ1, missing, x.prev, x.df), dψ
     end
-    function scale!(dψ::MultiBosonCMPSData_tnp_Grad, α::Number)
+    function scale!(dψ::MultiBosonCMPSData_MBMinv_Grad, α::Number)
         for ix in eachindex(dψ.dBs)
             dψ.dBs[ix] .= dψ.dBs[ix] * α
         end
         dψ.X .= dψ.X .* α
         return dψ
     end
-    function add!(y::MultiBosonCMPSData_tnp_Grad, x::MultiBosonCMPSData_tnp_Grad, α::Number=1, β::Number=1)
+    function add!(y::MultiBosonCMPSData_MBMinv_Grad, x::MultiBosonCMPSData_MBMinv_Grad, α::Number=1, β::Number=1)
         for ix in eachindex(y.dBs)
             VectorInterface.add!(y.dBs[ix], x.dBs[ix], α, β)
         end
@@ -589,23 +589,23 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_tnp; do_
         return y
     end
     # only for comparison
-    function _no_precondition(x::OptimState{MultiBosonCMPSData_tnp{T}}, dψ::MultiBosonCMPSData_tnp_Grad) where T
+    function _no_precondition(x::OptimState{MultiBosonCMPSData_MBMinv{T}}, dψ::MultiBosonCMPSData_MBMinv_Grad) where T
         return dψ
     end
 
     # linsolve is slow
-    #function _precondition_linsolve(ψ0::MultiBosonCMPSData_tnp, dψ::MultiBosonCMPSData_tnp_Grad)
+    #function _precondition_linsolve(ψ0::MultiBosonCMPSData_MBMinv, dψ::MultiBosonCMPSData_MBMinv_Grad)
     #    ϵ = max(1e-12, min(1, norm(dψ)^1.5))
     #    χ, d = get_χ(ψ0), get_d(ψ0)
     #    function f_map(v)
-    #        g = MultiBosonCMPSData_tnp_Grad(v, χ, d)
+    #        g = MultiBosonCMPSData_MBMinv_Grad(v, χ, d)
     #        return vec(tangent_map(ψ0, g)) + ϵ*v
     #    end
 
     #    vp, _ = linsolve(f_map, vec(dψ), rand(ComplexF64, χ*d+χ^2); maxiter=1000, ishermitian = true, isposdef = true, tol=ϵ)
-    #    return MultiBosonCMPSData_tnp_Grad(vp, χ, d)
+    #    return MultiBosonCMPSData_MBMinv_Grad(vp, χ, d)
     #end
-    function _precondition(x::OptimState{MultiBosonCMPSData_tnp{T}}, dψ::MultiBosonCMPSData_tnp_Grad) where T
+    function _precondition(x::OptimState{MultiBosonCMPSData_MBMinv{T}}, dψ::MultiBosonCMPSData_MBMinv_Grad) where T
         ψ = x.data
         χb, χ, d = get_χb(ψ), get_χ(ψ), get_d(ψ)
 
@@ -621,7 +621,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_tnp; do_
             Threads.@threads for ix in 1:χ^2+d*(χb^2)
                 v = zeros(ComplexF64, χ^2+d*(χb^2))
                 v[ix] = 1
-                g = MultiBosonCMPSData_tnp_Grad(v, χb, d)
+                g = MultiBosonCMPSData_MBMinv_Grad(v, χb, d)
                 g1 = tangent_map(ψ, g)
                 P[:, ix] = vec(g1)
             end 
@@ -630,13 +630,13 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_tnp; do_
             x.preconditioner = qr(P)
         end
         vp = x.preconditioner \ vec(dψ)
-        PG = MultiBosonCMPSData_tnp_Grad(vp, χb, d)
+        PG = MultiBosonCMPSData_MBMinv_Grad(vp, χb, d)
         return PG
     end
 
     transport!(v, x, d, α, xnew) = v
 
-    function finalize!(x::OptimState{MultiBosonCMPSData_tnp{T}}, f, g, numiter) where T
+    function finalize!(x::OptimState{MultiBosonCMPSData_MBMinv{T}}, f, g, numiter) where T
         @show x.df / norm(g), norm(x.data.M), norm(x.data.Minv)
         x.preconditioner = missing
         x.df = abs(f - x.prev)

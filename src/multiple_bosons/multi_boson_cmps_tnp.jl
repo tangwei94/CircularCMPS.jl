@@ -1,81 +1,80 @@
-mutable struct MultiBosonCMPSData_P <: AbstractCMPSData 
+# multi-boson cMPS with tensor product parameterization
+# The R matrices are parameterized as (I ⊗ ... ⊗ M ⊗ I ⊗ ... ⊗ I) 
+
+struct MultiBosonCMPSData_tnp <: AbstractCMPSData 
     Q::MPSBondTensor
     Ms::Vector{<:MPSBondTensor}
 end
 
-function MultiBosonCMPSData_P(f, χ::Integer, d::Integer)
+function MultiBosonCMPS_tnp(f, χ::Integer, d::Integer)
     Q = TensorMap(f, ComplexF64, ℂ^(χ^d), ℂ^(χ^d))
     Ms = MPSBondTensor{ComplexSpace}[]
     for ix in 1:d 
         push!(Ms, TensorMap(f, ComplexF64, ℂ^χ, ℂ^χ))
     end
-    return MultiBosonCMPSData_P(Q, Ms)
+    return MultiBosonCMPS_tnp(Q, Ms)
 end
 
 # operations on the data. not on the cMPS
-Base.:+(ψ::MultiBosonCMPSData_P, ϕ::MultiBosonCMPSData_P) = MultiBosonCMPSData_P(ψ.Q + ϕ.Q, ψ.Ms .+ ϕ.Ms)
-Base.:-(ψ::MultiBosonCMPSData_P, ϕ::MultiBosonCMPSData_P) = MultiBosonCMPSData_P(ψ.Q - ϕ.Q, ψ.Ms .- ϕ.Ms)
-Base.:*(ψ::MultiBosonCMPSData_P, x::Number) = MultiBosonCMPSData_P(ψ.Q * x, ψ.Ms .* x)
-Base.:*(x::Number, ψ::MultiBosonCMPSData_P) = MultiBosonCMPSData_P(ψ.Q * x, ψ.Ms .* x)
-LinearAlgebra.dot(ψ1::MultiBosonCMPSData_P, ψ2::MultiBosonCMPSData_P) = dot(ψ1.Q, ψ2.Q) + sum(dot.(ψ1.Ms, ψ2.Ms))
-Base.eltype(ψ::MultiBosonCMPSData_P) = eltype(ψ.Q)
-LinearAlgebra.norm(ψ::MultiBosonCMPSData_P) = sqrt(norm(dot(ψ, ψ)))
-#Base.vec(ψ::MultiBosonCMPSData_P) = [vec(ψ.Q); vec(ψ.Ms)]
+Base.:+(ψ::MultiBosonCMPS_tnp, ϕ::MultiBosonCMPS_tnp) = MultiBosonCMPS_tnp(ψ.Q + ϕ.Q, ψ.Ms .+ ϕ.Ms)
+Base.:-(ψ::MultiBosonCMPS_tnp, ϕ::MultiBosonCMPS_tnp) = MultiBosonCMPS_tnp(ψ.Q - ϕ.Q, ψ.Ms .- ϕ.Ms)
+Base.:*(ψ::MultiBosonCMPS_tnp, x::Number) = MultiBosonCMPS_tnp(ψ.Q * x, ψ.Ms .* x)
+Base.:*(x::Number, ψ::MultiBosonCMPS_tnp) = MultiBosonCMPS_tnp(ψ.Q * x, ψ.Ms .* x)
+LinearAlgebra.dot(ψ1::MultiBosonCMPS_tnp, ψ2::MultiBosonCMPS_tnp) = dot(ψ1.Q, ψ2.Q) + sum(dot.(ψ1.Ms, ψ2.Ms))
+Base.eltype(ψ::MultiBosonCMPS_tnp) = eltype(ψ.Q)
+LinearAlgebra.norm(ψ::MultiBosonCMPS_tnp) = sqrt(norm(dot(ψ, ψ)))
+#Base.vec(ψ::MultiBosonCMPS_tnp) = [vec(ψ.Q); vec(ψ.Ms)]
 
-function LinearAlgebra.mul!(w::MultiBosonCMPSData_P, v::MultiBosonCMPSData_P, α)
+function LinearAlgebra.mul!(w::MultiBosonCMPS_tnp, v::MultiBosonCMPS_tnp, α)
     mul!(w.Q, v.Q, α)
     for (Mw, Mv) in zip(w.Ms, v.Ms)
         mul!(Mw, Mv, α)
     end
     return w
 end
-function LinearAlgebra.rmul!(v::MultiBosonCMPSData_P, α)
+function LinearAlgebra.rmul!(v::MultiBosonCMPS_tnp, α)
     rmul!(v.Q, α)
     for M in v.Ms
         rmul!(M, α)
     end
     return v
 end
-
-function LinearAlgebra.axpy!(α, ψ1::MultiBosonCMPSData_P, ψ2::MultiBosonCMPSData_P)
+function LinearAlgebra.axpy!(α, ψ1::MultiBosonCMPS_tnp, ψ2::MultiBosonCMPS_tnp)
     axpy!(α, ψ1.Q, ψ2.Q)
     for (M1, M2) in zip(ψ1.Ms, ψ2.Ms)
         axpy!(α, M1, M2)
     end
     return ψ2
 end
-function LinearAlgebra.axpby!(α, ψ1::MultiBosonCMPSData_P, β, ψ2::MultiBosonCMPSData_P)
+function LinearAlgebra.axpby!(α, ψ1::MultiBosonCMPS_tnp, β, ψ2::MultiBosonCMPS_tnp)
     axpby!(α, ψ1.Q, β, ψ2.Q)
     for (M1, M2) in zip(ψ1.Ms, ψ2.Ms)
         axpby!(α, M1, β, M2)
     end
     return ψ2
 end
-
-function Base.similar(ψ::MultiBosonCMPSData_P) 
+function Base.similar(ψ::MultiBosonCMPS_tnp) 
     Q = similar(ψ.Q)
     Ms = [similar(M) for M in ψ.Ms]
-    return MultiBosonCMPSData_P(Q, Ms)
+    return MultiBosonCMPS_tnp(Q, Ms)
 end
-
-function randomize!(ψ::MultiBosonCMPSData_P)
+function randomize!(ψ::MultiBosonCMPS_tnp)
     randomize!(ψ.Q)
     for ix in 1:length(ψ.Ms)
         randomize!(ψ.Ms[ix])
     end
 end
-
-function Base.zero(ψ::MultiBosonCMPSData_P) 
+function Base.zero(ψ::MultiBosonCMPS_tnp) 
     Q = zero(ψ.Q)
     Ms = [zero(M) for M in ψ.Ms]
-    return MultiBosonCMPSData_P(Q, Ms)
+    return MultiBosonCMPS_tnp(Q, Ms)
 end
 
-@inline get_χ(ψ::MultiBosonCMPSData_P) = dim(_firstspace(ψ.Ms[1]))
-@inline get_d(ψ::MultiBosonCMPSData_P) = length(ψ.Ms)
-TensorKit.space(ψ::MultiBosonCMPSData_P) = _firstspace(ψ.Q)
+@inline get_χ(ψ::MultiBosonCMPS_tnp) = dim(_firstspace(ψ.Ms[1]))
+@inline get_d(ψ::MultiBosonCMPS_tnp) = length(ψ.Ms)
+TensorKit.space(ψ::MultiBosonCMPS_tnp) = _firstspace(ψ.Q)
 
-function CMPSData(ψ::MultiBosonCMPSData_P)
+function CMPSData(ψ::MultiBosonCMPS_tnp)
     χ, d = get_χ(ψ), get_d(ψ)
     δ = isomorphism(ℂ^(χ^d), (ℂ^χ)^d)
     Rs = map(1:d) do ix
@@ -85,8 +84,7 @@ function CMPSData(ψ::MultiBosonCMPSData_P)
     end
     return CMPSData(ψ.Q, Rs)
 end
-
-function MultiBosonCMPSData_P(ψ::CMPSData)
+function MultiBosonCMPS_tnp(ψ::CMPSData)
     χ1, d = get_χ(ψ), get_d(ψ)
     χ = Int(round(χ1^(1/d)))
     δ = isomorphism(ℂ^(χ^d), (ℂ^χ)^d)
@@ -96,17 +94,15 @@ function MultiBosonCMPSData_P(ψ::CMPSData)
         tmpM = @ncon([δ', ψ.Rs[ix], δ], [[indicesl; 1], [1, 2], [2; indicesr]])
         return permute(tmpM, (1,), (2,))
     end
-    return MultiBosonCMPSData_P(ψ.Q, Ms)
+    return MultiBosonCMPS_tnp(ψ.Q, Ms)
 end
-
-function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_P)
+function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPS_tnp)
     function CMPSData_pushback(∂ψn)
-        return NoTangent(), MultiBosonCMPSData_P(∂ψn) 
+        return NoTangent(), MultiBosonCMPS_tnp(∂ψn) 
     end
     return CMPSData(ψ), CMPSData_pushback
 end
-
-function expand(ψ::MultiBosonCMPSData_P, χ::Integer; perturb::Float64=1e-3)
+function expand(ψ::MultiBosonCMPS_tnp, χ::Integer; perturb::Float64=1e-3)
     χ0, d = get_χ(ψ), get_d(ψ)
     if χ <= χ0
         @warn "new χ not bigger than χ0"
@@ -132,10 +128,10 @@ function expand(ψ::MultiBosonCMPSData_P, χ::Integer; perturb::Float64=1e-3)
         push!(Ms, M)
     end
 
-    return MultiBosonCMPSData_P(Q, Ms) 
+    return MultiBosonCMPS_tnp(Q, Ms) 
 end
 
-function tangent_map(ψm::MultiBosonCMPSData_P, Xm::MultiBosonCMPSData_P, EL::MPSBondTensor, ER::MPSBondTensor, Kinv::AbstractTensorMap{T, S, 2, 2}) where {T,S}
+function tangent_map(ψm::MultiBosonCMPS_tnp, Xm::MultiBosonCMPS_tnp, EL::MPSBondTensor, ER::MPSBondTensor, Kinv::AbstractTensorMap{T, S, 2, 2}) where {T,S}
     χ, d = get_χ(ψm), get_d(ψm)
     ψ = CMPSData(ψm)
     X = CMPSData(Xm)
@@ -153,5 +149,5 @@ function tangent_map(ψm::MultiBosonCMPSData_P, Xm::MultiBosonCMPSData_P, EL::MP
         EL * XR * ER + EL1 * R * ER + EL * R * ER1 + singular * EL * R * ER
     end
 
-    return MultiBosonCMPSData_P(CMPSData(mapped_XQ, mapped_XRs)) 
+    return MultiBosonCMPS_tnp(CMPSData(mapped_XQ, mapped_XRs)) 
 end
