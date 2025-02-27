@@ -1,3 +1,19 @@
+function energy(H::MultiBosonLiebLiniger, ψ::CMPSData, Λ::Real; order::Integer=1)
+    OH = kinetic(ψ) + H.cs[1,1]* point_interaction(ψ, 1) + H.cs[2,2]* point_interaction(ψ, 2) + H.cs[1,2] * point_interaction(ψ, 1, 2) + H.cs[2,1] * point_interaction(ψ, 2, 1) - H.μs[1] * particle_density(ψ, 1) - H.μs[2] * particle_density(ψ, 2) + penalty_term(ψ, 1, 2, Λ; order=order)
+    TM = TransferMatrix(ψ, ψ)
+    envL = permute(left_env(TM), (), (1, 2))
+    envR = permute(right_env(TM), (2, 1), ()) 
+    return real(tr(envL * OH * envR) / tr(envL * envR))
+end
+
+function energy(H::MultiBosonLiebLinigerWithPairing, ψ::CMPSData, Λ::Real; order::Integer=1)
+    OH = kinetic(ψ) + H.cs[1,1]* point_interaction(ψ, 1) + H.cs[2,2]* point_interaction(ψ, 2) + H.cs[1,2] * point_interaction(ψ, 1, 2) + H.cs[2,1] * point_interaction(ψ, 2, 1) - H.μs[1] * particle_density(ψ, 1) - H.μs[2] * particle_density(ψ, 2) + H.us[1] * pairing(ψ, 1) + H.us[2] * pairing(ψ, 2) + penalty_term(ψ, 1, 2, Λ; order=order)
+    TM = TransferMatrix(ψ, ψ)
+    envL = permute(left_env(TM), (), (1, 2))
+    envR = permute(right_env(TM), (2, 1), ()) 
+    return real(tr(envL * OH * envR) / tr(envL * envR))
+end
+
 """
     ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λ::Real=1.0)
 
@@ -5,20 +21,19 @@ Find the ground state of the MultiBosonLiebLiniger model with the given Hamilton
 The multi-boson cMPS is parametrized with no regularity conditions. This allows a more efficient optimization. 
 The regularity condition is achieved via an additional Lagrangian multiplier term `Λ [ψ1, ψ2]† [ψ1, ψ2]`.
 """
-function ground_state(H::MultiBosonLiebLiniger, ψ0::CMPSData; Λs::Vector{<:Real}=10 .^ (2:(1/3):5), gradtol=1e-2, maxiter=100, do_prerun=true, fϵ=(x->10*x), energy_prefactor=1.0)
-    function fE_inf(ψ::CMPSData, Λ::Real) 
-        OH = kinetic(ψ) + H.cs[1,1]* point_interaction(ψ, 1) + H.cs[2,2]* point_interaction(ψ, 2) + H.cs[1,2] * point_interaction(ψ, 1, 2) + H.cs[2,1] * point_interaction(ψ, 2, 1) - H.μs[1] * particle_density(ψ, 1) - H.μs[2] * particle_density(ψ, 2)  
-        OH = energy_prefactor * OH + lagrangian_multiplier(ψ, 1, 2, Λ)
-        TM = TransferMatrix(ψ, ψ)
-        envL = permute(left_env(TM), (), (1, 2))
-        envR = permute(right_env(TM), (2, 1), ()) 
-        return real(tr(envL * OH * envR) / tr(envL * envR))
+function ground_state(H::AbstractHamiltonian, ψ0::CMPSData; Λs::Vector{<:Real}=10 .^ (2:(1/3):5), gradtol=1e-2, maxiter=100, do_prerun=true, fϵ=(x->10*x), energy_prefactor=1.0, order::Integer=1)
+    if H.L < Inf
+        error("finite size not implemented yet.")
     end
-    function fE_finiteL(ψ::CMPSData, Λ::Real)
-        OH = kinetic(ψ) + H.cs[1,1]* point_interaction(ψ, 1) + H.cs[2,2]* point_interaction(ψ, 2) + H.cs[1,2] * point_interaction(ψ, 1, 2) + H.cs[2,1] * point_interaction(ψ, 2, 1) - H.μs[1] * particle_density(ψ, 1) - H.μs[2] * particle_density(ψ, 2) + lagrangian_multiplier(ψ, 1, 2, Λ) 
-        expK, _ = finite_env(K_mat(ψ, ψ), H.L)
-        return real(tr(expK * OH))
-    end 
+
+    function fE_inf(ψ::CMPSData, Λ::Real) 
+        return energy(H, ψ, Λ; order=order)
+    end
+    #function fE_finiteL(ψ::CMPSData, Λ::Real)
+    #    OH = kinetic(ψ) + H.cs[1,1]* point_interaction(ψ, 1) + H.cs[2,2]* point_interaction(ψ, 2) + H.cs[1,2] * point_interaction(ψ, 1, 2) + H.cs[2,1] * point_interaction(ψ, 2, 1) - H.μs[1] * particle_density(ψ, 1) - H.μs[2] * particle_density(ψ, 2) + lagrangian_multiplier(ψ, 1, 2, Λ) 
+    #    expK, _ = finite_env(K_mat(ψ, ψ), H.L)
+    #    return real(tr(expK * OH))
+    #end 
     function _finalize!(x, f, g, numiter)
         #x1, err = convert_to_MultiBosonCMPSData_MDMinv(x.data)
         #x1 = left_canonical(x1)

@@ -70,7 +70,7 @@ export PowerMethod, power_iteration
 export VariationalOptim, leading_boundary
 
 # hamiltonian_zoo.jl
-export AbstractHamiltonian, SingleBosonLiebLiniger, MultiBosonLiebLiniger, ground_state
+export AbstractHamiltonian, SingleBosonLiebLiniger, MultiBosonLiebLiniger, ground_state, MultiBosonLiebLinigerWithPairing
 
 # cMPS code for continuous Hamiltonians
 include("utils.jl");

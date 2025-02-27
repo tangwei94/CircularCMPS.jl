@@ -70,14 +70,24 @@ function pairing(ψ::CMPSData)
     Oψ = Rs .* Rs
     return sum(K_otimes.(Ref(Iψ), Oψ)) + sum(K_otimes.(Oψ, Ref(Iψ)))
 end
+function pairing(ψ::CMPSData, index::Integer)
+    Iψ = id(domain(ψ.Q))
+    _, Rs = get_matrices(ψ) 
+    Oψ = Rs[index] * Rs[index]
+    return K_otimes(Iψ, Oψ) + K_otimes(Oψ, Iψ)
+end
 
 """
-    lagrangian_multiplier(ψ::CMPSData, index1::Integer, index2::Integer, Λ::Real)
+    penalty_term(ψ::CMPSData, index1::Integer, index2::Integer, Λ::Real)
 
     Lagrangian multiplier term `Λ [ψ1, ψ2]† [ψ1, ψ2]`.
 """
-function lagrangian_multiplier(ψ::CMPSData, index1::Integer, index2::Integer, Λ::Real)
+function penalty_term(ψ::CMPSData, index1::Integer, index2::Integer, Λ::Real; order::Integer=1)
     _, Rs = get_matrices(ψ) 
     Oψ = Rs[index1] * Rs[index2] - Rs[index2] * Rs[index1]
-    return Λ * K_otimes(Oψ, Oψ)
+    O_penalty = deepcopy(Oψ)
+    for _ in 2:order
+        O_penalty += O_penalty * Oψ
+    end
+    return Λ * K_otimes(O_penalty, O_penalty)
 end

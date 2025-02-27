@@ -634,18 +634,30 @@ function projection_X(offdiags::Vector{Matrix{T}}, Ds::Vector{Diagonal{T, Vector
     return projected_X
 end
 
-function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_MDMinv; preconditioner_type::Int=1, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x), m_LBFGS::Int=8, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
+function energy(H::MultiBosonLiebLiniger, ψ::MultiBosonCMPSData_MDMinv)
+    ψn = CMPSData(ψ)
+    OH = kinetic(ψn) + H.cs[1,1]* point_interaction(ψn, 1) + H.cs[2,2]* point_interaction(ψn, 2) + H.cs[1,2] * point_interaction(ψn, 1, 2) + H.cs[2,1] * point_interaction(ψn, 2, 1) - H.μs[1] * particle_density(ψn, 1) - H.μs[2] * particle_density(ψn, 2)
+    TM = TransferMatrix(ψn, ψn)
+    envL = permute(left_env(TM), (), (1, 2))
+    envR = permute(right_env(TM), (2, 1), ()) 
+    return real(tr(envL * OH * envR) / tr(envL * envR))
+end
+function energy(H::MultiBosonLiebLinigerWithPairing, ψ::MultiBosonCMPSData_MDMinv)
+    ψn = CMPSData(ψ)
+    OH = kinetic(ψn) + H.cs[1,1]* point_interaction(ψn, 1) + H.cs[2,2]* point_interaction(ψn, 2) + H.cs[1,2] * point_interaction(ψn, 1, 2) + H.cs[2,1] * point_interaction(ψn, 2, 1) - H.μs[1] * particle_density(ψn, 1) - H.μs[2] * particle_density(ψn, 2) + H.us[1] * pairing(ψn, 1) + H.us[2] * pairing(ψn, 2)
+    TM = TransferMatrix(ψn, ψn)
+    envL = permute(left_env(TM), (), (1, 2))
+    envR = permute(right_env(TM), (2, 1), ()) 
+    return real(tr(envL * OH * envR) / tr(envL * envR))
+end
+
+function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; preconditioner_type::Int=1, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x), m_LBFGS::Int=8, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
     if H.L < Inf
         error("finite size not implemented yet.")
     end
 
     function fE_inf(ψ::MultiBosonCMPSData_MDMinv)
-        ψn = CMPSData(ψ)
-        OH = kinetic(ψn) + H.cs[1,1]* point_interaction(ψn, 1) + H.cs[2,2]* point_interaction(ψn, 2) + H.cs[1,2] * point_interaction(ψn, 1, 2) + H.cs[2,1] * point_interaction(ψn, 2, 1) - H.μs[1] * particle_density(ψn, 1) - H.μs[2] * particle_density(ψn, 2)
-        TM = TransferMatrix(ψn, ψn)
-        envL = permute(left_env(TM), (), (1, 2))
-        envR = permute(right_env(TM), (2, 1), ()) 
-        return real(tr(envL * OH * envR) / tr(envL * envR))
+        return energy(H, ψ)
     end
     
     function fgE(x::OptimState{MultiBosonCMPSData_MDMinv{T}}) where T

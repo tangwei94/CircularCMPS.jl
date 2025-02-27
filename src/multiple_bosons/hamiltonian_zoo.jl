@@ -30,9 +30,16 @@ function ground_state(H::SingleBosonLiebLiniger, ψ0::CMPSData)
     end
 end
 
+# TODO. split finite L and infinite L as two structs. 
 struct MultiBosonLiebLiniger <: AbstractHamiltonian
     cs::Matrix{<:Real}
     μs::Vector{<:Real}
     L::Real
 end
 
+struct MultiBosonLiebLinigerWithPairing <: AbstractHamiltonian
+    cs::Matrix{<:Real}
+    μs::Vector{<:Real}
+    us::Vector{<:Real}
+    L::Real
+end
