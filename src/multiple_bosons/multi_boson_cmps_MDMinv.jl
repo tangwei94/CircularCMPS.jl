@@ -783,7 +783,6 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
     transport!(v, x, d, α, xnew) = v
 
     function finalize!(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, f, g, numiter) where T
-        @show x.df / norm(g), norm(x.data.M), norm(x.data.Minv)
         x.preconditioner = missing
         x.df = abs(f - x.prev)
         x.prev = f
@@ -793,11 +792,13 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
 
     optalg_LBFGS = LBFGS(m_LBFGS; maxiter=maxiter, gradtol=gradtol, acceptfirst=false, verbosity=2)
 
-    # only preconditioner type 1, 2 works.
+    # preconditioner type 0 is not doing any preconditioning.
+    # only preconditioner type 1, 2 works. preconditioner type 3, 4, 5, 6 will break the optimization. 
     # preconditioner type1 construct the preconditioner matrix explicitly, and solve its inverse by factorization O(χ^6)
     # preconditioner type 2 solve the preconditioner inverse by lssolve.. But in practice it is slower than type1 due to the large condition number of P.
-    # TODO. preconditioner type 3, 4, 5, 6 will break the optimization. There is no guarantee that the preconditioned gradient is a descent direction (preconditioner is not positive definite). should be removed.
-    # preconditioner type 0 is not doing any preconditioning.
+    # preconditioner type 3, 4, 5, 6 will break the optimization. 
+    # these preconditioners are tries to only inverse $\rho_R$ , and handle the M, Minv by some linear map
+    # There is no guarantee that the preconditioned gradient is a descent direction (preconditioner is not positive definite). so they don't work. TODO. they should be removed afterwards.
     if preconditioner_type == 1
         @show "using preconditioner 1"
         precondition1 = _precondition

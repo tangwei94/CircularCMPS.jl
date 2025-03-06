@@ -63,6 +63,12 @@ function minimize1(_f, init::CMPSData, alg::CircularCMPSRiemannian; finalize! = 
             ϵ = max(1e-12, ϵ)
 
             fK = transfer_matrix(ϕ, ϕ)
+            fT = TransferMatrix(ϕ, ϕ)
+            Open = penalty_term(ϕ, 1, 2, 1.0; order=1)
+            envL = permute(left_env(fT), (), (1, 2))
+            envR = permute(right_env(fT), (2, 1), ()) 
+            λ = real(tr(envL * Open * envR) / tr(envL * envR))
+            @show λ * Λ
 
             # solve the fixed point equation
             init = similar(ϕ.Q, _firstspace(ϕ.Q)←_firstspace(ϕ.Q))
