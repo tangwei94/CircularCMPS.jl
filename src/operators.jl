@@ -85,9 +85,19 @@ end
 function penalty_term(ψ::CMPSData, index1::Integer, index2::Integer, Λ::Real; order::Integer=1)
     _, Rs = get_matrices(ψ) 
     Oψ = Rs[index1] * Rs[index2] - Rs[index2] * Rs[index1]
-    O_penalty = deepcopy(Oψ)
+    O_penalty1 = K_otimes(Oψ, Oψ) * Λ
+    O_penalty = deepcopy(O_penalty1)
     for _ in 2:order
-        O_penalty += O_penalty * Oψ
+        O_penalty = O_penalty1 * O_penalty + O_penalty1
     end
-    return Λ * K_otimes(O_penalty, O_penalty)
+    return O_penalty
+end
+
+function penalty_term_type2(ψ::CMPSData, index1::Integer, index2::Integer, Λ::Real)
+    _, Rs = get_matrices(ψ) 
+    Oψ = Rs[index1] * Rs[index2] - Rs[index2] * Rs[index1]
+    O_penalty = K_otimes(Oψ, Oψ)
+    Id = id(domain(O_penalty))
+    @show space(exp(Λ * O_penalty) - Id)
+    return exp(Λ * O_penalty) - Id
 end

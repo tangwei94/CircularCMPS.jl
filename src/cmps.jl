@@ -162,22 +162,19 @@ function expand(ψ::CMPSData, χ::Integer, L::Real; perturb::Float64=1e-3)
         @warn "new χ not bigger than χ0"
         return ψ
     end
-    mask = similar(ψ.Q, ℂ^χ ← ℂ^χ)
-    fill_data!(mask, randn)
-    mask = perturb * mask
-    Q = copy(mask)
-    Q.data[1:χ0, 1:χ0] += ψ.Q.data
+
+    Qdat = perturb * rand(ComplexF64, χ, χ)
+    Qdat[1:χ0, 1:χ0] += convert(Array, ψ.Q)
     for ix in χ0+1:χ
-        Q.data[ix, ix] += 2*log(perturb)/L # suppress
+        Qdat[ix, ix] += 2*log(perturb)/L # suppress
     end
+    Q = TensorMap(Qdat, ℂ^χ ← ℂ^χ)
 
     Rs = MPSBondTensor[]
     for R0 in ψ.Rs
-        R = similar(R0, ℂ^χ ← ℂ^χ)
-        fill_data!(R, randn)
-        R = perturb * R
-        R.data[1:χ0, 1:χ0] += R0.data
-        push!(Rs, R)
+        Rdat = perturb * rand(ComplexF64, χ, χ)
+        Rdat[1:χ0, 1:χ0] += convert(Array, R0)
+        push!(Rs, TensorMap(Rdat, ℂ^χ ← ℂ^χ))
     end
 
     return CMPSData(Q, Rs) 

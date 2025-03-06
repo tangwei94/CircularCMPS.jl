@@ -76,6 +76,46 @@ function minimize(_f, init::CMPSData, alg::CircularCMPSRiemannian; finalize! = O
 
         return CMPSData(Q, Rs)
     end
+    function precondition1(x::OptimState{CMPSData}, dϕ::CMPSData)
+        ϕ = x.data
+
+        if ismissing(x.preconditioner)
+            δ = inner(ϕ, dϕ, dϕ)
+            ϵ = isnan(x.df) ? 1e-3*fϵ(sqrt(δ)) : fϵ(x.df)
+            ϵ = max(1e-12, ϵ)
+
+            fK = transfer_matrix(ϕ, ϕ)
+
+            # solve the fixed point equation
+            init = similar(ϕ.Q, _firstspace(ϕ.Q)←_firstspace(ϕ.Q))
+            randomize!(init);
+            _, vrs, _ = eigsolve(fK, init, 1, :LR)
+            vr = vrs[1]
+
+            Id = id(_firstspace(ϕ.Q))
+            @inline function kron1(A::TensorMap, B::TensorMap)
+                @tensor AB[-1 -2; -3 -4] := A[-3; -1] * B[-2; -4]
+                return AB
+            end
+            P1 = kron1(Id, ϕ.Rs[2] * vr * ϕ.Rs[2]') + 
+                 kron1(ϕ.Rs[2]' * ϕ.Rs[2], vr) + 
+                 kron1(ϕ.Rs[2], vr * ϕ.Rs[2]') + 
+                 kron1(ϕ.Rs[2]', ϕ.Rs[2] * vr)
+            P2 = kron1(Id, ϕ.Rs[1] * vr * ϕ.Rs[1]') + 
+                 kron1(ϕ.Rs[1]' * ϕ.Rs[1], vr) + 
+                 kron1(ϕ.Rs[1], vr * ϕ.Rs[1]') + 
+                 kron1(ϕ.Rs[1]', ϕ.Rs[1] * vr)
+
+            x.preconditioner = [herm_reg_inv(P1, ϵ), herm_reg_inv(P2, ϵ)]
+        end
+
+        Q = dϕ.Q  
+        @tensor R1[-1; -2] := x.preconditioner[1][1 2; -1 -2] * dϕ.Rs[1][1; 2]
+        @tensor R2[-1; -2] := x.preconditioner[2][1 2; -1 -2] * dϕ.Rs[2][1; 2]
+
+        return CMPSData(Q, [R1, R2])
+    end
+
     transport!(v, x, d, α, xnew) = v
 
     function finalize_wrapped!(x::OptimState{CMPSData}, f, g, numiter)
