@@ -1,3 +1,7 @@
+using Pkg;
+Pkg.activate(joinpath(@__DIR__, "..", ".."))
+Pkg.instantiate()
+
 using LinearAlgebra, TensorKit, KrylovKit 
 using ChainRules, Zygote 
 using CairoMakie 
@@ -21,14 +25,15 @@ function optimization_plain(χ::Integer)
         return x, f, g, numiter
     end
     ψ0 = MultiBosonCMPSData_diag(rand, χ, 2);
-    res = ground_state(Hm, ψ0; gradtol=1e-3, maxiter=1000000, do_preconditioning=false, _finalize! =myfinalize!);
+    res = ground_state(Hm, ψ0; gradtol=1e-6, maxiter=1000000, do_preconditioning=false, _finalize! =myfinalize!);
     return ys, gs
 end
 
 χ = parse(Int, ARGS[1])
 ix = parse(Int, ARGS[2])
 res = optimization_plain(χ);
-@save "multiboson_scripts_for_paper/benchmark/data/benchmark_plain_opt_$(χ)_$(ix).jld2" res
+#@save "multiboson_scripts_for_paper/benchmark/data/benchmark_plain_opt_$(χ)_$(ix).jld2" res
+@save "benchmark_plain_opt_$(χ)_$(ix).jld2" res
 
 
 
