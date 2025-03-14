@@ -45,6 +45,9 @@ export MultiBosonCMPSData_MDMinv, MultiBosonCMPSData_MDMinv_Grad
 # multi_boson_cmps_tnp.jl
 export MultiBosonCMPSData_tnp, MultiBosonCMPSData_tnp_Grad
 
+# multi_boson_cmps_diag.jl
+export MultiBosonCMPSData_diag
+
 # multi_boson_cmps_MCMinv.jl
 #export MultiBosonCMPSData_MCMinv#, MultiBosonCMPSData_MCMinv_Grad
 

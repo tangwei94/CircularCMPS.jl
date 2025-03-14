@@ -80,10 +80,10 @@ end
 function MultiBosonCMPSData_diag(ψ::CMPSData)
     χ, d = get_χ(ψ), get_d(ψ)
 
-    Q = ψ.Q.data
+    Q = convert(Array, ψ.Q)
     Λs = zeros(eltype(ψ.Q), χ, d)
     for ix in 1:d
-        Λs[:, ix] = diag(convert(Matrix, ψ.Rs[ix]))
+        Λs[:, ix] = diag(convert(Array, ψ.Rs[ix]))
     end
     return MultiBosonCMPSData_diag(Q, Λs)
 end
@@ -131,7 +131,7 @@ function tangent_map(ψm::MultiBosonCMPSData_diag, Xm::MultiBosonCMPSData_diag, 
     return MultiBosonCMPSData_diag(mapped_XQ, mapped_XRs) 
 end
 
-function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; do_preconditioning::Bool=true, maxiter::Int=1000)
+function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; gradtol::Float64=1e-8, do_preconditioning::Bool=true, maxiter::Int=1000, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
     if H.L == Inf
         cs = Matrix{ComplexF64}(H.cs)
         μs = Vector{ComplexF64}(H.μs)
@@ -174,13 +174,13 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; do
         end
 
         function scale!(dψ::MultiBosonCMPSData_diag, α::Number)
-            dψ.Q = dψ.Q * α
+            dψ.Q .= dψ.Q * α
             dψ.Λs .= dψ.Λs .* α
             return dψ
         end
 
         function add!(dψ::MultiBosonCMPSData_diag, dψ1::MultiBosonCMPSData_diag, α::Number) 
-            dψ.Q += dψ1.Q * α
+            dψ.Q .+= dψ1.Q * α
             dψ.Λs .+= dψ1.Λs .* α
             return dψ
         end
@@ -223,7 +223,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; do
 
         transport!(v, x, d, α, xnew) = v
 
-        optalg_LBFGS = LBFGS(;maxiter=maxiter, gradtol=1e-8, verbosity=2)
+        optalg_LBFGS = LBFGS(;maxiter=maxiter, gradtol=gradtol, verbosity=2)
 
         if do_preconditioning
             @show "doing precondition"
@@ -235,7 +235,7 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; do
         ψ1, E1, grad1, numfg1, history1 = optimize(fgE, ψ0, optalg_LBFGS; retract = retract,
                                         precondition = precondition,
                                         inner = inner, transport! =transport!,
-                                        scale! = scale!, add! = add!
+                                        scale! = scale!, add! = add!, finalize! = _finalize!
                                         );
 
         res1 = (ψ1, E1, grad1, numfg1, history1)
