@@ -51,11 +51,9 @@ The function f is used to generate random matrices and vectors.
 """
 function MultiBosonCMPSData_MDMinv(f, χ::Integer, d::Integer)
     Q = f(ComplexF64, χ, χ)
-    K = f(ComplexF64, χ, χ)
-    M = exp(im * (K+K'))
-    Minv = exp(-im * (K+K'))
-
-    Ds = map(ix -> Diagonal(exp.(π * im * f(Float64, χ))), 1:d)
+    M = Matrix{ComplexF64}(I, χ, χ)
+    Minv = Matrix{ComplexF64}(I, χ, χ)
+    Ds = map(ix -> Diagonal(rand(ComplexF64, χ)), 1:d)
     return MultiBosonCMPSData_MDMinv{ComplexF64}(Q, M, Minv, Ds)
 end
 
