@@ -120,6 +120,16 @@ function MultiBosonCMPSData_MDMinv(ψ::CMPSData)
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
 
+function MultiBosonCMPSData_MDMinv(ψ::MultiBosonCMPSData_diag)
+    χ, d = get_χ(ψ), get_d(ψ)
+    
+    Q = ψ.Q
+    M = Matrix{ComplexF64}(I, χ, χ)
+    Minv = Matrix{ComplexF64}(I, χ, χ)
+    Ds = map(ix -> Diagonal(ψ.Λs[:, ix]), 1:d)
+    return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
+end
+
 """
     convert_to_MultiBosonCMPSData_MDMinv_deprecated(ψ::CMPSData)
 
