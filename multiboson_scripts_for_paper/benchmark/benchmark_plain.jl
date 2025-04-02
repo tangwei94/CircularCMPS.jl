@@ -19,13 +19,20 @@ Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf)
 
 function optimization_plain(χ::Integer)
     ys, gs = Float64[], Float64[]
-    myfinalize!(x, f, g, numiter) = begin
+    myfinalize_for_diag!(x, f, g, numiter) = begin
+        _f_MDMinv(x1::MultiBosonCMPSData_MDMinv) = energy(Hm, x1)
+
+        x1 = left_canonical(MultiBosonCMPSData_MDMinv(x))
+        _, ∂E_MDMinv = withgradient(_f_MDMinv, x1)
+        g_MDMinv = CircularCMPS.diff_to_grad(x1, ∂E_MDMinv[1])
+
+        #println("f = $f, norm(g) = $(norm(g)), norm(g_MDMinv) = $(norm(g_MDMinv))")
         push!(ys, f)
-        push!(gs, norm(g))
+        push!(gs, norm(g_MDMinv))
         return x, f, g, numiter
     end
     ψ0 = MultiBosonCMPSData_diag(rand, χ, 2);
-    res = ground_state(Hm, ψ0; gradtol=1e-6, maxiter=1000000, do_preconditioning=false, _finalize! =myfinalize!);
+    res = ground_state(Hm, ψ0; gradtol=1e-6, maxiter=1000000, do_preconditioning=false, _finalize! =myfinalize_for_diag!);
     return ys, gs
 end
 
@@ -34,7 +41,3 @@ ix = parse(Int, ARGS[2])
 res = optimization_plain(χ);
 #@save "multiboson_scripts_for_paper/benchmark/data/benchmark_plain_opt_$(χ)_$(ix).jld2" res
 @save "benchmark_plain_opt_$(χ)_$(ix).jld2" res
-
-
-
-
