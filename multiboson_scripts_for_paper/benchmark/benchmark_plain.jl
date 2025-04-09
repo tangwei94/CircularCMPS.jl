@@ -16,12 +16,11 @@ c12 = 0.5
 μ1, μ2 = 2.0, 2.0 
 
 Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf) 
+_f_MDMinv(_x1::MultiBosonCMPSData_MDMinv) = energy(Hm, _x1)
 
 function optimization_plain(χ::Integer)
     ys, gs = Float64[], Float64[]
     myfinalize_for_diag!(x, f, g, numiter) = begin
-        _f_MDMinv(x1::MultiBosonCMPSData_MDMinv) = energy(Hm, x1)
-
         x1 = left_canonical(MultiBosonCMPSData_MDMinv(x))
         _, ∂E_MDMinv = withgradient(_f_MDMinv, x1)
         g_MDMinv = CircularCMPS.diff_to_grad(x1, ∂E_MDMinv[1])
