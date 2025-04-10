@@ -35,7 +35,7 @@ function optimization_plain(χ::Integer)
         return x, f, g, numiter
     end
     ψ0 = MultiBosonCMPSData_diag(rand, χ, 2);
-    res = ground_state(Hm, ψ0; gradtol=0, maxiter=1000000, do_preconditioning=false, _finalize! =myfinalize_for_diag!);
+    res = ground_state(Hm, ψ0; gradtol=0.0, maxiter=1000000, do_preconditioning=false, _finalize! =myfinalize_for_diag!);
     return ys, gs
 end
 

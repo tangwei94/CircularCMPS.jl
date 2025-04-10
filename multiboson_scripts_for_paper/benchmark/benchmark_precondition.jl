@@ -43,7 +43,7 @@ function optimization_precondition(χ::Integer)
     end
 
     ψ0 = MultiBosonCMPSData_diag(rand, χ, 2);
-    res0 = ground_state(Hm, ψ0; gradtol=0, maxiter=10000, do_preconditioning=false, _finalize! =myfinalize!);
+    res0 = ground_state(Hm, ψ0; gradtol=0.0, maxiter=10000, do_preconditioning=false, _finalize! =myfinalize!);
     ψ1 = MultiBosonCMPSData_MDMinv(res0[1])
     res_opt = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=10000, preconditioner_type=1, _finalize! =myfinalize!);
     return ys, gs
