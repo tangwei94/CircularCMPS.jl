@@ -28,10 +28,14 @@ function optimization_plain(χ::Integer)
         #println("f = $f, norm(g) = $(norm(g)), norm(g_MDMinv) = $(norm(g_MDMinv))")
         push!(ys, f)
         push!(gs, norm(g_MDMinv))
+        
+        if norm(g_MDMinv) < 1e-5 # exit condition for optimization 1
+            g = 0.0 * g
+        end
         return x, f, g, numiter
     end
     ψ0 = MultiBosonCMPSData_diag(rand, χ, 2);
-    res = ground_state(Hm, ψ0; gradtol=1e-6, maxiter=1000000, do_preconditioning=false, _finalize! =myfinalize_for_diag!);
+    res = ground_state(Hm, ψ0; gradtol=0, maxiter=1000000, do_preconditioning=false, _finalize! =myfinalize_for_diag!);
     return ys, gs
 end
 
