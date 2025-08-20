@@ -50,18 +50,20 @@ end
 ψ0 = CMPSData(rand, χ, 2);
 res, res_lm = optimization_starting_from(ψ0);
 
-ψ1 = expand(res_lm[2], 2*χ, 10; perturb = 1e-3);
-#ψ1 = CMPSData((expand(res[1], 2*χ; perturb = 1e-3), res[2])[1]);
-res1, res_lm1 = optimization_starting_from(ψ1);
+ψ1 = res[1]
+ϕ2 = CircularCMPS.jordan_expand(ψ1)
 
-ψ2 = expand(res_lm1[2], 3*χ, 10; perturb = 1e-3);
-res2, res_lm2 = optimization_starting_from(ψ2);
+ϕ1 = CMPSData(ψ1)
 
-ψ3 = expand(res_lm2[2], 4*χ, 10; perturb = 1e-3);
-res3, res_lm3 = optimization_starting_from(ψ3);
+real.(eigen(K_mat(ϕ1, ϕ1))[1].data) |> sort
+real.(eigen(K_mat(ϕ2, ϕ2))[1].data) |> sort
 
-ψ4 = expand(res_lm3[2], 5*χ, 10; perturb = 1e-3);
-res4, res_lm4 = optimization_starting_from(ψ4);
+function ln_ovlp1(a::CMPSData, b::CMPSData)
+    K = K_mat(a, b)
+    a = eigen(K)[1].data
 
-ψ5 = expand(res_lm4[2], 6*χ, 10; perturb = 1e-3);
-res5, res_lm5 = optimization_starting_from(ψ5);
+    return maximum(real.(a))
+end
+
+ln_ovlp1(ϕ1, ϕ1)
+2*ln_ovlp1(ϕ1, ϕ2)-ln_ovlp1(ϕ2, ϕ2)

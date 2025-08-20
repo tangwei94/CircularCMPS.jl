@@ -319,6 +319,26 @@ function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb = 1e-2)
     return left_canonical(MultiBosonCMPSData_MDMinv(Qd, M, Minv, Ds))
 end
 
+function jordan_expand(ψ::MultiBosonCMPSData_MDMinv; perturb = 1e-3)
+    χ0, d = get_χ(ψ), get_d(ψ)
+    χ = 2 * χ0
+
+    I2 = Float64[1 0; 0 1]
+    σp = Float64[0 1; 0 0]
+    σz = Float64[1 0; 0 -1]
+    Iχ0 = Matrix{Float64}(I, χ0, χ0)
+    Ds = map(1:d) do ix
+        kron(ψ.Ds[ix], I2)  
+    end
+    Qdat = kron(ψ.Q, I2) + kron(Iχ0, σz) 
+    #Qdat .+= perturb * rand(ComplexF64, χ, χ)
+    Q = TensorMap(Qdat, ℂ^χ, ℂ^χ)
+    M = kron(ψ.M, I2)
+    Rs = [TensorMap(M * D * inv(M), ℂ^χ, ℂ^χ) for D in Ds]
+    println("modified cmpo")
+    return CMPSData(Q, Rs)
+end
+
 function expand0(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb = 1e-2)
     χ0, d = get_χ(ψ), get_d(ψ)
     if χ <= χ0
