@@ -619,7 +619,7 @@ function energy(H::MultiBosonLiebLinigerWithPairing, ψ::MultiBosonCMPSData_MDMi
     return real(tr(envL * OH * envR) / tr(envL * envR))
 end
 
-function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; preconditioner_type::Int=1, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x), m_LBFGS::Int=8, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
+function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; preconditioner_type::Int=1, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->x), m_LBFGS::Int=8, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
     if H.L < Inf
         error("finite size not implemented yet.")
     end
@@ -664,13 +664,12 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         return dψ
     end
     
-    function _precondition(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
+    function _precondition1(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
         ψ = x.data
         χ, d = get_χ(ψ), get_d(ψ)
         ρR = right_env(ψ)
 
         if ismissing(x.preconditioner)
-            @show x.df, norm(dψ) # FIXME. norm(dψ) here is very large. why?
             ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
             ϵ = max(1e-12, ϵ)
 
@@ -697,13 +696,57 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
 
         return PG
     end
-    function _precondition1(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
+    function _precondition2(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
         ψ = x.data
         χ, d = get_χ(ψ), get_d(ψ)
 
         ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
         ϵ = max(1e-12, ϵ)
         PG = precondition_map(ψ, dψ; ϵ = ϵ)
+
+        return PG
+    end
+    function _precondition3(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
+        ψ = x.data
+        χ, d = get_χ(ψ), get_d(ψ)
+        ρR = right_env(ψ)
+
+        if ismissing(x.preconditioner)
+            ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
+            ϵ = max(1e-12, ϵ)
+
+            P = zeros(ComplexF64, χ^2+d*χ, χ^2+d*χ)
+
+            blas_num_threads = LinearAlgebra.BLAS.get_num_threads()
+            LinearAlgebra.BLAS.set_num_threads(1)
+
+            Threads.@threads for ix in 1:(χ^2+d*χ)
+                v = zeros(ComplexF64, χ^2+d*χ)
+                v[ix] = 1
+                g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
+                g1 = tangent_map(ψ, g)
+
+                # consider preconditioning X and dDs separately. does not work.
+                if norm(g.dDs[1]) > 0.1
+                    g1.X .= 0 
+                    g1.dDs[2] *= 0 
+                elseif norm(g.dDs[2]) > 0.1
+                    g1.dDs[1] *= 0 
+                    g1.X .= 0 
+                else
+                    g1.dDs .*= 0
+                end
+
+                P[:, ix] = vec(g1)
+            end 
+            LinearAlgebra.BLAS.set_num_threads(blas_num_threads)
+                        
+            P[diagind(P)] .+= ϵ
+
+            x.preconditioner = qr(P)
+        end
+        vp = x.preconditioner \ vec(dψ)
+        PG = MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
 
         return PG
     end
@@ -715,6 +758,8 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         x.df = abs(f - x.prev)
         x.prev = f
         _finalize!(x, f, g, numiter)
+
+        println("df = $(x.df), df/norm(g)^2 = $(x.df/norm(g)^2)")
         return x, f, g, numiter
     end
 
@@ -726,10 +771,13 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
     # preconditioner type 2 solve the preconditioner inverse by lssolve.. But in practice it is slower than type1 due to the large condition number of P.
     if preconditioner_type == 1
         @show "using preconditioner 1"
-        precondition1 = _precondition
+        precondition1 = _precondition1
     elseif preconditioner_type == 2
         @show "using preconditioner 2"
-        precondition1 = _precondition1
+        precondition1 = _precondition2
+    elseif preconditioner_type == 3
+        @show "using preconditioner 3"
+        precondition1 = _precondition3
     elseif preconditioner_type == 0
         @show "no precondition"
         precondition1 = _no_precondition

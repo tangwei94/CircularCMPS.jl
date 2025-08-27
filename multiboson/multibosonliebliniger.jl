@@ -12,7 +12,7 @@ using CircularCMPS
 #c12 = 0.5 
 #Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf) 
 c1, c2 = 1.0, 1.0
-c12 = 1.0
+c12 = -0.8
 μ1, μ2 = 1.0, 1.0 
 u1, u2 = 0.5, 0.5 
 #c12 = 0.5 
@@ -54,6 +54,20 @@ res, res_lm = optimization_starting_from(ψ0);
 ψ1 = res[1]
 ϕ1 = CMPSData(ψ1)
 
+v1 = diag(ψ1.Ds[1])
+v2 = diag(ψ1.Ds[2])
+
+norm.(v1)
+norm.(v2)
+
+ϕ1_flipped = deepcopy(ϕ1)
+ϕ1_flipped.Rs[1] = ϕ1.Rs[2]
+ϕ1_flipped.Rs[2] = ϕ1.Rs[1]
+
+ln_ovlp1(ϕ1, ϕ1)
+ln_ovlp1(ϕ1_flipped, ϕ1_flipped)
+ln_ovlp1(ϕ1_flipped, ϕ1)
+
 function ln_ovlp1(a::CMPSData, b::CMPSData)
     K = K_mat(a, b)
     a = eigen(K)[1].data
@@ -74,8 +88,27 @@ Veigs[orderR]
 2*ln_ovlp1(ϕ1, ϕ2) - (ln_ovlp1(ϕ2, ϕ2) + ln_ovlp1(ϕ1, ϕ1))
 
 ψ2 = MultiBosonCMPSData_MDMinv(ϕ2)
-res2 = ground_state(Hm, ψ2; gradtol=1e-6, maxiter=1000, preconditioner_type=1);
+res2 = ground_state(Hm, ψ2; gradtol=1e-9, maxiter=1000, preconditioner_type=1);
 @show res2[2]
+ψ2 = deepcopy(res2[1])
+
+ϕ2 = CMPSData(ψ2)
+ϕ2_flipped = deepcopy(ϕ2)
+ϕ2_flipped.Rs[1] = ϕ2.Rs[2]
+ϕ2_flipped.Rs[2] = ϕ2.Rs[1]
+
+ln_ovlp1(ϕ2, ϕ2)
+ln_ovlp1(ϕ2_flipped, ϕ2_flipped)
+ln_ovlp1(ϕ2_flipped, ϕ2)
+
+v1 = diag(ψ2.Ds[1])
+v2 = diag(ψ2.Ds[2])
+
+v1 ./= exp(im * angle(sum(v1)))
+v2 ./= exp(im * angle(sum(v2)))
+
+norm.(v1) |> sort
+norm.(v2) |> sort
 
 ϕ3 = CircularCMPS.embedding_expand(res2[1]; perturb=0.1);
 Veigs = eigen(K_mat(ϕ3, ϕ3))[1].data
