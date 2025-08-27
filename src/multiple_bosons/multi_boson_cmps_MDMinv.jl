@@ -102,6 +102,7 @@ function CMPSData(ψ::MultiBosonCMPSData_MDMinv)
     return CMPSData(Q, Rs)
 end
 
+
 """
     MultiBosonCMPSData_MDMinv(ψ::CMPSData)
 
@@ -264,11 +265,14 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, d
    
     Ds = ψ.Ds .+ α .* dDs
     
-    #X[diagind(X)] .- tr(X) / size(X, 1) # make X traceless
-    #M = exp(α * X) * ψ.M
-    #Minv = ψ.Minv * exp(-α * X)
     M = ψ.M * exp(α * X)
     Minv = exp(-α * X) * ψ.Minv
+
+    #Id = Matrix{T}(I, size(X, 1), size(X, 1))
+    #P = inv(Id - α * X / 2) * (Id + α * X / 2)
+    #Pinv = inv(P)
+    #M = ψ.M * P
+    #Minv = Pinv * ψ.Minv
 
     Rs = [ψ.M * D0 * ψ.Minv for D0 in ψ.Ds] 
     R1s = [M * D * Minv for D in Ds] 
@@ -319,24 +323,34 @@ function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb = 1e-2)
     return left_canonical(MultiBosonCMPSData_MDMinv(Qd, M, Minv, Ds))
 end
 
-function jordan_expand(ψ::MultiBosonCMPSData_MDMinv; perturb = 1e-3)
+function direct_sum_expansion(ψ::MultiBosonCMPSData_MDMinv; perturb = 1e-3)
     χ0, d = get_χ(ψ), get_d(ψ)
     χ = 2 * χ0
 
-    I2 = Float64[1 0; 0 1]
-    σp = Float64[0 1; 0 0]
-    σz = Float64[1 0; 0 -1]
-    Iχ0 = Matrix{Float64}(I, χ0, χ0)
+    I2 = Diagonal(ones(Float64, 2))
     Ds = map(1:d) do ix
-        kron(ψ.Ds[ix], I2)  
+        kron(ψ.Ds[ix], I2) 
     end
-    Qdat = kron(ψ.Q, I2) + kron(Iχ0, σz) 
-    #Qdat .+= perturb * rand(ComplexF64, χ, χ)
-    Q = TensorMap(Qdat, ℂ^χ, ℂ^χ)
+    Q = kron(ψ.Q, I2) 
     M = kron(ψ.M, I2)
-    Rs = [TensorMap(M * D * inv(M), ℂ^χ, ℂ^χ) for D in Ds]
-    println("modified cmpo")
-    return CMPSData(Q, Rs)
+    Minv = kron(ψ.Minv, I2)
+    R0s = [M * D * Minv for D in Ds]
+
+    X = rand(ComplexF64, χ, χ)
+    X = (X + X') / norm(X + X')
+
+    M = M * exp(perturb * X)
+    Minv = exp(-perturb * X) * Minv
+    Ds = map(Ds) do D
+        dD = Diagonal(rand(ComplexF64, χ))
+        dD = (dD + dD') / norm(dD + dD')
+        D + perturb * dD
+    end
+    ΔRs = [M * D * Minv - R0 for (D, R0) in zip(Ds, R0s)]
+    V = sum(-[R0' * ΔR + 0.5 * ΔR' * ΔR for (R0, ΔR) in zip(R0s, ΔRs)])
+    Q = Q + V
+
+    return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
 
 function expand0(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb = 1e-2)

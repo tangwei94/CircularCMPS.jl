@@ -80,10 +80,14 @@ end
 function MultiBosonCMPSData_diag(ψ::CMPSData)
     χ, d = get_χ(ψ), get_d(ψ)
 
-    Q = convert(Array, ψ.Q)
+    R1 = ψ.Rs[1]
+    _, V = eigen(R1)
+    Vinv = inv(V)
+
+    Q = convert(Array, Vinv * ψ.Q * V)
     Λs = zeros(eltype(ψ.Q), χ, d)
     for ix in 1:d
-        Λs[:, ix] = diag(convert(Array, ψ.Rs[ix]))
+        Λs[:, ix] = diag(convert(Array, Vinv * ψ.Rs[ix] * V))
     end
     return MultiBosonCMPSData_diag(Q, Λs)
 end
