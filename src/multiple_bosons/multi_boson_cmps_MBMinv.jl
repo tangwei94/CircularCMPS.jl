@@ -1,5 +1,6 @@
 # multi-boson cMPS with MBMinv parameterization
 # The R matrices are parameterized as M * (I ⊗ ... ⊗ B ⊗ I ⊗ ... ⊗ I) * Minv
+# deprecated. 
 
 mutable struct MultiBosonCMPSData_MBMinv{T<:Number} <: AbstractCMPSData
     Q::Matrix{T}
