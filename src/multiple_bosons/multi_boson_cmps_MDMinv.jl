@@ -102,14 +102,12 @@ function CMPSData(ψ::MultiBosonCMPSData_MDMinv)
     return CMPSData(Q, Rs)
 end
 
-
 """
     MultiBosonCMPSData_MDMinv(ψ::CMPSData)
 
 Convert CMPSData to MultiBosonCMPSData_MDMinv format. This function is deprecated.
 """
 function MultiBosonCMPSData_MDMinv(ψ::CMPSData)
-    @warn "MultiBosonCMPSData_MDMinv(ψ::CMPSData) is going to be removed"
     Q = convert(Array, ψ.Q)
     _, M = eigen(convert(Array, ψ.Rs[1]))
     Minv = inv(M)
@@ -129,77 +127,6 @@ function MultiBosonCMPSData_MDMinv(ψ::MultiBosonCMPSData_diag)
     Minv = Matrix{ComplexF64}(I, χ, χ)
     Ds = map(ix -> Diagonal(ψ.Λs[:, ix]), 1:d)
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
-end
-
-"""
-    convert_to_MultiBosonCMPSData_MDMinv_deprecated(ψ::CMPSData)
-
-Deprecated conversion function from CMPSData to MultiBosonCMPSData_MDMinv.
-Returns the converted state and the conversion error.
-"""
-function convert_to_MultiBosonCMPSData_MDMinv_deprecated(ψ::CMPSData)
-    Q = convert(Array, ψ.Q)
-    _, M = eigen(convert(Array, ψ.Rs[1]))
-    Minv = inv(M)
-  
-    D0s = map(R->Minv * convert(Array, R) * M, ψ.Rs)
-    Ds = map(D->Diagonal(D), D0s)
-    err2 = sum(norm.(Ds .- D0s) .^ 2)
-    
-    return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds), sqrt(err2)
-end
-
-"""
-    convert_to_MultiBosonCMPSData_MDMinv(ψ::CMPSData)
-
-Convert CMPSData to MultiBosonCMPSData_MDMinv format. Uses optimization to find the best M matrix
-that diagonalizes the R matrices.
-"""
-function convert_to_MultiBosonCMPSData_MDMinv(ψ::CMPSData)
-
-    # FIXME. a temporary solution; only works for the case of two species of bosons
-    R1, R2 = convert(Array, ψ.Rs[1]), convert(Array, ψ.Rs[2])
-    function fv(v::Vector{Float64})
-        α, β = v
-        _, V1 = eigen(R1 + (α + im*β) * R2);
-        invV1 = inv(V1)
-        D1 = (inv(V1) * R1 * V1)
-        D2 = (inv(V1) * R2 * V1)
-
-        err2(D) = norm(V1 * (D - Diagonal(D)) * invV1) ^ 2
-        y = sqrt(err2(D1) + err2(D2))
-        return y
-    end
-
-    function fgv(v::Vector{Float64})
-        y = fv(v)
-        g = grad(central_fdm(5, 1), fv, v)[1]
-        return y, g
-    end
-
-    ymin, vmin = Inf, [0, 0]
-    v0 = [0.0, 0.0]
-    for _ in 1:10
-        v0 += 2 * rand(2) .- 1
-        res = optimize(fgv, v0, LBFGS(;verbosity=0, gradtol=1e-4))
-        if res[2] < ymin
-            vmin = res[1]
-            ymin = res[2]
-        end
-    end
-
-    α, β = vmin
-    _, M = eigen(R1 + (α + im*β) * R2);
-
-    Q = convert(Array, ψ.Q)
-    _, M = eigen(convert(Array, ψ.Rs[1]))
-    Minv = inv(M)
-  
-    D0s = map(R->Minv * convert(Array, R) * M, ψ.Rs)
-    Ds = map(D->Diagonal(D), D0s)
-    err2 = sum(norm.(Ds .- D0s) .^ 2)
-    
-    return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds), sqrt(err2)
 end
 
 function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_MDMinv)
@@ -281,46 +208,6 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, d
     Q = ψ.Q - sum([R' * ΔR + 0.5 * ΔR' * ΔR for (R, ΔR) in zip(Rs, ΔRs)])
 
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
-end
-
-"""
-    expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb::Float64=1e-3)
-
-Expand the bond dimension of the state from χ₀ to χ > χ₀.
-The new components are initialized with small perturbations around the smallest eigenvalues.
-
-# Arguments
-- `ψ`: The state to expand
-- `χ`: New bond dimension
-- `perturb`: Scale of perturbations for initialization
-"""
-function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb = 1e-2)
-    χ0, d = get_χ(ψ), get_d(ψ)
-    if χ <= χ0
-        @warn "new χ not bigger than χ0"
-        return ψ
-    end
-    Δχ = χ - χ0
-
-    Qd0 = ψ.Minv * ψ.Q * ψ.M
-    Λ = maximum(norm.(eigvals(Qd0)))
-   
-    Ds = map(1:d) do ix
-        Diagonal(zeros(ComplexF64, χ))
-    end
-    for ix in 1:d 
-        Ddiag = view(Ds[ix], diagind(Ds[ix]))
-        Ddiag[1:χ0] .= diag(ψ.Ds[ix])
-        Ddiag[χ0+1:χ] .= maximum(norm.(Ddiag[1:χ0])) * (1 .+ rand(ComplexF64, Δχ))
-    end
-    Qd = perturb * rand(ComplexF64, χ, χ)
-    Qd[1:χ0, 1:χ0] .= Qd0
-    Qd[diagind(Qd)][χ0+1:χ] .-= 2*Λ
-    
-    M = Matrix{ComplexF64}(I, χ, χ)
-    Minv = Matrix{ComplexF64}(I, χ, χ)
-
-    return left_canonical(MultiBosonCMPSData_MDMinv(Qd, M, Minv, Ds))
 end
 
 function direct_sum_expansion(ψ::MultiBosonCMPSData_MDMinv; perturb = 1e-3)
