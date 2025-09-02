@@ -135,7 +135,7 @@ function tangent_map(ψm::MultiBosonCMPSData_diag, Xm::MultiBosonCMPSData_diag, 
     return MultiBosonCMPSData_diag(mapped_XQ, mapped_XRs) 
 end
 
-function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; gradtol::Float64=1e-8, do_preconditioning::Bool=true, maxiter::Int=1000, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
+function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; gradtol::Float64=1e-8, do_preconditioning::Bool=false, maxiter::Int=1000, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
     if H.L == Inf
         cs = Matrix{ComplexF64}(H.cs)
         μs = Vector{ComplexF64}(H.μs)
