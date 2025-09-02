@@ -210,7 +210,7 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, d
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
 
-function direct_sum_expansion(ψ::MultiBosonCMPSData_MDMinv; perturb = 1e-3)
+function expand(ψ::MultiBosonCMPSData_MDMinv; perturb = 1e-3)
     χ0, d = get_χ(ψ), get_d(ψ)
     χ = 2 * χ0
 
