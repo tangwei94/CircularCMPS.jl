@@ -12,8 +12,8 @@ using CircularCMPS
 #c12 = 0.5 
 #Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf) 
 c1, c2 = 1.0, 1.0
-c12 = -0.8
-μ1, μ2 = 1.0, 1.0 
+c12 = -0.1
+μ1, μ2 = 0.0, 0.0 
 u1, u2 = 0.5, 0.5 
 #c12 = 0.5 
 
@@ -23,7 +23,7 @@ Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf)
 function optimization_starting_from(ψ; penalty_order=1)
     # initialization with penalty term
     ϕ = left_canonical(ψ)[2];
-    res_lm = ground_state(Hm, ϕ; Λs = 10 .^ (1:(1/4):6), gradtol=1e-3, maxiter=250, do_prerun=true, order=penalty_order);
+    res_lm = ground_state(Hm, ϕ; Λs = 10 .^ (1:(1/2):2), gradtol=1e-3, maxiter=250, do_prerun=true, order=penalty_order);
     #res_lm = ground_state(Hm, ϕ; Λs = 10 .^ (5:6), gradtol=1e-1, maxiter=2, do_prerun=true, order=penalty_order);
     #res = ground_state(Hm, res_lm[1]; Λs = 10 .^ (6:(1/4):8), gradtol=1e-4, maxiter=1000, do_prerun=true, order=penalty_order);
    
