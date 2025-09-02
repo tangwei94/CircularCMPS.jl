@@ -240,48 +240,6 @@ function direct_sum_expansion(ψ::MultiBosonCMPSData_MDMinv; perturb = 1e-3)
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
 
-function expand0(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb = 1e-2)
-    χ0, d = get_χ(ψ), get_d(ψ)
-    if χ <= χ0
-        @warn "new χ not bigger than χ0"
-        return ψ
-    end
-    Δχ = χ - χ0
-   
-    Q = zeros(ComplexF64, χ, χ)
-    #Q = im*(Q + Q')
-    #Q ./= norm(Q)
-    M = Matrix{ComplexF64}(I, χ, χ)
-    Ds = map(1:d) do ix
-        Diagonal(zeros(ComplexF64, χ))
-    end
-
-    Λs = zeros(ComplexF64, d)
-    newphases = [1e-2 .* (1:(Δχ÷2)) ; -1e-2 .* (1:(Δχ÷2)) ]
-    for ix in 1:d
-        Ddiag = view(Ds[ix], diagind(Ds[ix]))
-        Ddiag[1:χ0] = diag(ψ.Ds[ix])
-        
-        perm = sortperm(norm.(Ddiag[1:χ0]))
-        phases = angle.(Ddiag[perm]) 
-        
-        Λs[ix] = maximum(norm.(Ddiag[perm])) * exp(im * sum(phases[1:2]) / 2)
-        Ddiag[χ0+1:χ] .= Λs[ix] * exp.(im * newphases)
-    end
-    Q0view = view(Q, 1:χ0, 1:χ0)
-    Q0view .+= ψ.Q
-    Qdiag = view(Q, diagind(Q))
-    Qdiag[χ0+1:χ] .-= sum(norm.(Λs) .^ 2) / 2
-
-    M0view = view(M, 1:χ0, 1:χ0)
-    M0view .= ψ.M * sqrt(norm(ψ.Minv) / norm(ψ.M))
-
-    Q .+= perturb * rand(ComplexF64, χ, χ)
-    M .+= perturb * rand(ComplexF64, χ, χ)
-
-    return left_canonical(MultiBosonCMPSData_MDMinv(Q, M, Ds)) 
-end
-
 """
     MultiBosonCMPSData_MDMinv_Grad{T<:Number} <: AbstractCMPSData
 
