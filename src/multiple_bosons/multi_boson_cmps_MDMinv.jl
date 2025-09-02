@@ -551,50 +551,6 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
 
         return PG
     end
-    function _precondition3(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
-        ψ = x.data
-        χ, d = get_χ(ψ), get_d(ψ)
-        ρR = right_env(ψ)
-
-        if ismissing(x.preconditioner)
-            ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
-            ϵ = max(1e-12, ϵ)
-
-            P = zeros(ComplexF64, χ^2+d*χ, χ^2+d*χ)
-
-            blas_num_threads = LinearAlgebra.BLAS.get_num_threads()
-            LinearAlgebra.BLAS.set_num_threads(1)
-
-            Threads.@threads for ix in 1:(χ^2+d*χ)
-                v = zeros(ComplexF64, χ^2+d*χ)
-                v[ix] = 1
-                g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
-                g1 = tangent_map(ψ, g)
-
-                # consider preconditioning X and dDs separately. does not work.
-                if norm(g.dDs[1]) > 0.1
-                    g1.X .= 0 
-                    g1.dDs[2] *= 0 
-                elseif norm(g.dDs[2]) > 0.1
-                    g1.dDs[1] *= 0 
-                    g1.X .= 0 
-                else
-                    g1.dDs .*= 0
-                end
-
-                P[:, ix] = vec(g1)
-            end 
-            LinearAlgebra.BLAS.set_num_threads(blas_num_threads)
-                        
-            P[diagind(P)] .+= ϵ
-
-            x.preconditioner = qr(P)
-        end
-        vp = x.preconditioner \ vec(dψ)
-        PG = MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
-
-        return PG
-    end
 
     transport!(v, x, d, α, xnew) = v
 
@@ -620,9 +576,6 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
     elseif preconditioner_type == 2
         @show "using preconditioner 2"
         precondition1 = _precondition2
-    elseif preconditioner_type == 3
-        @show "using preconditioner 3"
-        precondition1 = _precondition3
     elseif preconditioner_type == 0
         @show "no precondition"
         precondition1 = _no_precondition
