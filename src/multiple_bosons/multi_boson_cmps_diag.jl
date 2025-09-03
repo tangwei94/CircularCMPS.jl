@@ -92,9 +92,22 @@ function MultiBosonCMPSData_diag(ψ::CMPSData)
     return MultiBosonCMPSData_diag(Q, Λs)
 end
 
+function MultiBosonCMPSData_diag_direct(ψ::CMPSData)
+    χ, d = get_χ(ψ), get_d(ψ)
+
+    R1 = ψ.Rs[1]
+
+    Q = convert(Array, ψ.Q)
+    Λs = zeros(eltype(ψ.Q), χ, d)
+    for ix in 1:d
+        Λs[:, ix] = diag(convert(Array, ψ.Rs[ix]))
+    end
+    return MultiBosonCMPSData_diag(Q, Λs)
+end
+
 function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_diag)
     function CMPSData_pushback(∂ψ)
-        return NoTangent(), MultiBosonCMPSData_diag(∂ψ)
+        return NoTangent(), MultiBosonCMPSData_diag_direct(∂ψ)
     end
     return CMPSData(ψ), CMPSData_pushback
 end

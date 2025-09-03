@@ -128,6 +128,17 @@ function MultiBosonCMPSData_MDMinv(ψ::MultiBosonCMPSData_diag)
     Ds = map(ix -> Diagonal(ψ.Λs[:, ix]), 1:d)
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
+function MultiBosonCMPSData_diag(ψ::MultiBosonCMPSData_MDMinv)
+    χ, d = get_χ(ψ), get_d(ψ)
+    
+    Q = ψ.Minv * ψ.Q * ψ.M
+    Λs = zeros(ComplexF64, χ, d)
+    for ix in 1:d
+        Λs[:, ix] = diag(ψ.Ds[ix])
+    end
+    
+    return MultiBosonCMPSData_diag(Q, Λs)
+end
 
 function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_MDMinv)
     M, Minv = ψ.M, ψ.Minv
