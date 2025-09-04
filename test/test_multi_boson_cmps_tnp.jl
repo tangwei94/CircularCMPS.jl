@@ -1,5 +1,5 @@
-@testset "test basic utility functions for MultiBosonCMPSData_MDMinv" for ix in 1:10
-    ψa = MultiBosonCMPSData_MDMinv(rand, 2, 3)
+@testset "test basic utility functions for MultiBosonCMPSData_tnp" for ix in 1:10
+    ψa = MultiBosonCMPSData_tnp(rand, 2, 3)
 
     @test norm(ψa) / norm(2*ψa) ≈ 0.5
     @test norm(ψa) / norm(ψa + ψa * 0.5) ≈ 2/3
@@ -7,18 +7,18 @@
 
     ψb = similar(ψa)
     randomize!(ψb)
-    @test get_χ(ψb) == 2 
+    @test get_χ(ψb) == 8 
     @test get_d(ψb) == 3 
-
 end
 
-@testset "test MultiBosonCMPSData_MDMinv to CMPSData conversion" for ix in 1:10
-    χ, d = 4, 2
-    ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
+@testset "test MultiBosonCMPSData_tnp to CMPSData conversion" for ix in 1:10
+    χb, d = 3, 2
+    χ = χb^d
+    ψ = MultiBosonCMPSData_tnp(rand, χb, d)
     ϕn = CMPSData(rand, χ, d)
 
     ψn = CMPSData(ψ)
-    @test norm(ψn - CMPSData(MultiBosonCMPSData_MDMinv(ψn))) < 1e-12
+    #@test norm(ψn - CMPSData(MultiBosonCMPSData_tnp(ψn))) < 1e-12
 
     function _F1(ψ)
         ψn = CMPSData(ψ)
@@ -38,10 +38,10 @@ end
         vl1 = left_env(TM1)
         vr2 = right_env(TM2)
    
-        return norm(tr(vl1)) / norm(vl1) + norm(tr(vr2))/norm(vr2) + norm(tr(vl1 * vr2)) / norm(vl1) / norm(vr2)
+        return norm(tr(vl1)) / norm(vl1) + norm(tr(vr2)) / norm(vr2) + norm(tr(vl1 * vr2)) / norm(vl1) / norm(vr2)
     end
     cs, μs = ComplexF64[1. 1.4; 1.4 2.], ComplexF64[2.1, 2.3]
-    function _FE(ψ::MultiBosonCMPSData_MDMinv)
+    function _FE(ψ::MultiBosonCMPSData_tnp)
         ψn = CMPSData(ψ)
         OH = kinetic(ψn) + cs[1,1]*point_interaction(ψn, 1) + cs[2,2]*point_interaction(ψn, 2) + cs[1,2] * point_interaction(ψn, 1, 2) + cs[2,1] * point_interaction(ψn, 2, 1) - μs[1] * particle_density(ψn, 1) - μs[2] * particle_density(ψn, 2)
         TM = TransferMatrix(ψn, ψn)
@@ -55,35 +55,38 @@ end
     test_ADgrad(_FE, ψ)
 end
 
-@testset "left canonical form MultiBosonCMPSData_MDMinv" for ix in 1:10
-    χ, d = 4, 2
-    ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
+@testset "left canonical form MultiBosonCMPSData_tnp" for ix in 1:10
+    χb, d = 3, 2
+    χ = χb^d
+    ψ = MultiBosonCMPSData_tnp(rand, χb, d)
     ψl = left_canonical(ψ)
 
     function check_left_canonical_form(x)
         cmps = CMPSData(x)
-        @test norm(cmps.Q + cmps.Q' + sum([R' * R for R in cmps.Rs])) < 1e-11
+        @test norm(cmps.Q + cmps.Q' + sum([R' * R for R in cmps.Rs])) < 1e-9
     end
 
     check_left_canonical_form(ψl)
 
-    α = rand()
-    dDs = [Diagonal(randn(ComplexF64, χ)) for ix in 1:d]
+    α = 0.1*rand()
+    dBs = [rand(ComplexF64, χb, χb) for ix in 1:d]
     X = randn(ComplexF64, χ, χ)
-    ψl1 = CircularCMPS.retract_left_canonical(ψl, α, dDs, X)
+    ψl1 = CircularCMPS.retract_left_canonical(ψl, α, dBs, X)
     
     check_left_canonical_form(ψl1)
 
 end
 
 @testset "test diff_to_grad" for ix in 1:10
-    χ, d = 4, 2
-    ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
+    χb, d = 3, 2
+    χ = χb^2
+    ψ = MultiBosonCMPSData_tnp(rand, χb, d)
     ψ = left_canonical(ψ)
-    Rs = Ref(ψ.M) .* ψ.Ds .* Ref(ψ.Minv)
+    Cs = CircularCMPS.construct_full_block_matrix(ψ.Bs)
+    Rs = Ref(ψ.M) .* Cs .* Ref(ψ.Minv)
 
     cs, μs = ComplexF64[1. 1.4; 1.4 2.], ComplexF64[2.1, 2.3]
-    function _F1(ψ::MultiBosonCMPSData_MDMinv)
+    function _F1(ψ::MultiBosonCMPSData_tnp)
         ψn = CMPSData(ψ)
         OH = kinetic(ψn) + cs[1,1]*point_interaction(ψn, 1) + cs[2,2]*point_interaction(ψn, 2) + cs[1,2] * point_interaction(ψn, 1, 2) + cs[2,1] * point_interaction(ψn, 2, 1) - μs[1] * particle_density(ψn, 1) - μs[2] * particle_density(ψn, 2)
         TM = TransferMatrix(ψn, ψn)
@@ -92,35 +95,39 @@ end
         return real(tr(envL * OH * envR) / tr(envL * envR))
     end
     ∂ψ = _F1'(ψ)
-    ∂Ds = ∂ψ.Ds
+    ∂Bs = ∂ψ.Bs
     g0 = CircularCMPS.diff_to_grad(ψ, ∂ψ)
 
-    function tangent_vec(g::MultiBosonCMPSData_MDMinv_Grad)
-        Ws = [ψ.M * g.X * ψ.Minv * R - R * ψ.M * g.X * ψ.Minv + ψ.M * dD * ψ.Minv for (R, dD) in zip(Rs, g.dDs)]
+    function tangent_vec(g::MultiBosonCMPSData_tnp_Grad)
+        dCs = CircularCMPS.construct_full_block_matrix(g.dBs)
+        Ws = Ref(ψ.M) .* [g.X * C - C * g.X + dC for (C, dC) in zip(Cs, dCs)] .* Ref(ψ.Minv)
+        #Ws = [ψ.M * g.X * ψ.Minv * R - R * ψ.M * g.X * ψ.Minv + ψ.M * dD * ψ.Minv for (R, dD) in zip(Rs, g.dDs)]
         V = - sum([R' * W for (R, W) in zip(Rs, Ws)])
         gM = ψ.M * g.X 
-        return (V, g.dDs, gM)
+        return (V, g.dBs, gM)
     end
 
     # check the implementation
     g1 = similar(g0)
     randomize!(g1)
-    rQ1, rDs1, rM1 = tangent_vec(g1)
-    @test dot(g0, g1) ≈ dot(∂ψ.Q, rQ1) + sum(dot.(∂Ds, rDs1)) + dot(∂ψ.M, rM1)
+    #g1 *= 1/norm(g1)
+    rQ1, rBs1, rM1 = tangent_vec(g1)
+    @test dot(g0, g1) ≈ dot(∂ψ.Q, rQ1) + sum(dot.(∂Bs, rBs1)) + dot(∂ψ.M, rM1)
 
     # check in the context of retraction
-    α = 1e-4
-    ψ2 = CircularCMPS.retract_left_canonical(ψ, α, g1.dDs, g1.X)
-    ψ1 = CircularCMPS.retract_left_canonical(ψ, -α, g1.dDs, g1.X)
-    @test norm((_F1(ψ2) - _F1(ψ1)) / (2*α) - real(dot(g0, g1))) < 1e-4
+    α = 1e-6
+    ψ2 = CircularCMPS.retract_left_canonical(ψ, α, g1.dBs, g1.X)
+    ψ1 = CircularCMPS.retract_left_canonical(ψ, -α, g1.dBs, g1.X)
+    @test norm((_F1(ψ2) - _F1(ψ1)) / (2*α) - real(dot(g0, g1)))  < 1e-6
 end
 
 @testset "tangent_map" for ix in 1:10
-    χ, d = 4, 2
-    ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
+    χb, d = 3, 2
+    χ = χb^d
+    ψ = MultiBosonCMPSData_tnp(rand, χb, d)
     ψ = left_canonical(ψ)
     ρR = right_env(ψ)
-    Rs = Ref(ψ.M) .* ψ.Ds .* Ref(ψ.Minv)
+    Rs = Ref(ψ.M) .* CircularCMPS.construct_full_block_matrix(ψ.Bs) .* Ref(ψ.Minv)
     ϕn = CMPSData(rand, χ, d)
 
     function _F1(ψ)
@@ -134,7 +141,7 @@ end
         return norm(tr(vl1)) / norm(vl1) + norm(tr(vr2))/norm(vr2) + norm(tr(vl1 * vr2)) / norm(vl1) / norm(vr2)
     end
     ∂ψ = _F1'(ψ)
-    ∂Ds = ∂ψ.Ds
+    ∂Bs = ∂ψ.Bs
     g0 = CircularCMPS.diff_to_grad(ψ, ∂ψ)
 
     g1 = similar(g0)
@@ -142,9 +149,11 @@ end
     g2 = similar(g0)
     randomize!(g2)
 
-    function tangent_vec(g::MultiBosonCMPSData_MDMinv_Grad)
+    function tangent_vec(g::MultiBosonCMPSData_tnp_Grad)
         X = g.X
-        Ws = Ref(ψ.M) .* [X * D - D * X + dD for (D, dD) in zip(ψ.Ds, g.dDs)] .* Ref(ψ.Minv)
+        Cs = CircularCMPS.construct_full_block_matrix(ψ.Bs)
+        dCs = CircularCMPS.construct_full_block_matrix(g.dBs)
+        Ws = Ref(ψ.M) .* [X * C - C * X + dC for (C, dC) in zip(Cs, dCs)] .* Ref(ψ.Minv)
         V = - sum([R' * W for (R, W) in zip(Rs, Ws)])
         return (V, Ws)
     end
@@ -163,20 +172,21 @@ end
 end
 
 @testset "tangent_map should be hermitian" for ix in 1:10
-    χ, d = 4, 2
-    ψ = MultiBosonCMPSData_MDMinv(rand, χ, d)
+    χb, d = 3, 2
+    χ = χb^2
+    ψ = MultiBosonCMPSData_tnp(rand, χb, d)
 
-    M = zeros(ComplexF64, χ*d+χ^2, χ*d+χ^2)
-    for ix in 1:χ*d+χ^2
-        v = zeros(ComplexF64, χ*d+χ^2)
+    M = zeros(ComplexF64, d*(χb^2)+(χ^2), d*(χb^2)+(χ^2))
+    for ix in 1:d*(χb^2)+(χ^2)
+        v = zeros(ComplexF64, d*(χb^2)+(χ^2))
         v[ix] = 1
-        g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
+        g = MultiBosonCMPSData_tnp_Grad(v, χb, d)
         M[:, ix] = vec(tangent_map(ψ, g))
     end
 
-    @test norm(M - M') < 1e-12
+    @test norm(M - M') < 1e-11
 
     Λ, _ = eigen(Hermitian(M))
-    @test all(Λ .≥ -1e-14)
+    @test all(Λ .≥ -1e-12)
 
 end

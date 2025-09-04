@@ -13,7 +13,7 @@ end
 """
 function CMPSData(f, χ::Integer, d::Integer)
     Q = TensorMap(f, ComplexF64, ℂ^χ, ℂ^χ)
-    Rs = MPSBondTensor{ComplexSpace}[]
+    Rs = MPSBondTensor[]
     for ix in 1:d 
         push!(Rs, TensorMap(f, ComplexF64, ℂ^χ, ℂ^χ))
     end
@@ -162,22 +162,19 @@ function expand(ψ::CMPSData, χ::Integer, L::Real; perturb::Float64=1e-3)
         @warn "new χ not bigger than χ0"
         return ψ
     end
-    mask = similar(ψ.Q, ℂ^χ ← ℂ^χ)
-    fill_data!(mask, randn)
-    mask = perturb * mask
-    Q = copy(mask)
-    Q.data[1:χ0, 1:χ0] += ψ.Q.data
+
+    Qdat = perturb * rand(ComplexF64, χ, χ)
+    Qdat[1:χ0, 1:χ0] += convert(Array, ψ.Q)
     for ix in χ0+1:χ
-        Q.data[ix, ix] += 2*log(perturb)/L # suppress
+        Qdat[ix, ix] += 2*log(perturb)/L # suppress
     end
+    Q = TensorMap(Qdat, ℂ^χ ← ℂ^χ)
 
     Rs = MPSBondTensor[]
     for R0 in ψ.Rs
-        R = similar(R0, ℂ^χ ← ℂ^χ)
-        fill_data!(R, randn)
-        R = perturb * R
-        R.data[1:χ0, 1:χ0] += R0.data
-        push!(Rs, R)
+        Rdat = perturb * rand(ComplexF64, χ, χ)
+        Rdat[1:χ0, 1:χ0] += convert(Array, R0)
+        push!(Rs, TensorMap(Rdat, ℂ^χ ← ℂ^χ))
     end
 
     return CMPSData(Q, Rs) 
@@ -211,7 +208,7 @@ function K_mat(ϕ::CMPSData, ψ::CMPSData)
 end
 
 """
-    finite_env(t::TensorMap{ComplexSpace}, L::Real)
+    finite_env(K::AbstractTensorMap{T, S, 2, 2},, L::Real)
 
     For a cMPS transfer matrix `t` (see `K_mat`), calculate the environment block for the finite length `L`.
     The input `t` matrix should look like 
@@ -224,7 +221,7 @@ end
     ```
     This function will calculate exp(t) / tr(exp(t)) by diagonalizing `t`.
 """
-function finite_env(K::TensorMap{ComplexSpace}, L::Real)
+function finite_env(K::AbstractTensorMap{T, S, 2, 2}, L::Real) where {T,S}
     W, UR = eig(K)
     UL = inv(UR)
     Ws = []

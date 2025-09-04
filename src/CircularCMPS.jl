@@ -42,6 +42,15 @@ export MultiBosonCMPSData, tangent_map
 # multi_boson_cmps_MDMinv.jl
 export MultiBosonCMPSData_MDMinv, MultiBosonCMPSData_MDMinv_Grad
 
+# multi_boson_cmps_tnp.jl
+export MultiBosonCMPSData_tnp, MultiBosonCMPSData_tnp_Grad
+
+# multi_boson_cmps_diag.jl
+export MultiBosonCMPSData_diag
+
+# multi_boson_cmps_MCMinv.jl
+#export MultiBosonCMPSData_MCMinv#, MultiBosonCMPSData_MCMinv_Grad
+
 # multi_boson_cmps_P.jl
 export MultiBosonCMPSData_P
 
@@ -49,7 +58,7 @@ export MultiBosonCMPSData_P
 export CircularCMPSRiemannian, minimize, leading_boundary_cmps
 
 # cmpo.jl 
-export AbstractCMPO, CMPO, ln_ovlp, compress, direct_sum, W_mul, variance, free_energy, energy, klein, inner
+export AbstractCMPO, CMPO, ln_ovlp, compress, direct_sum, W_mul, variance, free_energy, energy, klein
 
 # cmpo_zoo.jl
 export ising_cmpo, xxz_af_cmpo, xxz_fm_cmpo, heisenberg_j1j2_cmpo, rydberg_cmpo
@@ -64,7 +73,7 @@ export PowerMethod, power_iteration
 export VariationalOptim, leading_boundary
 
 # hamiltonian_zoo.jl
-export AbstractHamiltonian, SingleBosonLiebLiniger, MultiBosonLiebLiniger, ground_state
+export AbstractHamiltonian, SingleBosonLiebLiniger, MultiBosonLiebLiniger, ground_state, MultiBosonLiebLinigerWithPairing
 
 # cMPS code for continuous Hamiltonians
 include("utils.jl");
@@ -73,12 +82,13 @@ include("cmpsAD.jl");
 include("operators.jl");
 include("ground_state.jl")
 include("excited_state.jl");
-include("multi_boson_cmps.jl");
-include("multi_boson_cmps_MDMinv.jl");
-include("multi_boson_cmps_P.jl");
-include("transfer_matrix.jl");
 include("optim_alg.jl");
-include("hamiltonian_zoo.jl")
+include("transfer_matrix.jl");
+include("multiple_bosons/hamiltonian_zoo.jl");
+include("multiple_bosons/multi_boson_cmps_via_penalty.jl");
+include("multiple_bosons/multi_boson_cmps_diag.jl");
+include("multiple_bosons/multi_boson_cmps_tnp.jl");
+include("multiple_bosons/multi_boson_cmps_MDMinv.jl");
 
 # cMPO code
 include("cmpo.jl");

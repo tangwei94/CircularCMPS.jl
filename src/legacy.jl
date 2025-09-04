@@ -78,7 +78,7 @@ function tangent_map(ψ::cmps, L::Real, p::Real=0; gauge::Symbol=:periodic)
     idW = id(ℂ^(χ^2))
 
     # calculate the map
-    function f(V::TensorMap{ComplexSpace, 1, 1})
+    function f(V::AbstractTensorMap{T, S, 1, 1}) where {T, S}
         # crossing term
         @tensor M0[-1, -2; -3, -4] := V[1, -4] * proj[-2, 2, 1] * A'[-3, -1, 2]
         M = UL * M0 * UR

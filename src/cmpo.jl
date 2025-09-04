@@ -268,6 +268,7 @@ function direct_sum(A::MPSBondTensor, B::MPSBondTensor)
     χA, χB = dim(_firstspace(A)), dim(_firstspace(B))
 
     A_oplus_B = TensorMap(zeros, ComplexF64, ℂ^(χA+χB), ℂ^(χA+χB))
+    # FIXME!!!
     A_oplus_B.data[1:χA, 1:χA] = A.data
     A_oplus_B.data[1+χA:end, 1+χA:end] = B.data
     return A_oplus_B
@@ -302,7 +303,7 @@ function Base.:*(T::CMPO, W::Matrix{<:Number})
     return CMPO(T.Q, T.Ls, Rs, Ps)
 end
 
-function inner(T1::CMPO, T2::CMPO, L::Real)
+function TensorKit.inner(T1::CMPO, T2::CMPO, L::Real)
     Id_1, Id_2 = id(space(T1)), id(space(T2))
 
     Kmat = K_otimes(T1.Q, Id_2) + K_otimes(Id_1, T2.Q) + sum(K_otimes.(T1.Rs, T2.Rs)) + sum(K_otimes.(T1.Ls, T2.Ls))
