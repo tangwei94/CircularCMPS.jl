@@ -108,7 +108,6 @@ end
 Convert CMPSData to MultiBosonCMPSData_MDMinv format. This function is deprecated.
 """
 function MultiBosonCMPSData_MDMinv(ψ::CMPSData)
-    @warn "MultiBosonCMPSData_MDMinv(ψ::CMPSData) is going to be removed"
     Q = convert(Array, ψ.Q)
     _, M = eigen(convert(Array, ψ.Rs[1]))
     Minv = inv(M)
@@ -129,76 +128,16 @@ function MultiBosonCMPSData_MDMinv(ψ::MultiBosonCMPSData_diag)
     Ds = map(ix -> Diagonal(ψ.Λs[:, ix]), 1:d)
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
-
-"""
-    convert_to_MultiBosonCMPSData_MDMinv_deprecated(ψ::CMPSData)
-
-Deprecated conversion function from CMPSData to MultiBosonCMPSData_MDMinv.
-Returns the converted state and the conversion error.
-"""
-function convert_to_MultiBosonCMPSData_MDMinv_deprecated(ψ::CMPSData)
-    Q = convert(Array, ψ.Q)
-    _, M = eigen(convert(Array, ψ.Rs[1]))
-    Minv = inv(M)
-  
-    D0s = map(R->Minv * convert(Array, R) * M, ψ.Rs)
-    Ds = map(D->Diagonal(D), D0s)
-    err2 = sum(norm.(Ds .- D0s) .^ 2)
+function MultiBosonCMPSData_diag(ψ::MultiBosonCMPSData_MDMinv)
+    χ, d = get_χ(ψ), get_d(ψ)
     
-    return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds), sqrt(err2)
-end
-
-"""
-    convert_to_MultiBosonCMPSData_MDMinv(ψ::CMPSData)
-
-Convert CMPSData to MultiBosonCMPSData_MDMinv format. Uses optimization to find the best M matrix
-that diagonalizes the R matrices.
-"""
-function convert_to_MultiBosonCMPSData_MDMinv(ψ::CMPSData)
-
-    # FIXME. a temporary solution; only works for the case of two species of bosons
-    R1, R2 = convert(Array, ψ.Rs[1]), convert(Array, ψ.Rs[2])
-    function fv(v::Vector{Float64})
-        α, β = v
-        _, V1 = eigen(R1 + (α + im*β) * R2);
-        invV1 = inv(V1)
-        D1 = (inv(V1) * R1 * V1)
-        D2 = (inv(V1) * R2 * V1)
-
-        err2(D) = norm(V1 * (D - Diagonal(D)) * invV1) ^ 2
-        y = sqrt(err2(D1) + err2(D2))
-        return y
+    Q = ψ.Minv * ψ.Q * ψ.M
+    Λs = zeros(ComplexF64, χ, d)
+    for ix in 1:d
+        Λs[:, ix] = diag(ψ.Ds[ix])
     end
-
-    function fgv(v::Vector{Float64})
-        y = fv(v)
-        g = grad(central_fdm(5, 1), fv, v)[1]
-        return y, g
-    end
-
-    ymin, vmin = Inf, [0, 0]
-    v0 = [0.0, 0.0]
-    for _ in 1:10
-        v0 += 2 * rand(2) .- 1
-        res = optimize(fgv, v0, LBFGS(;verbosity=0, gradtol=1e-4))
-        if res[2] < ymin
-            vmin = res[1]
-            ymin = res[2]
-        end
-    end
-
-    α, β = vmin
-    _, M = eigen(R1 + (α + im*β) * R2);
-
-    Q = convert(Array, ψ.Q)
-    _, M = eigen(convert(Array, ψ.Rs[1]))
-    Minv = inv(M)
-  
-    D0s = map(R->Minv * convert(Array, R) * M, ψ.Rs)
-    Ds = map(D->Diagonal(D), D0s)
-    err2 = sum(norm.(Ds .- D0s) .^ 2)
     
-    return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds), sqrt(err2)
+    return MultiBosonCMPSData_diag(Q, Λs)
 end
 
 function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_MDMinv)
@@ -264,11 +203,14 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, d
    
     Ds = ψ.Ds .+ α .* dDs
     
-    #X[diagind(X)] .- tr(X) / size(X, 1) # make X traceless
-    #M = exp(α * X) * ψ.M
-    #Minv = ψ.Minv * exp(-α * X)
     M = ψ.M * exp(α * X)
     Minv = exp(-α * X) * ψ.Minv
+
+    #Id = Matrix{T}(I, size(X, 1), size(X, 1))
+    #P = inv(Id - α * X / 2) * (Id + α * X / 2)
+    #Pinv = inv(P)
+    #M = ψ.M * P
+    #Minv = Pinv * ψ.Minv
 
     Rs = [ψ.M * D0 * ψ.Minv for D0 in ψ.Ds] 
     R1s = [M * D * Minv for D in Ds] 
@@ -279,86 +221,34 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, d
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
 
-"""
-    expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb::Float64=1e-3)
-
-Expand the bond dimension of the state from χ₀ to χ > χ₀.
-The new components are initialized with small perturbations around the smallest eigenvalues.
-
-# Arguments
-- `ψ`: The state to expand
-- `χ`: New bond dimension
-- `perturb`: Scale of perturbations for initialization
-"""
-function expand(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb = 1e-2)
+function expand(ψ::MultiBosonCMPSData_MDMinv; perturb = 1e-3)
     χ0, d = get_χ(ψ), get_d(ψ)
-    if χ <= χ0
-        @warn "new χ not bigger than χ0"
-        return ψ
-    end
-    Δχ = χ - χ0
+    χ = 2 * χ0
 
-    Qd0 = ψ.Minv * ψ.Q * ψ.M
-    Λ = maximum(norm.(eigvals(Qd0)))
-   
+    I2 = Diagonal(ones(Float64, 2))
     Ds = map(1:d) do ix
-        Diagonal(zeros(ComplexF64, χ))
+        kron(ψ.Ds[ix], I2) 
     end
-    for ix in 1:d 
-        Ddiag = view(Ds[ix], diagind(Ds[ix]))
-        Ddiag[1:χ0] .= diag(ψ.Ds[ix])
-        Ddiag[χ0+1:χ] .= maximum(norm.(Ddiag[1:χ0])) * (1 .+ rand(ComplexF64, Δχ))
+    Q = kron(ψ.Q, I2) 
+    M = kron(ψ.M, I2)
+    Minv = kron(ψ.Minv, I2)
+    R0s = [M * D * Minv for D in Ds]
+
+    X = rand(ComplexF64, χ, χ)
+    X = (X + X') / norm(X + X')
+
+    M = M * exp(perturb * X)
+    Minv = exp(-perturb * X) * Minv
+    Ds = map(Ds) do D
+        dD = Diagonal(rand(ComplexF64, χ))
+        dD = (dD + dD') / norm(dD + dD')
+        D + perturb * dD
     end
-    Qd = perturb * rand(ComplexF64, χ, χ)
-    Qd[1:χ0, 1:χ0] .= Qd0
-    Qd[diagind(Qd)][χ0+1:χ] .-= 2*Λ
-    
-    M = Matrix{ComplexF64}(I, χ, χ)
-    Minv = Matrix{ComplexF64}(I, χ, χ)
+    ΔRs = [M * D * Minv - R0 for (D, R0) in zip(Ds, R0s)]
+    V = sum(-[R0' * ΔR + 0.5 * ΔR' * ΔR for (R0, ΔR) in zip(R0s, ΔRs)])
+    Q = Q + V
 
-    return left_canonical(MultiBosonCMPSData_MDMinv(Qd, M, Minv, Ds))
-end
-
-function expand0(ψ::MultiBosonCMPSData_MDMinv, χ::Integer; perturb = 1e-2)
-    χ0, d = get_χ(ψ), get_d(ψ)
-    if χ <= χ0
-        @warn "new χ not bigger than χ0"
-        return ψ
-    end
-    Δχ = χ - χ0
-   
-    Q = zeros(ComplexF64, χ, χ)
-    #Q = im*(Q + Q')
-    #Q ./= norm(Q)
-    M = Matrix{ComplexF64}(I, χ, χ)
-    Ds = map(1:d) do ix
-        Diagonal(zeros(ComplexF64, χ))
-    end
-
-    Λs = zeros(ComplexF64, d)
-    newphases = [1e-2 .* (1:(Δχ÷2)) ; -1e-2 .* (1:(Δχ÷2)) ]
-    for ix in 1:d
-        Ddiag = view(Ds[ix], diagind(Ds[ix]))
-        Ddiag[1:χ0] = diag(ψ.Ds[ix])
-        
-        perm = sortperm(norm.(Ddiag[1:χ0]))
-        phases = angle.(Ddiag[perm]) 
-        
-        Λs[ix] = maximum(norm.(Ddiag[perm])) * exp(im * sum(phases[1:2]) / 2)
-        Ddiag[χ0+1:χ] .= Λs[ix] * exp.(im * newphases)
-    end
-    Q0view = view(Q, 1:χ0, 1:χ0)
-    Q0view .+= ψ.Q
-    Qdiag = view(Q, diagind(Q))
-    Qdiag[χ0+1:χ] .-= sum(norm.(Λs) .^ 2) / 2
-
-    M0view = view(M, 1:χ0, 1:χ0)
-    M0view .= ψ.M * sqrt(norm(ψ.Minv) / norm(ψ.M))
-
-    Q .+= perturb * rand(ComplexF64, χ, χ)
-    M .+= perturb * rand(ComplexF64, χ, χ)
-
-    return left_canonical(MultiBosonCMPSData_MDMinv(Q, M, Ds)) 
+    return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
 
 """
@@ -564,82 +454,8 @@ function preconditioner_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData
         return tangent_map(ψ, gx; ρR = ρR) + ϵ * gx
     end
 
-    g_mapped, _ = lssolve(_f, g; verbosity = 0, tol=1e-12, maxiter=χ^3)
+    g_mapped, _ = lssolve(_f, g; verbosity = 0, tol=1e-12, maxiter=χ)
     return g_mapped
-end
-
-
-function tangent_map1(ψ::MultiBosonCMPSData_MDMinv{T}, g::MultiBosonCMPSData_MDMinv_Grad{T}; ρR = nothing, ϵ = 1e-10) where T
-    if isnothing(ρR)
-        ρR = right_env(ψ)
-    end
-
-    Id = Matrix{eltype(ρR)}(I, size(ρR))
-    ρRinv = inv(ρR + ϵ * Id)
-
-    EL = ψ.Minv * ψ.Minv' + sqrt(ϵ) * Id
-    ER = ψ.M' * ρRinv * ψ.M + sqrt(ϵ) * Id
-    Ms = [EL * (g.X * D - D * g.X + dD) * ER for (dD, D) in zip(g.dDs, ψ.Ds)] 
-
-    X_mapped = sum([M * D' - D' * M for (M, D) in zip(Ms, ψ.Ds)])
-    dDs_mapped = Diagonal.(Ms)
-
-    return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
-end
-
-function preconditioner_map1(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ϵ = 1e-10, ρR = nothing)
-    if isnothing(ρR)
-        ρR = right_env(ψ)
-    end
-
-    Id = Matrix{eltype(ρR)}(I, size(ρR))
-    ρRinv = inv(ρR + ϵ * Id)
-
-    Ws_mapped = [ψ.M * (g.X * D - D * g.X + dD) * ψ.Minv * ρRinv for (dD, D) in zip(g.dDs, ψ.Ds)]
-    function _f(gx::MultiBosonCMPSData_MDMinv_Grad, ::Val{false})
-        return [ψ.M * (gx.X * D - D * gx.X + dD) * ψ.Minv for (dD, D) in zip(gx.dDs, ψ.Ds)]
-    end 
-    function _f(Ws::Vector{Matrix{T}}, ::Val{true}) where T
-        Cs = [ψ.M' * W * ψ.Minv' for W in Ws]
-        dDs_mapped = Diagonal.(Cs)
-        X_mapped = sum([M * D' - D' * M for (M, D) in zip(Ws, ψ.Ds)])
-
-        return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
-    end
-    
-    χ = size(ψ.M, 1)
-    g_mapped, _ = lssolve(_f, Ws_mapped; verbosity = 1, tol=1e-12, maxiter=χ^3)
-    return g_mapped
-end
-
-function preconditioner_map2(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ϵ = 1e-10, ρR = nothing)
-    if isnothing(ρR)
-        ρR = right_env(ψ)
-    end
-
-    Id = Matrix{eltype(ρR)}(I, size(ρR))
-    ρRinv = inv(ρR)
-
-    C0s = [(g.X * D - D * g.X + dD) for (dD, D) in zip(g.dDs, ψ.Ds)]
-    Cs = [ψ.M' * ψ.M * C0 * ψ.Minv * ρRinv * ψ.Minv' + ϵ * C0 for C0 in C0s]
-    dDs = Diagonal.(Cs)
-    X = projection_X(Cs, ψ.Ds)
-    return MultiBosonCMPSData_MDMinv_Grad(dDs, X)
-end
-
-function projection_X(offdiags::Vector{Matrix{T}}, Ds::Vector{Diagonal{T, Vector{T}}}) where T
-    # min ‖ sum([X * D - D * X - offdiag for (D, offdiag) in zip(Ds, offdiags)]) ‖
-    χ = size(Ds[1], 1)
-
-    projected_X = zeros(T, χ, χ)
-    for ix in 1:χ, iy in 1:χ
-        up = sum([dot(D[iy, iy] - D[ix, ix], offdiag[ix, iy]) for (D, offdiag) in zip(Ds, offdiags)])
-        dn = sum([dot(D[iy, iy] - D[ix, ix], D[iy, iy] - D[ix, ix]) for D in Ds])
-        projected_X[ix, iy] = (ix == iy) ? 0 : up / dn
-    end
-    residual = sum(norm(projected_X * D - D * projected_X - (offdiag - Diagonal(offdiag))) for (D, offdiag) in zip(Ds, offdiags))
-    @info "residual, $residual, norm of projected_X, $(norm(projected_X))"
-    return projected_X
 end
 
 function energy(H::MultiBosonLiebLiniger, ψ::MultiBosonCMPSData_MDMinv)
@@ -659,7 +475,7 @@ function energy(H::MultiBosonLiebLinigerWithPairing, ψ::MultiBosonCMPSData_MDMi
     return real(tr(envL * OH * envR) / tr(envL * envR))
 end
 
-function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; preconditioner_type::Int=1, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->10*x), m_LBFGS::Int=8, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
+function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; preconditioner_type::Int=1, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->x), m_LBFGS::Int=8, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
     if H.L < Inf
         error("finite size not implemented yet.")
     end
@@ -704,13 +520,12 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         return dψ
     end
     
-    function _precondition(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
+    function _precondition1(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
         ψ = x.data
         χ, d = get_χ(ψ), get_d(ψ)
         ρR = right_env(ψ)
 
         if ismissing(x.preconditioner)
-            @show x.df, norm(dψ) # FIXME. norm(dψ) here is very large. why?
             ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
             ϵ = max(1e-12, ϵ)
 
@@ -737,53 +552,13 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
 
         return PG
     end
-    function _precondition1(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
-        ψ = x.data
-        χ, d = get_χ(ψ), get_d(ψ)
-
-        ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
-        ϵ = max(1e-12, ϵ)
-        PG = precondition_map(ψ, dψ; ϵ = ϵ)
-
-        return PG
-    end
     function _precondition2(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
         ψ = x.data
         χ, d = get_χ(ψ), get_d(ψ)
 
         ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
         ϵ = max(1e-12, ϵ)
-        PG = precondition_map_1(ψ, dψ; ϵ = ϵ)
-
-        return PG
-    end
-    function _precondition4(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
-        ψ = x.data
-        ρR = right_env(ψ)
-
-        ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
-        ϵ = max(1e-12, ϵ)
-        PG = preconditioner_map(ψ, dψ; ρR = ρR, ϵ = ϵ)
-
-        return PG
-    end
-    function _precondition5(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
-        ψ = x.data
-        ρR = right_env(ψ)
-
-        ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
-        ϵ = max(1e-12, ϵ)
-        PG = tangent_map1(ψ, dψ; ρR = ρR, ϵ = ϵ)
-
-        return PG
-    end
-    function _precondition6(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
-        ψ = x.data
-        ρR = right_env(ψ)
-
-        ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
-        ϵ = max(1e-12, ϵ)
-        PG = preconditioner_map1(ψ, dψ; ρR = ρR, ϵ = ϵ)
+        PG = precondition_map(ψ, dψ; ϵ = ϵ)
 
         return PG
     end
@@ -795,36 +570,23 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         x.df = abs(f - x.prev)
         x.prev = f
         _finalize!(x, f, g, numiter)
+
+        println("df = $(x.df), df/norm(g)^2 = $(x.df/norm(g)^2)")
         return x, f, g, numiter
     end
 
     optalg_LBFGS = LBFGS(m_LBFGS; maxiter=maxiter, gradtol=gradtol, acceptfirst=false, verbosity=2)
 
     # preconditioner type 0 is not doing any preconditioning.
-    # only preconditioner type 1, 2 works. preconditioner type 3, 4, 5, 6 will break the optimization. 
+    # only preconditioner type 1, 2 works.  
     # preconditioner type1 construct the preconditioner matrix explicitly, and solve its inverse by factorization O(χ^6)
     # preconditioner type 2 solve the preconditioner inverse by lssolve.. But in practice it is slower than type1 due to the large condition number of P.
-    # preconditioner type 3, 4, 5, 6 will break the optimization. 
-    # these preconditioners are tries to only inverse $\rho_R$ , and handle the M, Minv by some linear map
-    # There is no guarantee that the preconditioned gradient is a descent direction (preconditioner is not positive definite). so they don't work. TODO. they should be removed afterwards.
     if preconditioner_type == 1
         @show "using preconditioner 1"
-        precondition1 = _precondition
+        precondition1 = _precondition1
     elseif preconditioner_type == 2
         @show "using preconditioner 2"
-        precondition1 = _precondition1
-    elseif preconditioner_type == 3
-        @show "using preconditioner 2"
         precondition1 = _precondition2
-    elseif preconditioner_type == 4
-        @show "using preconditioner 4"
-        precondition1 = _precondition4
-    elseif preconditioner_type == 5
-        @show "using preconditioner 5"
-        precondition1 = _precondition5
-    elseif preconditioner_type == 6
-        @show "using preconditioner 6"
-        precondition1 = _precondition6
     elseif preconditioner_type == 0
         @show "no precondition"
         precondition1 = _no_precondition

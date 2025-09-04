@@ -80,6 +80,23 @@ end
 function MultiBosonCMPSData_diag(ψ::CMPSData)
     χ, d = get_χ(ψ), get_d(ψ)
 
+    R1 = ψ.Rs[1]
+    _, V = eigen(R1)
+    Vinv = inv(V)
+
+    Q = convert(Array, Vinv * ψ.Q * V)
+    Λs = zeros(eltype(ψ.Q), χ, d)
+    for ix in 1:d
+        Λs[:, ix] = diag(convert(Array, Vinv * ψ.Rs[ix] * V))
+    end
+    return MultiBosonCMPSData_diag(Q, Λs)
+end
+
+function MultiBosonCMPSData_diag_direct(ψ::CMPSData)
+    χ, d = get_χ(ψ), get_d(ψ)
+
+    R1 = ψ.Rs[1]
+
     Q = convert(Array, ψ.Q)
     Λs = zeros(eltype(ψ.Q), χ, d)
     for ix in 1:d
@@ -90,7 +107,7 @@ end
 
 function ChainRulesCore.rrule(::Type{CMPSData}, ψ::MultiBosonCMPSData_diag)
     function CMPSData_pushback(∂ψ)
-        return NoTangent(), MultiBosonCMPSData_diag(∂ψ)
+        return NoTangent(), MultiBosonCMPSData_diag_direct(∂ψ)
     end
     return CMPSData(ψ), CMPSData_pushback
 end
@@ -131,7 +148,7 @@ function tangent_map(ψm::MultiBosonCMPSData_diag, Xm::MultiBosonCMPSData_diag, 
     return MultiBosonCMPSData_diag(mapped_XQ, mapped_XRs) 
 end
 
-function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; gradtol::Float64=1e-8, do_preconditioning::Bool=true, maxiter::Int=1000, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
+function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; gradtol::Float64=1e-8, do_preconditioning::Bool=false, maxiter::Int=1000, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
     if H.L == Inf
         cs = Matrix{ComplexF64}(H.cs)
         μs = Vector{ComplexF64}(H.μs)
