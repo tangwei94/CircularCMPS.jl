@@ -15,13 +15,14 @@ c = 1.0
 μ = parse(Float64, ARGS[1])
 c12 = parse(Float64, ARGS[2])
 
+folder_name = "data_for_two_component_lieb_liniger_c$(c)_mu$(μ)_c12$(c12)"
+
 c1, c2 = c, c
 μ1, μ2 = μ, μ 
 
 Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
 
-χ = 4
-ϕ1 = MultiBosonCMPSData_diag(rand, χ, 2);
+ϕ1 = MultiBosonCMPSData_diag(rand, 4, 2);
 res_d1 = ground_state(Hm, ϕ1; gradtol=1e-3, maxiter=1000, do_preconditioning=false);
 ψ1 = left_canonical(MultiBosonCMPSData_MDMinv(res_d1[1]))
 res1 = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=2500, preconditioner_type=1);
@@ -44,7 +45,7 @@ res_d4 = ground_state(Hm, ϕ4; gradtol=1e-3, maxiter=1000, do_preconditioning=fa
 ψ4 = left_canonical(MultiBosonCMPSData_MDMinv(res_d4[1]))
 res4 = ground_state(Hm, ψ4; gradtol=1e-6, maxiter=2500, preconditioner_type=1);
 
-@save "two_component_lieb_liniger_results_chi4.jld2" res1
-@save "two_component_lieb_liniger_results_chi8.jld2" res2
-@save "two_component_lieb_liniger_results_chi16.jld2" res3
-@save "two_component_lieb_liniger_results_chi32.jld2" res4
+@save joinpath(folder_name, "results_chi4.jld2") res=res1
+@save joinpath(folder_name, "results_chi8.jld2") res=res2
+@save joinpath(folder_name, "results_chi16.jld2") res=res3
+@save joinpath(folder_name, "results_chi32.jld2") res=res4
