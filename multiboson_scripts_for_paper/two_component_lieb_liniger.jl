@@ -10,10 +10,10 @@ using OptimKit
 using Revise 
 using CircularCMPS 
 
-# parameters for the model, only consider equal mass
+# parameters for the model, only consider equal mass for now
 c = 1.0
-μ = 0.5
-c12 = -0.4
+μ = parse(Float64, ARGS[1])
+c12 = parse(Float64, ARGS[2])
 
 c1, c2 = c, c
 μ1, μ2 = μ, μ 

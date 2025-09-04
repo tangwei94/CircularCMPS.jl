@@ -475,6 +475,15 @@ function energy(H::MultiBosonLiebLinigerWithPairing, ψ::MultiBosonCMPSData_MDMi
     return real(tr(envL * OH * envR) / tr(envL * envR))
 end
 
+function particle_density(ψ::MultiBosonCMPSData_MDMinv, component_index::Int)
+    ψn = CMPSData(ψ)
+    ON = particle_density(ψn, component_index)
+    TM = TransferMatrix(ψn, ψn)
+    envL = permute(left_env(TM), (), (1, 2))
+    envR = permute(right_env(TM), (2, 1), ()) 
+    return real(tr(envL * ON * envR) / tr(envL * envR))
+end
+
 function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; preconditioner_type::Int=1, maxiter::Int=10000, gradtol=1e-6, fϵ=(x->x), m_LBFGS::Int=8, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
     if H.L < Inf
         error("finite size not implemented yet.")
