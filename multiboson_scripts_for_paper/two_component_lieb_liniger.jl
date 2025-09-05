@@ -1,5 +1,5 @@
 using Pkg;
-Pkg.activate(joinpath(@__DIR__, "..", ".."))
+Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
 
 using LinearAlgebra, TensorKit, KrylovKit 
