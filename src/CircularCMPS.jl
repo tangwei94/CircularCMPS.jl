@@ -36,6 +36,9 @@ export θ2, θ3, AbstractCoeffs, Coeff2, Coeff3, ExcitationData, gauge_fixing_ma
 # transfer_matrix.jl
 export TransferMatrix, left_env, right_env, Kmat_pseudo_inv
 
+# correlations.jl
+export correlator
+
 # multi_boson_cmps.jl
 export MultiBosonCMPSData, tangent_map
 
@@ -84,6 +87,7 @@ include("ground_state.jl")
 include("excited_state.jl");
 include("optim_alg.jl");
 include("transfer_matrix.jl");
+include("correlations.jl");
 include("multiple_bosons/hamiltonian_zoo.jl");
 include("multiple_bosons/multi_boson_cmps_via_penalty.jl");
 include("multiple_bosons/multi_boson_cmps_diag.jl");
