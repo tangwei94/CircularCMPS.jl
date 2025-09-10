@@ -440,6 +440,22 @@ function tangent_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv
     return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
 end
 
+function tangent_map_h(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad, TMpinv; ρR = nothing)
+    if isnothing(ρR)
+        ρR = right_env(ψ)
+    end
+
+    EL = ψ.M' * ψ.M
+    ER = ψ.Minv * ρR * ψ.Minv'
+    Ms = [EL * (g.X * D * D - D * D * g.X + 2*D * dD) * ER for (dD, D) in zip(g.dDs, ψ.Ds)] 
+
+    X_mapped = sum([M * (D * D)' - (D * D)' * M for (M, D) in zip(Ms, ψ.Ds)])
+    #dDs_mapped = Diagonal.(Ms) * inv(2*D)
+    dDs_mapped = [Diagonal(M) * 2*D' for (M, D) in zip(Ms, ψ.Ds)]
+
+    return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
+end
+
 # solve P x = b by lssolve. this is slow due to the large condition number of P.
 function preconditioner_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing, ϵ = 1e-10)
     if isnothing(ρR)
@@ -547,7 +563,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
                 v = zeros(ComplexF64, χ^2+d*χ)
                 v[ix] = 1
                 g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
-                g1 = tangent_map(ψ, g)
+                g1 = tangent_map_h(ψ, g)
                 P[:, ix] = vec(g1)
             end 
             LinearAlgebra.BLAS.set_num_threads(blas_num_threads)
