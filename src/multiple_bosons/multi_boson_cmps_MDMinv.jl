@@ -440,6 +440,32 @@ function tangent_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv
     return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
 end
 
+# another preconditioner. does not work well. can somehow stabilize the optimization in the dilute limit. But the convergence is very slow.
+function tangent_map_h(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing, coupling::Float64 = 0.0)
+    if isnothing(ρR)
+        ρR = right_env(ψ)
+    end
+
+    EL = ψ.M' * ψ.M
+    ER = ψ.Minv * ρR * ψ.Minv'
+    D1, D2, dD1, dD2 = ψ.Ds[1], ψ.Ds[2], g.dDs[1], g.dDs[2]
+    M11 = EL * (g.X * D1 * D1 - D1 * D1 * g.X + 2*D1 * dD1) * ER
+    M22 = EL * (g.X * D2 * D2 - D2 * D2 * g.X + 2*D2 * dD2) * ER
+    M12 = EL * (g.X * D1 * D2 - D1 * D2 * g.X + 2*D1 * dD2) * ER * coupling
+    M21 = EL * (g.X * D2 * D1 - D2 * D1 * g.X + 2*D2 * dD1) * ER * coupling
+
+    X_mapped = M11 * (D1 * D1)' - (D1 * D1)' * M11 + 
+               M22 * (D2 * D2)' - (D2 * D2)' * M22 +
+               M12 * (D1 * D2)' - (D1 * D2)' * M12 +
+               M21 * (D2 * D1)' - (D2 * D1)' * M21
+
+    dD1_mapped = Diagonal(M11) * 2*D1' + Diagonal(M21) * 2*D2'
+    dD2_mapped = Diagonal(M22) * 2*D2' + Diagonal(M12) * 2*D1'
+    dDs_mapped = [dD1_mapped, dD2_mapped]
+
+    return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
+end
+
 # solve P x = b by lssolve. this is slow due to the large condition number of P.
 function preconditioner_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing, ϵ = 1e-10)
     if isnothing(ρR)
@@ -547,6 +573,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
                 v = zeros(ComplexF64, χ^2+d*χ)
                 v[ix] = 1
                 g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
+                #g1 = tangent_map_h(ψ, g; coupling = H.cs[1,2] / H.cs[1,1])
                 g1 = tangent_map(ψ, g)
                 P[:, ix] = vec(g1)
             end 
