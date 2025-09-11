@@ -46,7 +46,7 @@ res_d3 = ground_state(Hm, ϕ3; gradtol=1e-3, maxiter=1000, do_preconditioning=fa
 res3 = ground_state(Hm, ψ3; gradtol=1e-6, maxiter=2500, preconditioner_type=1);
 @save joinpath(root_folder, folder_name, "results_chi16.jld2") res=res3
 
-ψ4 = left_canonical(expand(res3[1]; perturb=0.05));
+ψ4 = left_canonical(expand(res3[1]; perturb=0.075));
 ϕ4 = MultiBosonCMPSData_diag(ψ4)
 res_d4 = ground_state(Hm, ϕ4; gradtol=1e-3, maxiter=1000, do_preconditioning=false);
 ψ4 = left_canonical(MultiBosonCMPSData_MDMinv(res_d4[1]))
