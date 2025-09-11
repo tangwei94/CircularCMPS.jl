@@ -7,7 +7,7 @@ using Revise
 using CircularCMPS 
 
 c = 1.0
-μ, c12 = 0.9, -0.8
+μ, c12 = 0.9, 0.4
 
 root_folder = "tmpdata/data_two_component_lieb_liniger"
 folder_name = "results_c$(c)_mu$(μ)_coupling$(c12)"
