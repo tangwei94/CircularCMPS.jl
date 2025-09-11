@@ -7,12 +7,10 @@ using Revise
 using CircularCMPS 
 
 c = 1.0
-μ, c12 = 1.0, -0.3
+μ, c12 = 0.9, -0.8
 
 root_folder = "tmpdata/data_two_component_lieb_liniger"
 folder_name = "results_c$(c)_mu$(μ)_coupling$(c12)"
-mkpath(root_folder)
-mkpath(joinpath(root_folder, folder_name))
 
 c1, c2 = c, c
 μ1, μ2 = μ, μ 
@@ -29,17 +27,23 @@ On2 = particle_density(ψ, 2);
 
 corr_m_s = Float64[];
 corr_p_s = Float64[];
+coherence_s = Float64[];
+hopping_s = Float64[];
 Δxs = (0.01:0.01:1) .* 2*ξ;
 for Δx in Δxs
     Cm = real(corr(On1 - On2, On1 - On2, Δx))
     Cp = real(corr(On1 + On2, On1 + On2, Δx)) - ρp^2
-    println(Δx, " ", Cm, " ", Cp)
+    Cc = real(corr(pairing12(ψ, false), pairing12(ψ, true), Δx)) 
+    Ch = real(corr(hopping12(ψ, false), hopping12(ψ, true), Δx)) 
+    println(Δx, " ", Cm, " ", Cp, " ", Cc, " ", Ch)
     push!(corr_m_s, Cm)
     push!(corr_p_s, Cp)
+    push!(coherence_s, Cc)
+    push!(hopping_s, Ch)
 end
 
 let _ = 1 
-    fig = Figure(backgroundcolor = :white, fontsize=18, resolution= (600, 800))
+    fig = Figure(fontsize=18, size= (600, 1200))
 
     ax1 = Axis(fig[1, 1], 
             xlabel = L"Δx",
@@ -53,7 +57,21 @@ let _ = 1
             yscale = log10,
             xscale = log10,
             )
+    ax3 = Axis(fig[3, 1], 
+            xlabel = L"Δx",
+            ylabel = L"C_c", 
+            yscale = log10,
+            xscale = log10,
+            )
+    ax4 = Axis(fig[4, 1], 
+            xlabel = L"Δx",
+            ylabel = L"C_h", 
+            yscale = log10,
+            xscale = log10,
+            )
     lines!(ax1, Δxs, norm.(corr_m_s))
     lines!(ax2, Δxs, norm.(corr_p_s))
+    lines!(ax3, Δxs, norm.(coherence_s))
+    lines!(ax4, Δxs, norm.(hopping_s))
     @show fig
 end 

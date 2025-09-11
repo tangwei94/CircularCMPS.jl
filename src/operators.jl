@@ -76,6 +76,27 @@ function pairing(ψ::CMPSData, index::Integer)
     Oψ = Rs[index] * Rs[index]
     return K_otimes(Iψ, Oψ) + K_otimes(Oψ, Iψ)
 end
+function pairing12(ψ::CMPSData, dag::Bool)
+    Iψ = id(domain(ψ.Q))
+    _, Rs = get_matrices(ψ) 
+    Oψ = Rs[1] * Rs[2]
+    if dag
+        return K_otimes(Oψ, Iψ)
+    else
+        return K_otimes(Iψ, Oψ)
+    end
+end
+function hopping12(ψ::CMPSData, dag::Bool)
+    Iψ = id(domain(ψ.Q))
+    _, Rs = get_matrices(ψ) 
+    Oψ_1 = Rs[1] 
+    Oψ_2 = Rs[2]
+    if dag
+        return K_otimes(Oψ_1, Oψ_2)
+    else
+        return K_otimes(Oψ_2, Oψ_1)
+    end
+end
 
 """
     penalty_term(ψ::CMPSData, index1::Integer, index2::Integer, Λ::Real)
