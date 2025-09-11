@@ -37,7 +37,7 @@ export θ2, θ3, AbstractCoeffs, Coeff2, Coeff3, ExcitationData, gauge_fixing_ma
 export TransferMatrix, left_env, right_env, Kmat_pseudo_inv
 
 # correlations.jl
-export correlator
+export correlator, measure_local_observable
 
 # multi_boson_cmps.jl
 export MultiBosonCMPSData, tangent_map
