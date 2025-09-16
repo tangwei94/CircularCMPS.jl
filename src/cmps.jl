@@ -226,8 +226,8 @@ function finite_env(K::AbstractTensorMap{T, S, 2, 2}, L::Real) where {T,S}
     UL = inv(UR)
     Ws = []
 
-    if W.data isa Matrix 
-        Ws = diag(W.data)
+    if W.data isa Array 
+        Ws = W.data
     elseif W.data isa TensorKit.SortedVectorDict
         Ws = vcat([diag(values) for (_, values) in W.data]...)
     end

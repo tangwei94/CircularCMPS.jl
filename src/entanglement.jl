@@ -1,3 +1,19 @@
+function entanglement_spectrum_inf(ψ::CMPSData)
+    TM = TransferMatrix(ψ, ψ)
+    ρR = right_env(TM)
+    ρL = left_env(TM)
+    ρ = ρL * ρR
+    
+    _, S, _ = tsvd(ρ)
+    return S.data / tr(S)
+end
+
+function entanglement_entropy_inf(ψ::CMPSData)
+    S = entanglement_spectrum_inf(ψ)
+    return - real(sum(S .* log.(S)))
+end
+
+
 function half_chain_singular_values(ψ::CMPSData, β::Real)
     #MA = permute(finite_env(ψ*ψ, β/2)[1], (1, 3), (2, 4))
     #MB = permute(finite_env(convert(TensorMap, (ψ*ψ)'), β/2)[1], (1, 3), (2, 4))
