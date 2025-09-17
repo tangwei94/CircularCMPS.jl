@@ -496,13 +496,13 @@ function precondition_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_M
         if ismissing(P)
             return vec(Mgx)
         else
-            return P * vec(Mgx) #P \ vec(Mgx)
+            return P \ vec(Mgx)
         end
     end
     if ismissing(P)
         g1 = vec(g)
     else
-        g1 = P * vec(g) #P \ vec(g)
+        g1 = P \ vec(g)
     end
 
     v_mapped, info = linsolve(_f, g1, g1; ishermitian = true, isposdef = true, verbosity = 0, tol=1e-12, maxiter=1)
@@ -607,10 +607,9 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
                         
             P[diagind(P)] .+= ϵ
 
-            #x.preconditioner = qr(P)
-            x.preconditioner = inv(P)
+            x.preconditioner = qr(P)
         end
-        vp = x.preconditioner * vec(dψ) #x.preconditioner \ vec(dψ)
+        vp = x.preconditioner \ vec(dψ)
         PG = MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
 
         return PG
