@@ -467,21 +467,47 @@ function tangent_map_h(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMi
 end
 
 # solve P x = b by lssolve. this is slow due to the large condition number of P.
-function preconditioner_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing, ϵ = 1e-10)
+#function preconditioner_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing, ϵ = 1e-10)
+#    if isnothing(ρR)
+#        ρR = right_env(ψ)
+#    end
+#    χ = size(ψ.M, 1)
+#
+#    function _f(gx::MultiBosonCMPSData_MDMinv_Grad, ::Val{true})
+#        return tangent_map(ψ, gx; ρR = ρR) + ϵ * gx
+#    end
+#    function _f(gx::MultiBosonCMPSData_MDMinv_Grad, ::Val{false})
+#        return tangent_map(ψ, gx; ρR = ρR) + ϵ * gx
+#    end
+#
+#    g_mapped, _ = lssolve(_f, g; verbosity = 0, tol=1e-12, maxiter=χ)
+#    return g_mapped
+#end
+
+function precondition_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing, ϵ = 1e-10, P = missing)
     if isnothing(ρR)
         ρR = right_env(ψ)
     end
-    χ = size(ψ.M, 1)
+    χ, d = get_χ(ψ), get_d(ψ)
 
-    function _f(gx::MultiBosonCMPSData_MDMinv_Grad, ::Val{true})
-        return tangent_map(ψ, gx; ρR = ρR) + ϵ * gx
+    function _f(v::Vector)
+        gx = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
+        Mgx = tangent_map(ψ, gx; ρR = ρR) + ϵ * gx
+        if ismissing(P)
+            return vec(Mgx)
+        else
+            return P * vec(Mgx) #P \ vec(Mgx)
+        end
     end
-    function _f(gx::MultiBosonCMPSData_MDMinv_Grad, ::Val{false})
-        return tangent_map(ψ, gx; ρR = ρR) + ϵ * gx
+    if ismissing(P)
+        g1 = vec(g)
+    else
+        g1 = P * vec(g) #P \ vec(g)
     end
 
-    g_mapped, _ = lssolve(_f, g; verbosity = 0, tol=1e-12, maxiter=χ)
-    return g_mapped
+    v_mapped, info = linsolve(_f, g1, g1; ishermitian = true, isposdef = true, verbosity = 0, tol=1e-12, maxiter=1)
+    g_mapped = MultiBosonCMPSData_MDMinv_Grad(v_mapped, χ, d)
+    return g_mapped, info
 end
 
 function energy(H::MultiBosonLiebLiniger, ψ::MultiBosonCMPSData_MDMinv)
@@ -581,9 +607,10 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
                         
             P[diagind(P)] .+= ϵ
 
-            x.preconditioner = qr(P)
+            #x.preconditioner = qr(P)
+            x.preconditioner = inv(P)
         end
-        vp = x.preconditioner \ vec(dψ)
+        vp = x.preconditioner * vec(dψ) #x.preconditioner \ vec(dψ)
         PG = MultiBosonCMPSData_MDMinv_Grad(vp, χ, d)
 
         return PG
@@ -594,15 +621,36 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
 
         ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
         ϵ = max(1e-12, ϵ)
-        PG = precondition_map(ψ, dψ; ϵ = ϵ)
+        PG, _ = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner)
 
         return PG
+    end
+    function _precondition3(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
+        if ismissing(x.preconditioner)
+            return _precondition1(x, dψ)
+        else 
+            ψ = x.data
+            χ, d = get_χ(ψ), get_d(ψ)
+
+            ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
+            ϵ = max(1e-12, ϵ)
+            PG, info = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner)
+            @show info
+            if norm(info.residual) > 1e-12
+                @info "will recompute preconditioner..."
+                x.preconditioner = missing
+            end
+            return PG
+        end
     end
 
     transport!(v, x, d, α, xnew) = v
 
     function finalize!(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, f, g, numiter) where T
-        x.preconditioner = missing
+        if preconditioner_type == 1 || preconditioner_type == 2
+            x.preconditioner = missing 
+        end
+
         x.df = abs(f - x.prev)
         x.prev = f
         _finalize!(x, f, g, numiter)
@@ -619,20 +667,23 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
     # preconditioner type 2 solve the preconditioner inverse by lssolve.. But in practice it is slower than type1 due to the large condition number of P.
     if preconditioner_type == 1
         @show "using preconditioner 1"
-        precondition1 = _precondition1
+        precondition★ = _precondition1
     elseif preconditioner_type == 2
         @show "using preconditioner 2"
-        precondition1 = _precondition2
+        precondition★ = _precondition2
+    elseif preconditioner_type == 3
+        @show "using preconditioner 3"
+        precondition★ = _precondition3
     elseif preconditioner_type == 0
         @show "no precondition"
-        precondition1 = _no_precondition
+        precondition★ = _no_precondition
     else
         error("preconditioner type not supported")
     end
 
     x0 = OptimState(left_canonical(ψ0)) # FIXME. needs to do it twice??
     x1, E1, grad1, numfg1, history1 = optimize(fgE, x0, optalg_LBFGS; retract = retract,
-                                    precondition = precondition1,
+                                    precondition = precondition★,
                                     inner = inner, transport! =transport!,
                                     scale! = scale!, add! = add!, finalize! = finalize!
                                     );
