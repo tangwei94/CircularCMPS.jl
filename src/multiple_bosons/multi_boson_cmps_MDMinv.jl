@@ -505,7 +505,7 @@ function precondition_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_M
         g1 = P \ vec(g)
     end
 
-    v_mapped, info = linsolve(_f, g1, g1; ishermitian = true, isposdef = true, verbosity = 0, tol=1e-12, maxiter=1)
+    v_mapped, info = linsolve(_f, g1, g1; ishermitian = true, isposdef = true, verbosity = 0, tol=1e-15, maxiter=1)
     g_mapped = MultiBosonCMPSData_MDMinv_Grad(v_mapped, χ, d)
     return g_mapped, info
 end
@@ -635,7 +635,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
             ϵ = max(1e-12, ϵ)
             PG, info = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner)
             @show info
-            if norm(info.residual) > 1e-12
+            if norm(info.residual) > 1e-15
                 @info "will recompute preconditioner..."
                 x.preconditioner = missing
             end
