@@ -23,6 +23,8 @@ c12 = parse(Float64, ARGS[2])
 c1, c2 = c, c
 μ1, μ2 = μ, μ 
 
+@info "Perturbing the state for c1 = $c1, c2 = $c2, c12 = $c12, μ1 = $μ1, μ2 = $μ2 "
+
 root_folder = "data_two_component_lieb_liniger"
 folder_name = "results_c$(c)_mu$(μ)_coupling$(c12)"
 mkpath(root_folder)

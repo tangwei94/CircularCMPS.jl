@@ -22,6 +22,8 @@ c12_old = parse(Float64, ARGS[4])
 c1, c2 = c, c
 μ1, μ2 = μ, μ 
 Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
+@info "Doing calculation for c1 = $c1, c2 = $c2, c12 = $c12, μ1 = $μ1, μ2 = $μ2 "
+@info "Initialized with results of c1 = $c1, c2 = $c2, c12 = $c12_old, μ1 = $μ_old, μ2 = $μ_old "
 
 root_folder = "data_two_component_lieb_liniger"
 folder_name = "results_c$(c)_mu$(μ)_coupling$(c12)"

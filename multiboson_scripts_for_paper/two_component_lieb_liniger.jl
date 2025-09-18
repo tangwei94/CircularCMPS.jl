@@ -25,6 +25,7 @@ c1, c2 = c, c
 μ1, μ2 = μ, μ 
 
 Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
+@info "Doing calculation for c1 = $c1, c2 = $c2, c12 = $c12, μ1 = $μ1, μ2 = $μ2 "
 
 ϕ1 = MultiBosonCMPSData_diag(rand, 4, 2);
 res_d1 = ground_state(Hm, ϕ1; gradtol=1e-3, maxiter=1000, do_preconditioning=false);
