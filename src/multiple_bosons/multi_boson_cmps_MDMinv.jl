@@ -541,6 +541,9 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         error("finite size not implemented yet.")
     end
 
+    # TODO. save right environement during the optimization
+    #ρR = nothing
+
     function fE_inf(ψ::MultiBosonCMPSData_MDMinv)
         return energy(H, ψ)
     end
@@ -638,6 +641,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
             if norm(info.residual) > 1e-15
                 @info "will recompute preconditioner..."
                 x.preconditioner = missing
+                PG = _precondition1(x, dψ)
             end
             return PG
         end

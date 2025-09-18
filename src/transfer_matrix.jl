@@ -35,6 +35,7 @@ function (TM::TransferMatrix)(v::MPSBondTensor)
     end
 end
 
+# TODO. use better initialization
 function right_env(TM::TransferMatrix)
     init = similar(TM.Qu, _firstspace(TM.Qd)←_firstspace(TM.Qu))
     randomize!(init);
@@ -78,6 +79,7 @@ function (bTM::TransferMatrixBackward)(v::MPSBondTensor, cavity_loc::Symbol)
     end
 end
 
+# TODO. represent the inverse of the TM as an MPO??
 function right_env_backward(TM::TransferMatrix, λ::Number, vr::MPSBondTensor, ∂vr::MPSBondTensor)
     init = similar(vr)
     randomize!(init); 
