@@ -16,3 +16,4 @@ ising/results
 multiboson/results*
 xxz/*.jld2
 multiboson_scripts_for_paper/benchmark/data
+data_two_component_lieb_liniger
