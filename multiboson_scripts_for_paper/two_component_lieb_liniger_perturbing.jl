@@ -14,7 +14,7 @@ using CircularCMPS
 
 # parameters for the model, only consider equal mass for now
 c = 1.0
-#μ, c12 = 0.02, -0.4
+#μ, c12 = 1, -0.4
 μ = parse(Float64, ARGS[1])
 c12 = parse(Float64, ARGS[2])
 
@@ -49,10 +49,10 @@ for perturbing_label in ["mm", "m0", "mp", "0p", "pp"]
         @save joinpath(root_folder, folder_name_perturbing, file) res=res1
 
         open(joinpath(root_folder, folder_name_perturbing, "basic_measurements.txt"), "a") do f
-            n1 = particle_density(res[1], 1)
-            n2 = particle_density(res[1], 2)
-            num_iter = size(res[5])[1]
-            msg = "$χ, $(res[2]), $(norm(res[3])), $n1, $n2, $num_iter"
+            n1 = particle_density(res1[1], 1)
+            n2 = particle_density(res1[1], 2)
+            num_iter = size(res1[5])[1]
+            msg = "$χ, $(res1[2]), $(norm(res1[3])), $n1, $n2, $num_iter"
             println(f, msg)
             println(msg)
         end

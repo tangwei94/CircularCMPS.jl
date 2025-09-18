@@ -40,10 +40,10 @@ for (χ, file) in zip([4, 8, 16, 32], ["results_chi4.jld2", "results_chi8.jld2",
     @save joinpath(root_folder, folder_name, file) res=res1
 
     open(joinpath(root_folder, folder_name, "basic_measurements.txt"), "a") do f
-        n1 = particle_density(res[1], 1)
-        n2 = particle_density(res[1], 2)
-        num_iter = size(res[5])[1]
-        msg = "$χ, $(res[2]), $(norm(res[3])), $n1, $n2, $num_iter"
+        n1 = particle_density(res1[1], 1)
+        n2 = particle_density(res1[1], 2)
+        num_iter = size(res1[5])[1]
+        msg = "$χ, $(res1[2]), $(norm(res1[3])), $n1, $n2, $num_iter"
         println(f, msg)
         println(msg)
     end
