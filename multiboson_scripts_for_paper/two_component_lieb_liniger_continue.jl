@@ -36,15 +36,15 @@ for (χ, file) in zip([4, 8, 16, 32], ["results_chi4.jld2", "results_chi8.jld2",
     ψ1 = deepcopy(res[1])
     if norm(res[3]) > 1e-6
         res1 = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=2500, preconditioner_type=3);
-    end
-    @save joinpath(root_folder, folder_name, file) res=res1
+        @save joinpath(root_folder, folder_name, file) res=res1
 
-    open(joinpath(root_folder, folder_name, "basic_measurements.txt"), "a") do f
-        n1 = particle_density(res1[1], 1)
-        n2 = particle_density(res1[1], 2)
-        num_iter = size(res1[5])[1]
-        msg = "$χ, $(res1[2]), $(norm(res1[3])), $n1, $n2, $num_iter"
-        println(f, msg)
-        println(msg)
+        open(joinpath(root_folder, folder_name, "basic_measurements.txt"), "a") do f
+            n1 = particle_density(res1[1], 1)
+            n2 = particle_density(res1[1], 2)
+            num_iter = size(res1[5])[1]
+            msg = "$χ, $(res1[2]), $(norm(res1[3])), $n1, $n2, $num_iter"
+            println(f, msg)
+            println(msg)
+        end
     end
 end
