@@ -12,7 +12,7 @@ using CircularCMPS
 
 # parameters for the model, only consider equal mass for now
 c = 1.0
-#μ, c12 = 0.02, -0.4
+#μ, c12 = 0.0, -0.7
 μ = parse(Float64, ARGS[1])
 c12 = parse(Float64, ARGS[2])
 

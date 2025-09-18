@@ -484,7 +484,7 @@ end
 #    return g_mapped
 #end
 
-function precondition_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing, ϵ = 1e-10, P = missing)
+function precondition_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing, ϵ = 1e-10, P = missing, maxiter = 1, tol = 1e-12)
     if isnothing(ρR)
         ρR = right_env(ψ)
     end
@@ -505,7 +505,7 @@ function precondition_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_M
         g1 = P \ vec(g)
     end
 
-    v_mapped, info = linsolve(_f, g1, g1; ishermitian = true, isposdef = true, verbosity = 0, tol=1e-15, maxiter=1)
+    v_mapped, info = linsolve(_f, g1, g1; ishermitian = true, isposdef = true, verbosity = 0, tol=tol, maxiter=maxiter)
     g_mapped = MultiBosonCMPSData_MDMinv_Grad(v_mapped, χ, d)
     return g_mapped, info
 end
@@ -563,7 +563,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
     function retract(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad, α::Real) where T
         ψ = x.data
         ψ1 = retract_left_canonical(ψ, α, dψ.dDs, dψ.X)
-        return OptimState(ψ1, missing, x.prev, x.df), dψ
+        return OptimState(ψ1, x.preconditioner, x.prev, x.df), dψ
     end
     function scale!(dψ::MultiBosonCMPSData_MDMinv_Grad, α::Number)
         for ix in eachindex(dψ.dDs)
@@ -635,10 +635,11 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
             χ, d = get_χ(ψ), get_d(ψ)
 
             ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
+            precondition_tol = norm(dψ)^2
             ϵ = max(1e-12, ϵ)
-            PG, info = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner)
-            @show info
-            if norm(info.residual) > 1e-15
+            PG, info = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner, maxiter = 1, tol = precondition_tol)
+            if norm(info.residual) > precondition_tol
+                @show info
                 @info "will recompute preconditioner..."
                 x.preconditioner = missing
                 PG = _precondition1(x, dψ)
