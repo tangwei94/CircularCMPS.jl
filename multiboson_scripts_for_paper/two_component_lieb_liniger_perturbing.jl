@@ -69,7 +69,7 @@ if isdir(root_folder)
     all_dirs = filter(isdir, readdir(root_folder, join=true))
     for dir_path in all_dirs
         dir_name = basename(dir_path)
-        if dir_name in files_to_keep
+        if !(dir_name in files_to_keep)
             rm(dir_path, recursive=true)
         end
     end
