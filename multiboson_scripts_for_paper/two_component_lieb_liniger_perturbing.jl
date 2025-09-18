@@ -61,4 +61,19 @@ for perturbing_label in ["mm", "m0", "mp", "0p", "pp"]
     end
 end
 
+# after the job is done, delete all the directories in root_folder except folder_name
+# otherwise, different jobs might conflict with eachother when copying data to the management node
+files_to_keep = ["perturbing_$(perturbing_label)_1e-2_results_c$(c)_mu$(μ)_coupling$(c12)" for perturbing_label in ["mm", "m0", "mp", "0p", "pp"]]
+@info "Job completed. Cleaning up directories in $root_folder..."
+if isdir(root_folder)
+    all_dirs = filter(isdir, readdir(root_folder, join=true))
+    for dir_path in all_dirs
+        dir_name = basename(dir_path)
+        if dir_name in files_to_keep
+            rm(dir_path, recursive=true)
+        end
+    end
+    all_dirs = filter(isdir, readdir(root_folder, join=true))
+    @info "Cleanup completed. Now the directories in $root_folder are: $(all_dirs)"
+end
 
