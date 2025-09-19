@@ -603,7 +603,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
                 v[ix] = 1
                 g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
                 #g1 = tangent_map_h(ψ, g; coupling = H.cs[1,2] / H.cs[1,1])
-                g1 = tangent_map(ψ, g)
+                g1 = tangent_map(ψ, g; ρR = ρR)
                 P[:, ix] = vec(g1)
             end 
             LinearAlgebra.BLAS.set_num_threads(blas_num_threads)
