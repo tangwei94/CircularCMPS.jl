@@ -655,11 +655,11 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
             x.preconditioner = missing 
         end
 
-        x.df = abs(f - x.prev)
-        x.prev = f
         _finalize!(x, f, g, numiter)
-
-        println("df = $(x.df), df/norm(g)^2 = $(x.df/norm(g)^2)")
+        ΔE = abs(f - x.prev)
+        println("ΔE = $(ΔE), ΔE/norm(g)^2 = $(ΔE/norm(g)^2)")
+        x.df = norm(g)^2#abs(f - x.prev) # FIXME. change the name of df
+        x.prev = f
         return x, f, g, numiter
     end
 
