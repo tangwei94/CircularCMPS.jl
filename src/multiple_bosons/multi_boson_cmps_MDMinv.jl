@@ -590,7 +590,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         ρR = right_env(ψ)
 
         if ismissing(x.preconditioner)
-            ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
+            ϵ = isnan(x.df) ? 1e-3 : fϵ(x.df)
             ϵ = max(1e-12, ϵ)
 
             P = zeros(ComplexF64, χ^2+d*χ, χ^2+d*χ)
@@ -621,7 +621,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         ψ = x.data
         χ, d = get_χ(ψ), get_d(ψ)
 
-        ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
+        ϵ = isnan(x.df) ? 1e-3 : fϵ(x.df)
         ϵ = max(1e-12, ϵ)
         PG, _ = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner)
 
@@ -634,7 +634,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
             ψ = x.data
             χ, d = get_χ(ψ), get_d(ψ)
 
-            ϵ = isnan(x.df) ? fϵ(norm(dψ)^2) : fϵ(x.df)
+            ϵ = isnan(x.df) ? 1e-3 : fϵ(x.df)
             precondition_tol = norm(dψ)^2
             ϵ = max(1e-12, ϵ)
             PG, info = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner, maxiter = 1, tol = precondition_tol)
