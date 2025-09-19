@@ -31,6 +31,29 @@ mkpath(root_folder)
 
 label_meaning = Dict('m' => -1.0, '0' => 0.0, 'p' => 1.0)
 
+# before running the job, delete all the directories in root_folder except folder_name
+# otherwise, different jobs might conflict with eachother when copying data to the management node
+files_to_keep = ["perturbing_$(perturbing_label)_1e-2_results_c$(c)_mu$(μ)_coupling$(c12)" for perturbing_label in ["mm", "m0", "mp", "0p", "pp"]]
+@info "Cleaning up directories in $root_folder..."
+mkpath("tmp_init")
+# copy jld2 files in folder_name to tmp_init 
+for file in readdir(joinpath(root_folder, folder_name))
+    if endswith(file, ".jld2")
+        cp(joinpath(root_folder, folder_name, file), joinpath("tmp_init", file))
+    end
+end
+if isdir(root_folder)
+    all_dirs = filter(isdir, readdir(root_folder, join=true))
+    for dir_path in all_dirs
+        dir_name = basename(dir_path)
+        if !(dir_name in files_to_keep)
+            rm(dir_path, recursive=true)
+        end
+    end
+    all_dirs = filter(isdir, readdir(root_folder, join=true))
+    @info "Cleanup completed. Now the directories in $root_folder are: $(all_dirs)"
+end
+
 for perturbing_label in ["mm", "m0", "mp", "0p", "pp"]
     s1 = label_meaning[perturbing_label[1]]
     s2 = label_meaning[perturbing_label[2]]
@@ -45,7 +68,7 @@ for perturbing_label in ["mm", "m0", "mp", "0p", "pp"]
     end
     
     for (χ, file) in zip([4, 8, 16, 32], ["results_chi4.jld2", "results_chi8.jld2", "results_chi16.jld2", "results_chi32.jld2"])
-        @load joinpath(root_folder, folder_name, file) res
+        @load joinpath("tmp_init", file) res
         ψ1 = deepcopy(res[1])
         res1 = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=2500, preconditioner_type=3);
         @save joinpath(root_folder, folder_name_perturbing, file) res=res1
@@ -61,19 +84,5 @@ for perturbing_label in ["mm", "m0", "mp", "0p", "pp"]
     end
 end
 
-# after the job is done, delete all the directories in root_folder except folder_name
-# otherwise, different jobs might conflict with eachother when copying data to the management node
-files_to_keep = ["perturbing_$(perturbing_label)_1e-2_results_c$(c)_mu$(μ)_coupling$(c12)" for perturbing_label in ["mm", "m0", "mp", "0p", "pp"]]
-@info "Job completed. Cleaning up directories in $root_folder..."
-if isdir(root_folder)
-    all_dirs = filter(isdir, readdir(root_folder, join=true))
-    for dir_path in all_dirs
-        dir_name = basename(dir_path)
-        if !(dir_name in files_to_keep)
-            rm(dir_path, recursive=true)
-        end
-    end
-    all_dirs = filter(isdir, readdir(root_folder, join=true))
-    @info "Cleanup completed. Now the directories in $root_folder are: $(all_dirs)"
-end
+
 
