@@ -620,10 +620,11 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
     function _precondition2(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad) where T
         ψ = x.data
         χ, d = get_χ(ψ), get_d(ψ)
+        ρR = right_env(ψ)
 
         ϵ = isnan(x.df) ? 1e-3 : fϵ(x.df)
         ϵ = max(1e-12, ϵ)
-        PG, _ = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner)
+        PG, _ = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner, ρR = ρR)
 
         return PG
     end
@@ -633,11 +634,12 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         else 
             ψ = x.data
             χ, d = get_χ(ψ), get_d(ψ)
+            ρR = right_env(ψ)
 
             ϵ = isnan(x.df) ? 1e-3 : fϵ(x.df)
             precondition_tol = norm(dψ)^2
             ϵ = max(1e-12, ϵ)
-            PG, info = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner, maxiter = 1, tol = precondition_tol)
+            PG, info = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner, maxiter = 1, tol = precondition_tol, ρR = ρR)
             if norm(info.residual) > precondition_tol
                 @show info
                 @info "will recompute preconditioner..."
