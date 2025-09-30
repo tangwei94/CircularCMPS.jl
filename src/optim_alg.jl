@@ -1,14 +1,15 @@
 mutable struct OptimState{A}
     data::A
     preconditioner::Any
+    ρR::Any
     prev::Float64
     df::Float64
 
-    function OptimState(data::A, preconditioner, prev::Float64, df::Float64) where A
-        return new{A}(data, preconditioner, prev, df)
+    function OptimState(data::A, preconditioner, ρR, prev::Float64, df::Float64) where A
+        return new{A}(data, preconditioner, ρR, prev, df)
     end
     function OptimState(data::A) where A
-        return new{A}(data, missing, NaN, NaN)
+        return new{A}(data, missing, missing, NaN, NaN)
     end
 end
 
@@ -40,7 +41,7 @@ function minimize(_f, init::CMPSData, alg::CircularCMPSRiemannian; finalize! = O
         Q = ϕ.Q - α * sum(adjoint.(ϕ.Rs) .* dϕ.Rs) - 0.5 * α^2 * sum(adjoint.(dϕ.Rs) .* dϕ.Rs)
         ϕ1 = CMPSData(Q, Rs)
 
-        return OptimState(ϕ1, missing, x.prev, x.df), dϕ
+        return OptimState(ϕ1, missing, x.ρR, x.prev, x.df), dϕ
     end
     function scale!(dϕ::CMPSData, α::Number)
         dϕ.Q = dϕ.Q * α

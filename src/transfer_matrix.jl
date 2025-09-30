@@ -35,18 +35,31 @@ function (TM::TransferMatrix)(v::MPSBondTensor)
     end
 end
 
-# TODO. use better initialization
-function right_env(TM::TransferMatrix)
-    init = similar(TM.Qu, _firstspace(TM.Qd)←_firstspace(TM.Qu))
-    randomize!(init);
-    _, vrs, _ = eigsolve(TM, init, 1, :LR)
+function right_env(TM::TransferMatrix; init = missing, verbosity = 0)
+   
+    init = ignore_derivatives() do
+        if ismissing(init)
+            init = similar(TM.Qu, _firstspace(TM.Qd)←_firstspace(TM.Qu))
+            randomize!(init);
+            return init
+        else 
+            return init
+        end
+    end
+    _, vrs, _ = eigsolve(TM, init, 1, :LR; verbosity = verbosity)
     return vrs[1]
 end
 
-function left_env(TM::TransferMatrix)
-    init = similar(TM.Qu, _firstspace(TM.Qu)←_firstspace(TM.Qd))
-    randomize!(init);
-    _, vrs, _ = eigsolve(flip(TM), init, 1, :LR)
+function left_env(TM::TransferMatrix; init = missing, verbosity = 0)
+   
+    init = ignore_derivatives() do
+        if ismissing(init)
+            init = similar(TM.Qu, _firstspace(TM.Qu)←_firstspace(TM.Qd))
+            randomize!(init);
+        end
+        return init
+    end
+    _, vrs, _ = eigsolve(flip(TM), init, 1, :LR; verbosity = verbosity)
     return vrs[1]
 end
 
@@ -105,10 +118,12 @@ function left_env_backward(TM::TransferMatrix, λ::Number, vl::MPSBondTensor, �
     return ξl_adj'
 end
 
-function ChainRulesCore.rrule(::typeof(right_env), TM::TransferMatrix)
-    init = similar(TM.Qu, _firstspace(TM.Qd)←_firstspace(TM.Qu))
-    randomize!(init);
-    λrs, vrs, _ = eigsolve(TM, init, 1, :LR)
+function ChainRulesCore.rrule(::typeof(right_env), TM::TransferMatrix; init = missing, verbosity = 0)
+    if ismissing(init)
+        init = similar(TM.Qu, _firstspace(TM.Qd)←_firstspace(TM.Qu))
+        randomize!(init);
+    end
+    λrs, vrs, _ = eigsolve(TM, init, 1, :LR; verbosity = verbosity)
     λr, vr = λrs[1], vrs[1]
     
     function right_env_pushback(∂vr)
@@ -118,10 +133,12 @@ function ChainRulesCore.rrule(::typeof(right_env), TM::TransferMatrix)
     return vr, right_env_pushback
 end
 
-function ChainRulesCore.rrule(::typeof(left_env), TM::TransferMatrix)
-    init = similar(TM.Qu, _firstspace(TM.Qu)←_firstspace(TM.Qd))
-    randomize!(init);
-    λls, vls, _ = eigsolve(flip(TM), init, 1, :LR)
+function ChainRulesCore.rrule(::typeof(left_env), TM::TransferMatrix; init = missing, verbosity = 0)
+    if ismissing(init)
+        init = similar(TM.Qu, _firstspace(TM.Qu)←_firstspace(TM.Qd))
+        randomize!(init);
+    end
+    λls, vls, _ = eigsolve(flip(TM), init, 1, :LR; verbosity = verbosity)
     λl, vl = λls[1], vls[1]
    
     function left_env_pushback(∂vl)

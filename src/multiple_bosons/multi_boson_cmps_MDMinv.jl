@@ -174,19 +174,17 @@ end
 
 Compute the right environment matrix (fixed point of the transfer matrix).
 """
-function right_env(ψ::MultiBosonCMPSData_MDMinv)
+function right_env(ψ::MultiBosonCMPSData_MDMinv; init = missing, verbosity = 0)
     # transfer matrix
     ψc = CMPSData(ψ)
-    fK = transfer_matrix(ψc, ψc)
+    fK = TransferMatrix(ψc, ψc)
     
     # solve the fixed-point equation
-    init = similar(ψc.Q, space(ψc.Q, 1)←space(ψc.Q, 1))
-    randomize!(init);
-    _, vls, _ = eigsolve(fK, init, 1, :LR)
-    vl = vls[1]
+    vl = right_env(fK; init = init, verbosity = verbosity)
     
-    U, S, _ = svd(convert(Array, vl))
-    return U * Diagonal(S) * U'
+    #U, S, _ = svd(convert(Array, vl))
+    #return U * Diagonal(S) * U'
+    return vl
 end
 
 """
@@ -425,13 +423,15 @@ end
 
 Apply the tangent map to a gradient vector. If ρR is not provided, it will be computed using right_env.
 """
-function tangent_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing)
-    if isnothing(ρR)
+function tangent_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρRmat = missing)
+    if ismissing(ρRmat)
         ρR = right_env(ψ)
+        U, S, _ = svd(convert(Array, ρR))
+        ρRmat = U * Diagonal(S) * U'
     end
 
     EL = ψ.M' * ψ.M
-    ER = ψ.Minv * ρR * ψ.Minv'
+    ER = ψ.Minv * ρRmat * ψ.Minv'
     Ms = [EL * (g.X * D - D * g.X + dD) * ER for (dD, D) in zip(g.dDs, ψ.Ds)] 
 
     X_mapped = sum([M * D' - D' * M for (M, D) in zip(Ms, ψ.Ds)])
@@ -441,13 +441,15 @@ function tangent_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv
 end
 
 # another preconditioner. does not work well. can somehow stabilize the optimization in the dilute limit. But the convergence is very slow.
-function tangent_map_h(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing, coupling::Float64 = 0.0)
-    if isnothing(ρR)
+function tangent_map_h(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρRmat = missing, coupling::Float64 = 0.0)
+    if ismissing(ρRmat)
         ρR = right_env(ψ)
+        U, S, _ = svd(convert(Array, ρR))
+        ρRmat = U * Diagonal(S) * U'
     end
 
     EL = ψ.M' * ψ.M
-    ER = ψ.Minv * ρR * ψ.Minv'
+    ER = ψ.Minv * ρRmat * ψ.Minv'
     D1, D2, dD1, dD2 = ψ.Ds[1], ψ.Ds[2], g.dDs[1], g.dDs[2]
     M11 = EL * (g.X * D1 * D1 - D1 * D1 * g.X + 2*D1 * dD1) * ER
     M22 = EL * (g.X * D2 * D2 - D2 * D2 * g.X + 2*D2 * dD2) * ER
@@ -466,33 +468,17 @@ function tangent_map_h(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMi
     return MultiBosonCMPSData_MDMinv_Grad(dDs_mapped, X_mapped)
 end
 
-# solve P x = b by lssolve. this is slow due to the large condition number of P.
-#function preconditioner_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing, ϵ = 1e-10)
-#    if isnothing(ρR)
-#        ρR = right_env(ψ)
-#    end
-#    χ = size(ψ.M, 1)
-#
-#    function _f(gx::MultiBosonCMPSData_MDMinv_Grad, ::Val{true})
-#        return tangent_map(ψ, gx; ρR = ρR) + ϵ * gx
-#    end
-#    function _f(gx::MultiBosonCMPSData_MDMinv_Grad, ::Val{false})
-#        return tangent_map(ψ, gx; ρR = ρR) + ϵ * gx
-#    end
-#
-#    g_mapped, _ = lssolve(_f, g; verbosity = 0, tol=1e-12, maxiter=χ)
-#    return g_mapped
-#end
-
-function precondition_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρR = nothing, ϵ = 1e-10, P = missing, maxiter = 1, tol = 1e-12)
-    if isnothing(ρR)
+function precondition_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_MDMinv_Grad; ρRmat = missing, ϵ = 1e-10, P = missing, maxiter = 1, tol = 1e-12)
+    if ismissing(ρRmat)
         ρR = right_env(ψ)
+        U, S, _ = svd(convert(Array, vl))
+        ρRmat = U * Diagonal(S) * U'
     end
     χ, d = get_χ(ψ), get_d(ψ)
 
     function _f(v::Vector)
         gx = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
-        Mgx = tangent_map(ψ, gx; ρR = ρR) + ϵ * gx
+        Mgx = tangent_map(ψ, gx; ρRmat = ρRmat) + ϵ * gx
         if ismissing(P)
             return vec(Mgx)
         else
@@ -510,29 +496,29 @@ function precondition_map(ψ::MultiBosonCMPSData_MDMinv, g::MultiBosonCMPSData_M
     return g_mapped, info
 end
 
-function energy(H::MultiBosonLiebLiniger, ψ::MultiBosonCMPSData_MDMinv)
+function energy(H::MultiBosonLiebLiniger, ψ::MultiBosonCMPSData_MDMinv; init_envL = missing, init_envR = missing)
     ψn = CMPSData(ψ)
     OH = kinetic(ψn) + H.cs[1,1]* point_interaction(ψn, 1) + H.cs[2,2]* point_interaction(ψn, 2) + H.cs[1,2] * point_interaction(ψn, 1, 2) + H.cs[2,1] * point_interaction(ψn, 2, 1) - H.μs[1] * particle_density(ψn, 1) - H.μs[2] * particle_density(ψn, 2)
     TM = TransferMatrix(ψn, ψn)
-    envL = permute(left_env(TM), (), (1, 2))
-    envR = permute(right_env(TM), (2, 1), ()) 
+    envL = permute(left_env(TM; init = init_envL), (), (1, 2))
+    envR = permute(right_env(TM; init = init_envR), (2, 1), ()) 
     return real(tr(envL * OH * envR) / tr(envL * envR))
 end
-function energy(H::MultiBosonLiebLinigerWithPairing, ψ::MultiBosonCMPSData_MDMinv)
+function energy(H::MultiBosonLiebLinigerWithPairing, ψ::MultiBosonCMPSData_MDMinv; init_envL = missing, init_envR = missing)
     ψn = CMPSData(ψ)
     OH = kinetic(ψn) + H.cs[1,1]* point_interaction(ψn, 1) + H.cs[2,2]* point_interaction(ψn, 2) + H.cs[1,2] * point_interaction(ψn, 1, 2) + H.cs[2,1] * point_interaction(ψn, 2, 1) - H.μs[1] * particle_density(ψn, 1) - H.μs[2] * particle_density(ψn, 2) + H.us[1] * pairing(ψn, 1) + H.us[2] * pairing(ψn, 2)
     TM = TransferMatrix(ψn, ψn)
-    envL = permute(left_env(TM), (), (1, 2))
-    envR = permute(right_env(TM), (2, 1), ()) 
+    envL = permute(left_env(TM; init = init_envL), (), (1, 2))
+    envR = permute(right_env(TM; init = init_envR), (2, 1), ()) 
     return real(tr(envL * OH * envR) / tr(envL * envR))
 end
 
-function particle_density(ψ::MultiBosonCMPSData_MDMinv, component_index::Int)
+function particle_density(ψ::MultiBosonCMPSData_MDMinv, component_index::Int; init_envL = missing, init_envR = missing)
     ψn = CMPSData(ψ)
     ON = particle_density(ψn, component_index)
     TM = TransferMatrix(ψn, ψn)
-    envL = permute(left_env(TM), (), (1, 2))
-    envR = permute(right_env(TM), (2, 1), ()) 
+    envL = permute(left_env(TM; init = init_envL), (), (1, 2))
+    envR = permute(right_env(TM; init = init_envR), (2, 1), ()) 
     return real(tr(envL * ON * envR) / tr(envL * envR))
 end
 
@@ -541,15 +527,11 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         error("finite size not implemented yet.")
     end
 
-    # TODO. save right environement during the optimization
-    #ρR = nothing
-
-    function fE_inf(ψ::MultiBosonCMPSData_MDMinv)
-        return energy(H, ψ)
-    end
-    
     function fgE(x::OptimState{MultiBosonCMPSData_MDMinv{T}}) where T
         ψ = x.data
+        init_envL = id(space(x.ρR, 1))
+        init_envR = x.ρR
+        fE_inf = ψ -> energy(H, ψ; init_envL = init_envL, init_envR = init_envR)
         E, ∂ψ = withgradient(fE_inf, ψ)
         g = diff_to_grad(ψ, ∂ψ[1])
         return E, g
@@ -563,7 +545,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
     function retract(x::OptimState{MultiBosonCMPSData_MDMinv{T}}, dψ::MultiBosonCMPSData_MDMinv_Grad, α::Real) where T
         ψ = x.data
         ψ1 = retract_left_canonical(ψ, α, dψ.dDs, dψ.X)
-        return OptimState(ψ1, x.preconditioner, x.prev, x.df), dψ
+        return OptimState(ψ1, x.preconditioner, x.ρR, x.prev, x.df), dψ
     end
     function scale!(dψ::MultiBosonCMPSData_MDMinv_Grad, α::Number)
         for ix in eachindex(dψ.dDs)
@@ -588,6 +570,8 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         ψ = x.data
         χ, d = get_χ(ψ), get_d(ψ)
         ρR = right_env(ψ)
+        U, S, _ = svd(convert(Array, ρR))
+        ρRmat = U * Diagonal(S) * U'
 
         if ismissing(x.preconditioner)
             ϵ = isnan(x.df) ? 1e-3 : fϵ(x.df)
@@ -602,8 +586,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
                 v = zeros(ComplexF64, χ^2+d*χ)
                 v[ix] = 1
                 g = MultiBosonCMPSData_MDMinv_Grad(v, χ, d)
-                #g1 = tangent_map_h(ψ, g; coupling = H.cs[1,2] / H.cs[1,1])
-                g1 = tangent_map(ψ, g; ρR = ρR)
+                g1 = tangent_map(ψ, g; ρRmat = ρRmat)
                 P[:, ix] = vec(g1)
             end 
             LinearAlgebra.BLAS.set_num_threads(blas_num_threads)
@@ -621,10 +604,12 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         ψ = x.data
         χ, d = get_χ(ψ), get_d(ψ)
         ρR = right_env(ψ)
+        U, S, _ = svd(convert(Array, ρR))
+        ρRmat = U * Diagonal(S) * U'
 
         ϵ = isnan(x.df) ? 1e-3 : fϵ(x.df)
         ϵ = max(1e-12, ϵ)
-        PG, _ = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner, ρR = ρR)
+        PG, _ = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner, ρRmat = ρRmat)
 
         return PG
     end
@@ -635,11 +620,13 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
             ψ = x.data
             χ, d = get_χ(ψ), get_d(ψ)
             ρR = right_env(ψ)
+            U, S, _ = svd(convert(Array, ρR))
+            ρRmat = U * Diagonal(S) * U'
 
             ϵ = isnan(x.df) ? 1e-3 : fϵ(x.df)
             precondition_tol = norm(dψ)^2
             ϵ = max(1e-12, ϵ)
-            PG, info = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner, maxiter = 1, tol = precondition_tol, ρR = ρR)
+            PG, info = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner, maxiter = 1, tol = precondition_tol, ρRmat = ρRmat)
             if norm(info.residual) > precondition_tol
                 @show info
                 @info "will recompute preconditioner..."
@@ -662,6 +649,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         println("ΔE = $(ΔE), ΔE/norm(g)^2 = $(ΔE/norm(g)^2)")
         x.df = norm(g)^2#abs(f - x.prev) # FIXME. change the name of df
         x.prev = f
+        x.ρR = right_env(x.data; init = x.ρR, verbosity = 1)
         return x, f, g, numiter
     end
 
@@ -687,7 +675,8 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         error("preconditioner type not supported")
     end
 
-    x0 = OptimState(left_canonical(ψ0)) # FIXME. needs to do it twice??
+    x0 = OptimState(left_canonical(ψ0)) 
+    x0.ρR = right_env(x0.data; init = missing, verbosity = 2)
     x1, E1, grad1, numfg1, history1 = optimize(fgE, x0, optalg_LBFGS; retract = retract,
                                     precondition = precondition★,
                                     inner = inner, transport! =transport!,
