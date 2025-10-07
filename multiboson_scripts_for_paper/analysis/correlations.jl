@@ -7,8 +7,8 @@ using Revise
 using CircularCMPS 
 
 c = 1.0
-μ, c12 = 0.9, -0.1
-root_folder = "tmpdata/data_two_component_lieb_liniger"
+μ, c12 = 0.0, -0.5
+root_folder = "data_two_component_lieb_liniger"
 folder_name = "results_c$(c)_mu$(μ)_coupling$(c12)"
 
 c1, c2 = c, c
@@ -42,8 +42,6 @@ for Δx in Δxs
     push!(coherence_s, Cc)
     push!(hopping_s, Ch)
 end
-
-
 
 let _ = 1 
     fig = Figure(fontsize=18, size= (600, 1200))
