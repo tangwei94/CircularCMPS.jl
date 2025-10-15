@@ -10,13 +10,13 @@ using OptimKit
 using Revise 
 using CircularCMPS 
 
-# parameters for the model, only consider equal mass for now
+# parameters for the model, only consider equal mass for now 
 c = 1.0
 #μ, c12 = 0.02, -0.4
 μ = parse(Float64, ARGS[1])
 c12 = parse(Float64, ARGS[2])
 
-c1, c2 = c, c
+c1, c2 = c, c 
 μ1, μ2 = μ, μ 
 Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
 @info "Continue simulation for c1 = $c1, c2 = $c2, c12 = $c12, μ1 = $μ1, μ2 = $μ2"
@@ -50,7 +50,7 @@ for (χ, file) in zip([4, 8, 16, 32], ["results_chi4.jld2", "results_chi8.jld2",
     @load joinpath(root_folder, folder_name, file) res
     ψ1 = deepcopy(res[1])
     if norm(res[3]) > 1e-6
-        res1 = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=5000, preconditioner_type=3);
+        res1 = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=10000, preconditioner_type=3);
         @save joinpath(root_folder, folder_name, file) res=res1
 
         open(joinpath(root_folder, folder_name, "basic_measurements.txt"), "a") do f
