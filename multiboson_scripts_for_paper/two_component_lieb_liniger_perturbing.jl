@@ -29,10 +29,11 @@ root_folder = "data_two_component_lieb_liniger"
 folder_name = "results_c$(c)_mu$(μ)_coupling$(c12)"
 mkpath(root_folder)
 
-label_meaning = Dict('m' => -1.0, '0' => 0.0, 'p' => 1.0)
+label_meaning = Dict('M' => -1.0, 'm' => -0.5, '0' => 0.0, 'p' => 0.5, 'P' => 1.0)
 
 # before running the job, delete all the directories in root_folder except folder_name
 # otherwise, different jobs might conflict with eachother when copying data to the management node
+labels = ["MM", "mm", "pp", "PP", "mp", "MP"]
 files_to_keep = ["perturbing_$(perturbing_label)_1e-2_results_c$(c)_mu$(μ)_coupling$(c12)" for perturbing_label in ["mm", "m0", "mp", "0p", "pp"]]
 @info "Cleaning up directories in $root_folder..."
 mkpath("tmp_init")
@@ -54,7 +55,7 @@ if isdir(root_folder)
     @info "Cleanup completed. Now the directories in $root_folder are: $(all_dirs)"
 end
 
-for perturbing_label in ["mm", "m0", "mp", "0p", "pp"]
+for perturbing_label in labels
     s1 = label_meaning[perturbing_label[1]]
     s2 = label_meaning[perturbing_label[2]]
     μ1_perturbing = μ1 + s1 * δμ
@@ -70,7 +71,7 @@ for perturbing_label in ["mm", "m0", "mp", "0p", "pp"]
     for (χ, file) in zip([4, 8, 16, 32], ["results_chi4.jld2", "results_chi8.jld2", "results_chi16.jld2", "results_chi32.jld2"])
         @load joinpath("tmp_init", file) res
         ψ1 = deepcopy(res[1])
-        res1 = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=2500, preconditioner_type=3);
+        res1 = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=10000, preconditioner_type=3);
         @save joinpath(root_folder, folder_name_perturbing, file) res=res1
 
         open(joinpath(root_folder, folder_name_perturbing, "basic_measurements.txt"), "a") do f
