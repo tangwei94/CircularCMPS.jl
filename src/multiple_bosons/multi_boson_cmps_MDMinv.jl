@@ -624,7 +624,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
             ρRmat = U * Diagonal(S) * U'
 
             ϵ = isnan(x.df) ? 1e-3 : fϵ(x.df)
-            precondition_tol = norm(dψ)^2
+            precondition_tol = isnan(x.prev) ? 0.01 : norm(dψ)^2 / norm(x.prev)^(5/3)
             ϵ = max(1e-12, ϵ)
             PG, info = precondition_map(ψ, dψ; ϵ = ϵ, P = x.preconditioner, maxiter = 1, tol = precondition_tol, ρRmat = ρRmat)
             if norm(info.residual) > precondition_tol
@@ -647,7 +647,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         _finalize!(x, f, g, numiter)
         ΔE = abs(f - x.prev)
         println("ΔE = $(ΔE), ΔE/norm(g)^2 = $(ΔE/norm(g)^2)")
-        x.df = norm(g)^2#abs(f - x.prev) # FIXME. change the name of df
+        x.df = (norm(g))^2 / norm(f)^(5/3)#abs(f - x.prev) # FIXME. change the name of df
         x.prev = f
         x.ρR = right_env(x.data; init = x.ρR, verbosity = 1)
         return x, f, g, numiter
