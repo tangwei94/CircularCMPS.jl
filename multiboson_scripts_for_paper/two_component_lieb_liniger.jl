@@ -16,7 +16,7 @@ c = 10.0
 μ = parse(Float64, ARGS[1])
 c12 = parse(Float64, ARGS[2])
 
-root_folder = "data_two_component_lieb_liniger_local"
+root_folder = "data_two_component_lieb_liniger"
 folder_name = "results_c$(c)_mu$(μ)_coupling$(c12)"
 mkpath(root_folder)
 mkpath(joinpath(root_folder, folder_name))
