@@ -62,7 +62,7 @@ open(joinpath(root_folder, folder_name, "basic_measurements.txt"), "w") do f
         n2 = particle_density(res[1], 2)
         num_iter = size(res[5])[1]
         msg = "$χ, $(res[2]), $(norm(res[3])), $n1, $n2, $num_iter"
-        #println(f, msg)
+        println(f, msg)
         println(msg)
     end
 end
