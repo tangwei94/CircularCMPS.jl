@@ -249,6 +249,53 @@ function expand(ψ::MultiBosonCMPSData_MDMinv; perturb = 1e-3)
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
 
+function direct_sum(A::Matrix, B::Matrix)
+    m1, n1 = size(A)
+    m2, n2 = size(B)
+    result = zeros(eltype(A), m1 + m2, n1 + n2)
+    result[1:m1, 1:n1] = A
+    result[m1+1:end, n1+1:end] = B
+    return result
+end
+function direct_sum(A::Diagonal, B::Diagonal)
+    diag_A = A.diag
+    diag_B = B.diag
+    
+    combined_diag = vcat(diag_A, diag_B)
+    
+    return Diagonal(combined_diag)
+end
+
+function expand(ψ::MultiBosonCMPSData_MDMinv, ψ1::MultiBosonCMPSData_MDMinv; perturb = 1e-3)
+    χ0, d = get_χ(ψ), get_d(ψ)
+    χ1, d = get_χ(ψ), get_d(ψ)
+    χ = χ0 + χ1
+
+    Ds = map(1:d) do ix
+        direct_sum(ψ.Ds[ix], ψ1.Ds[ix])
+    end
+    Q = direct_sum(ψ.Q, ψ1.Q)
+    M = direct_sum(ψ.M, ψ1.M)
+    Minv = direct_sum(ψ.Minv, ψ1.Minv)
+    R0s = [M * D * Minv for D in Ds]
+
+    X = rand(ComplexF64, χ, χ)
+    X = (X + X') / norm(X + X')
+
+    M = M * exp(perturb * X)
+    Minv = exp(-perturb * X) * Minv
+    Ds = map(Ds) do D
+        dD = Diagonal(rand(ComplexF64, χ))
+        dD = (dD + dD') / norm(dD + dD')
+        D + perturb * dD
+    end
+    ΔRs = [M * D * Minv - R0 for (D, R0) in zip(Ds, R0s)]
+    V = sum(-[R0' * ΔR + 0.5 * ΔR' * ΔR for (R0, ΔR) in zip(R0s, ΔRs)])
+    Q = Q + V
+
+    return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
+end
+
 """
     MultiBosonCMPSData_MDMinv_Grad{T<:Number} <: AbstractCMPSData
 
