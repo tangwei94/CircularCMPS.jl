@@ -268,7 +268,7 @@ end
 
 function expand(ψ::MultiBosonCMPSData_MDMinv, ψ1::MultiBosonCMPSData_MDMinv; perturb = 1e-3)
     χ0, d = get_χ(ψ), get_d(ψ)
-    χ1, d = get_χ(ψ), get_d(ψ)
+    χ1 = get_χ(ψ1)
     χ = χ0 + χ1
 
     Ds = map(1:d) do ix
