@@ -681,7 +681,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
 
             δ = isnan(x.df) ? 1e-3 : x.df
             α = isnan(x.prev) ? 1.0 : x.prev
-            precondition_tol = isnan(x.prev) ? 1e-3 : norm(dψ) * sqrt(δ) # TODO. fix this.
+            precondition_tol = isnan(x.prev) ? 0.01*norm(dψ) : norm(dψ) * min(sqrt(δ), 1e-2) # TODO. fix this.
             #println("preconditioner3: |dψ| = $(norm(dψ)), δ = $(δ), α = $(α)")
             PG, info = precondition_map(ψ, dψ; δ = δ, α = α, P = x.preconditioner, maxiter = 1, tol = precondition_tol, ρRmat = ρRmat)
             if norm(info.residual) > precondition_tol
