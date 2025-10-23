@@ -11,7 +11,7 @@ using Revise
 using CircularCMPS 
 
 # parameters for the model, only consider equal mass for now
-c = 100.0
+c = 10.0
 #μ, c12 = 0.0, -7.0
 μ = parse(Float64, ARGS[1])
 c12 = parse(Float64, ARGS[2])
