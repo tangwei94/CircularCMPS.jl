@@ -275,6 +275,7 @@ function expand(ψ::MultiBosonCMPSData_MDMinv, ψ1::MultiBosonCMPSData_MDMinv; p
         direct_sum(ψ.Ds[ix], ψ1.Ds[ix])
     end
     Q = direct_sum(ψ.Q, ψ1.Q)
+    Q[diagind(Q)[χ0+1:end]] .-= 0.01
     M = direct_sum(ψ.M, ψ1.M)
     Minv = direct_sum(ψ.Minv, ψ1.Minv)
     R0s = [M * D * Minv for D in Ds]
@@ -289,9 +290,10 @@ function expand(ψ::MultiBosonCMPSData_MDMinv, ψ1::MultiBosonCMPSData_MDMinv; p
         dD = (dD + dD') / norm(dD + dD')
         D + perturb * dD
     end
-    ΔRs = [M * D * Minv - R0 for (D, R0) in zip(Ds, R0s)]
-    V = sum(-[R0' * ΔR + 0.5 * ΔR' * ΔR for (R0, ΔR) in zip(R0s, ΔRs)])
-    Q = Q + V
+    #ΔRs = [M * D * Minv - R0 for (D, R0) in zip(Ds, R0s)]
+    V = rand(ComplexF64, χ, χ)#sum(-[R0' * ΔR + 0.5 * ΔR' * ΔR for (R0, ΔR) in zip(R0s, ΔRs)])
+    V = (V + V') / norm(V + V')
+    Q = Q + perturb * V
 
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
@@ -645,6 +647,9 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
                 P[:, ix] = vec(g1)
             end 
             LinearAlgebra.BLAS.set_num_threads(blas_num_threads)
+            Peigs = eigvals(P)
+            χ = size(ψ.M, 1)
+            @show real(Peigs[χ+1]), real(Peigs[end])
                         
             P[diagind(P)[1:d*χ]] .+= δ # dD
             P[diagind(P)[d*χ+1:end]] .+= δ * α # X
@@ -681,7 +686,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
 
             δ = isnan(x.df) ? 1e-3 : x.df
             α = isnan(x.prev) ? 1.0 : x.prev
-            precondition_tol = isnan(x.prev) ? 0.01*norm(dψ) : norm(dψ) * min(sqrt(δ), 1e-2) # TODO. fix this.
+            precondition_tol = isnan(x.prev) ? 0.01*norm(dψ) : norm(dψ) * min(sqrt(δ), 1e-3) # TODO. fix this.
             #println("preconditioner3: |dψ| = $(norm(dψ)), δ = $(δ), α = $(α)")
             PG, info = precondition_map(ψ, dψ; δ = δ, α = α, P = x.preconditioner, maxiter = 1, tol = precondition_tol, ρRmat = ρRmat)
             if norm(info.residual) > precondition_tol
@@ -703,12 +708,15 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
 
         _finalize!(x, f, g, numiter)
 
-        #α = norm(x.data.Q)
         α = norm(f) ^ (1/3)
         x.prev = α # prev now plays the role of α. change name. 
 
+        #U, S, _ = svd(convert(Array, x.ρR))
+        #ρRmat = U * Diagonal(S) * U'
+        #Ng = tangent_map(x.data, g; ρRmat = ρRmat)
+        #δ = norm(dot(g, Ng))
         g1 = MultiBosonCMPSData_MDMinv_Grad( α^(-2.5) * g.dDs, α^(-3) * g.X)
-        δ = norm(g1)^2
+        δ = norm(g1) ^ 2
         x.df = δ # FIXME. df now plays the role of δ. change name.
         
         println("finalize: δ = $(δ), α = $(α)")

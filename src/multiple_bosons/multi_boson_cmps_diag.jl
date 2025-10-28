@@ -127,7 +127,7 @@ function expand(ψ::MultiBosonCMPSData_diag, χ::Integer; perturb::Float64=1e-1)
     return MultiBosonCMPSData_diag(Q, Λs) 
 end
 
-function tangent_map(ψm::MultiBosonCMPSData_diag, Xm::MultiBosonCMPSData_diag, EL::MPSBondTensor, ER::MPSBondTensor, Kinv::AbstractTensorMap{T, S, 2, 2}) where {T,S}
+function tangent_map_local(ψm::MultiBosonCMPSData_diag, Xm::MultiBosonCMPSData_diag, EL::MPSBondTensor, ER::MPSBondTensor) where {T,S}
     χ = get_χ(ψm)
     ψ = CMPSData(ψm)
     X = CMPSData(Xm)
@@ -136,8 +136,10 @@ function tangent_map(ψm::MultiBosonCMPSData_diag, Xm::MultiBosonCMPSData_diag, 
     ER /= tr(EL * ER)
 
     K1 = K_permute(K_otimes(Id, X.Q) + sum(K_otimes.(ψ.Rs, X.Rs)))
-    @tensor ER1[-1; -2] := Kinv[-1 4; 3 -2] * K1[3 2; 1 4] * ER[1; 2]
-    @tensor EL1[-1; -2] := Kinv[4 -1; -2 3] * K1[2 3; 4 1] * EL[1; 2]
+    #@tensor ER1[-1; -2] := Kinv[-1 4; 3 -2] * K1[3 2; 1 4] * ER[1; 2]
+    #@tensor EL1[-1; -2] := Kinv[4 -1; -2 3] * K1[2 3; 4 1] * EL[1; 2]
+    @tensor ER1[-1; -2] := K1[-1 2; 1 -4] * ER[1; 2]
+    @tensor EL1[-1; -2] := K1[2 -1; -2 1] * EL[1; 2]
     @tensor singular = EL[1; 2] * K1[2 3; 4 1] * ER[4; 3]
 
     mapped_XQ = EL * ER1 + EL1 * ER + singular * EL * ER
@@ -147,6 +149,27 @@ function tangent_map(ψm::MultiBosonCMPSData_diag, Xm::MultiBosonCMPSData_diag, 
 
     return MultiBosonCMPSData_diag(mapped_XQ, mapped_XRs) 
 end
+
+#function tangent_map(ψm::MultiBosonCMPSData_diag, Xm::MultiBosonCMPSData_diag, EL::MPSBondTensor, ER::MPSBondTensor, Kinv::AbstractTensorMap{T, S, 2, 2}) where {T,S}
+#    χ = get_χ(ψm)
+#    ψ = CMPSData(ψm)
+#    X = CMPSData(Xm)
+#    Id = id(ℂ^χ)
+#
+#    ER /= tr(EL * ER)
+#
+#    K1 = K_permute(K_otimes(Id, X.Q) + sum(K_otimes.(ψ.Rs, X.Rs)))
+#    @tensor ER1[-1; -2] := Kinv[-1 4; 3 -2] * K1[3 2; 1 4] * ER[1; 2]
+#    @tensor EL1[-1; -2] := Kinv[4 -1; -2 3] * K1[2 3; 4 1] * EL[1; 2]
+#    @tensor singular = EL[1; 2] * K1[2 3; 4 1] * ER[4; 3]
+#
+#    mapped_XQ = EL * ER1 + EL1 * ER + singular * EL * ER
+#    mapped_XRs = map(zip(ψ.Rs, X.Rs)) do (R, XR)
+#        EL * XR * ER + EL1 * R * ER + EL * R * ER1 + singular * EL * R * ER
+#    end
+#
+#    return MultiBosonCMPSData_diag(mapped_XQ, mapped_XRs) 
+#end
 
 function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; gradtol::Float64=1e-8, do_preconditioning::Bool=false, maxiter::Int=1000, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
     if H.L == Inf
