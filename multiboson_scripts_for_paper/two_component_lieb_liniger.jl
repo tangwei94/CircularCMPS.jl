@@ -12,7 +12,7 @@ using CircularCMPS
 
 # parameters for the model, only consider equal mass for now
 c = 10.0
-μ, c12 = 0.0, -2.0
+μ, c12 = 0.0, -3.0
 μ = parse(Float64, ARGS[1])
 c12 = parse(Float64, ARGS[2])
 
@@ -28,17 +28,22 @@ Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
 @info "Doing calculation for c1 = $c1, c2 = $c2, c12 = $c12, μ1 = $μ1, μ2 = $μ2 "
 
 ϕ1 = MultiBosonCMPSData_diag(rand, 4, 2);
-res_d1 = ground_state(Hm, ϕ1; gradtol=1e-12, maxiter=1000, do_preconditioning=false);
+res_d1 = ground_state(Hm, ϕ1; gradtol=1e-4, maxiter=1000, do_preconditioning=true);
+@show res_d1[2], norm(res_d1[3])
 ψ1 = left_canonical(MultiBosonCMPSData_MDMinv(res_d1[1]))
 res1 = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=5000, preconditioner_type=3);
 @save joinpath(root_folder, folder_name, "results_chi4.jld2") res=res1
+@show res1[2], norm(res1[3])
 
 ψ2 = left_canonical(expand(res1[1]; perturb=0.05));
 ϕ2 = MultiBosonCMPSData_diag(ψ2)
-res_d2 = ground_state(Hm, ϕ2; gradtol=1e-12, maxiter=1000, do_preconditioning=false);
+cond(ϕ2.Q)
+res_d2 = ground_state(Hm, ϕ2; gradtol=1e-4, maxiter=1000, do_preconditioning=false);
+@show res_d2[2], norm(res_d2[3])
 ψ2 = left_canonical(MultiBosonCMPSData_MDMinv(res_d2[1]))
 res2 = ground_state(Hm, ψ2; gradtol=1e-6, maxiter=5000, preconditioner_type=3);
 @save joinpath(root_folder, folder_name, "results_chi8.jld2") res=res2
+@show res2[2], norm(res2[3])
 
 ψ3 = left_canonical(expand(res2[1]; perturb=0.05));
 ϕ3 = MultiBosonCMPSData_diag(ψ3)
@@ -46,25 +51,20 @@ res_d3 = ground_state(Hm, ϕ3; gradtol=1e-12, maxiter=1000, do_preconditioning=f
 ψ3 = left_canonical(MultiBosonCMPSData_MDMinv(res_d3[1]))
 res3 = ground_state(Hm, ψ3; gradtol=1e-6, maxiter=5000, preconditioner_type=3);
 @save joinpath(root_folder, folder_name, "results_chi16.jld2") res=res3
+@show res3[2], norm(res3[3])
 
-ψ4 = left_canonical(expand(res3[1], res2[1]; perturb=1e-4));
+ψ4 = left_canonical(expand(res3[1]; perturb=0.05));
 ϕ4 = MultiBosonCMPSData_diag(ψ4)
 res_d4 = ground_state(Hm, ϕ4; gradtol=1e-12, maxiter=1000, do_preconditioning=false);
+@show res_d4[2], norm(res_d4[3])
 ψ4 = left_canonical(MultiBosonCMPSData_MDMinv(res_d4[1]))
 res4 = ground_state(Hm, ψ4; gradtol=1e-6, maxiter=5000, preconditioner_type=3);
 @save joinpath(root_folder, folder_name, "results_chi24.jld2") res=res4
 
-ψ5 = left_canonical(expand(res4[1], res2[1]; perturb=1e-4));
-ϕ5 = MultiBosonCMPSData_diag(ψ5)
-res_d5 = ground_state(Hm, ϕ5; gradtol=1e-12, maxiter=1000, do_preconditioning=false);
-ψ5 = left_canonical(MultiBosonCMPSData_MDMinv(res_d5[1]))
-res5 = ground_state(Hm, ψ5; gradtol=1e-6, maxiter=5000, preconditioner_type=3);
-@save joinpath(root_folder, folder_name, "results_chi32.jld2") res=res5
-
 # some basic measurements 
 open(joinpath(root_folder, folder_name, "basic_measurements.txt"), "w") do f
     println(f, "chi, energy, gnorm, n1, n2, num_iter")
-    for (res, χ) in zip([res1, res2, res3, res4, res5], [4, 8, 16, 24, 32])
+    for (res, χ) in zip([res1, res2, res3, res4], [4, 8, 16, 32])
         n1 = particle_density(res[1], 1)
         n2 = particle_density(res[1], 2)
         num_iter = size(res[5])[1]

@@ -250,6 +250,94 @@ function energy(H::MultiBosonLiebLiniger, ψ::MultiBosonCMPSData_diag; init_envL
     return real(tr(envL * OH * envR) / tr(envL * envR))
 end 
 
+function ground_state_updateQ(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; gradtol::Float64=1e-8, do_preconditioning::Bool=false, maxiter::Int=1000, m_LBFGS::Int=8, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
+    
+    cs = Matrix{ComplexF64}(H.cs)
+    μs = Vector{ComplexF64}(H.μs)
+
+    function fgE(x::OptimState{Matrix{T}}) where T
+        ψ = MultiBosonCMPSData_diag(x.data, ψ0.Λs)
+        init_envL, init_envR = x.ρR
+        fE_inf = ψ -> energy(H, ψ; init_envL = init_envL, init_envR = init_envR)
+        E, ∂ψ = withgradient(fE_inf, ψ)
+        return E, ∂ψ[1].Q
+    end
+    function inner(x::OptimState{Matrix{T}}, a::Matrix, b::Matrix) where T
+        # be careful the cases with or without a factor of 2. depends on how to define the complex gradient
+        return real(dot(a, b)) 
+    end
+    function retract(x::OptimState{Matrix{T}}, dQ::Matrix, α::Real) where T
+        Q = x.data + α * dQ
+        return OptimState(Q, missing, x.ρR, x.prev, x.df), dQ
+    end
+
+    function _no_precondition(x::OptimState{Matrix{T}}, dQ::Matrix) where T
+        return dQ
+    end
+    function _precondition(x::OptimState{Matrix{T}}, dQ::Matrix) where T
+        ψ = MultiBosonCMPSData_diag(x.data, ψ0.Λs)
+        χ, d = get_χ(ψ), get_d(ψ)
+
+        EL = left_env(ψ; init = x.ρR[1])
+        ER = right_env(ψ; init = x.ρR[2])
+        ER /= tr(EL * ER)
+
+        ELmat = convert(Array, EL)
+        ERmat = convert(Array, ER)
+        U, S, V = svd(ELmat)
+        ELmat = U * Diagonal(S) * U'
+        U, S, V = svd(ERmat)
+        ERmat = U * Diagonal(S) * U'
+        
+        δ = isnan(x.df) ? 1e-3 : max(x.df, 1e-12)
+        ELmat[diagind(ELmat)] .+= sqrt(δ)
+        ERmat[diagind(ERmat)] .+= sqrt(δ)
+
+        dQp =inv(ELmat) * dQ * inv(ERmat)
+
+        return dQp
+    end
+
+    function finalize!(x::OptimState{Matrix{T}}, f, g, numiter) where T
+        _finalize!(x, f, g, numiter)
+
+        α = norm(f) ^ (1/3)
+        x.prev = α # prev now plays the role of α. change name. 
+
+        #g1 = α^(-2.5) * g # it seems that V and W also need to be scaled sperately
+        g1 = g
+        δ = norm(g1) ^ 2
+        x.df = δ # FIXME. df now plays the role of δ. change name.
+        
+        println("finalize: δ = $(δ), α = $(α), cond number = $(cond(x.data)), eigenvalues = $(abs.(svd(x.data).S)))")
+        ψ = MultiBosonCMPSData_diag(x.data, ψ0.Λs)
+        x.ρR = (left_env(ψ; init = x.ρR[1], verbosity = 1), right_env(ψ; init = x.ρR[2], verbosity = 1))
+        return x, f, g, numiter
+    end
+    transport!(v, x, d, α, xnew) = v
+
+    optalg_LBFGS = LBFGS(m_LBFGS; maxiter=maxiter, gradtol=gradtol, acceptfirst=false, verbosity=2)
+
+    if do_preconditioning
+        @show "doing precondition"
+        precondition★ = _precondition
+    else
+        @show "no precondition"
+        precondition★ = _no_precondition
+    end
+
+    x0 = OptimState(ψ0.Q) 
+    x0.ρR = (left_env(ψ0; init = missing, verbosity = 2), right_env(ψ0; init = missing, verbosity = 2))
+    x1, E1, grad1, numfg1, history1 = optimize(fgE, x0, optalg_LBFGS; retract = retract,
+                                    precondition = precondition★,
+                                    inner = inner, transport! =transport!, finalize! = finalize!
+                                    );
+
+    res = (MultiBosonCMPSData_diag(x1.data, ψ0.Λs), E1, grad1, numfg1, history1)
+    return res
+
+end
+
 function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; gradtol::Float64=1e-8, do_preconditioning::Bool=false, maxiter::Int=1000, m_LBFGS::Int=8, _finalize! = (x, f, g, numiter) -> (x, f, g, numiter))
 
     if H.L < Inf
@@ -382,8 +470,12 @@ function ground_state(H::MultiBosonLiebLiniger, ψ0::MultiBosonCMPSData_diag; gr
         δ = norm(g1) ^ 2
         x.df = δ # FIXME. df now plays the role of δ. change name.
         
-        println("finalize: δ = $(δ), α = $(α)")
         x.ρR = (left_env(x.data; init = x.ρR[1], verbosity = 1), right_env(x.data; init = x.ρR[2], verbosity = 1))
+
+        full_env = convert(Array, x.ρR[1] * x.ρR[2])
+
+        println("finalize: δ = $(δ), α = $(α), cond number = $(cond(full_env))")
+
         return x, f, g, numiter
     end
     transport!(v, x, d, α, xnew) = v

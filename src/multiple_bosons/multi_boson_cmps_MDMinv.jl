@@ -275,7 +275,7 @@ function expand(ψ::MultiBosonCMPSData_MDMinv, ψ1::MultiBosonCMPSData_MDMinv; p
         direct_sum(ψ.Ds[ix], ψ1.Ds[ix])
     end
     Q = direct_sum(ψ.Q, ψ1.Q)
-    Q[diagind(Q)[χ0+1:end]] .-= 0.01
+    Q[diagind(Q)[χ0+1:end]] .-= perturb
     M = direct_sum(ψ.M, ψ1.M)
     Minv = direct_sum(ψ.Minv, ψ1.Minv)
     R0s = [M * D * Minv for D in Ds]
@@ -719,9 +719,10 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         δ = norm(g1) ^ 2
         x.df = δ # FIXME. df now plays the role of δ. change name.
         
-        println("finalize: δ = $(δ), α = $(α)")
-
         x.ρR = right_env(x.data; init = x.ρR, verbosity = 1)
+
+        full_env = convert(Array, x.ρR)
+        println("finalize: δ = $(δ), α = $(α), cond number = $(cond(full_env))")
         return x, f, g, numiter
     end
 
