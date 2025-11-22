@@ -26,8 +26,8 @@ folder_name = "results_c$(c)_mu$(μ)_coupling$(c12)"
 mkpath(root_folder)
 mkpath(joinpath(root_folder, folder_name))
 
-open(joinpath(root_folder, folder_name, "basic_measurements.txt"), "a") do f
-    println(f, "--- Continuing from the last checkpoint ---")
+open(joinpath(root_folder, folder_name, "basic_measurements.txt"), "w") do f
+    #println(f, "--- Continuing from the last checkpoint ---")
     println(f, "chi, energy, gnorm, n1, n2, num_iter")
 end
 
@@ -50,7 +50,7 @@ for (χ, file) in zip([4, 8, 16, 32], ["results_chi4.jld2", "results_chi8.jld2",
     @load joinpath(root_folder, folder_name, file) res
     ψ1 = deepcopy(res[1])
     if norm(res[3]) > 1e-6
-        res1 = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=10000, preconditioner_type=3);
+        res1 = ground_state(Hm, ψ1; gradtol=1e-10, maxiter=10000, preconditioner_type=3);
         @save joinpath(root_folder, folder_name, file) res=res1
 
         open(joinpath(root_folder, folder_name, "basic_measurements.txt"), "a") do f
