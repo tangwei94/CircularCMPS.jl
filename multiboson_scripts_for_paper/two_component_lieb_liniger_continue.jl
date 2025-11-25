@@ -49,7 +49,7 @@ end
 for (χ, file) in zip([4, 8, 16, 32], ["results_chi4.jld2", "results_chi8.jld2", "results_chi16.jld2", "results_chi32.jld2"])
     @load joinpath(root_folder, folder_name, file) res
     ψ1 = deepcopy(res[1])
-    res1 = ground_state(Hm, ψ1; gradtol=1e-9, maxiter=10000, preconditioner_type=3);
+    res1 = ground_state(Hm, ψ1; gradtol=1e-8, maxiter=10000, preconditioner_type=3);
     @save joinpath(root_folder, folder_name, file) res=res1
 
     open(joinpath(root_folder, folder_name, "basic_measurements.txt"), "a") do f
