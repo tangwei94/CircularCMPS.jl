@@ -726,7 +726,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         return x, f, g, numiter
     end
 
-    optalg_LBFGS = LBFGS(m_LBFGS; maxiter=maxiter, gradtol=gradtol, acceptfirst=false, verbosity=2)
+    optalg_LBFGS = LBFGS(m_LBFGS; maxiter=maxiter, gradtol=gradtol, acceptfirst=false, verbosity=2, linesearch = HagerZhangLineSearch(ϵ=1e-16, maxiter=10))
 
     # preconditioner type 0 is not doing any preconditioning.
     # only preconditioner type 1, 2 works.  
