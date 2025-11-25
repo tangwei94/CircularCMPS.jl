@@ -30,28 +30,28 @@ Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
 ϕ1 = MultiBosonCMPSData_diag(rand, 4, 2);
 res_d1 = ground_state(Hm, ϕ1; gradtol=1e-12, maxiter=1000, do_preconditioning=false);
 ψ1 = left_canonical(MultiBosonCMPSData_MDMinv(res_d1[1]))
-res1 = ground_state(Hm, ψ1; gradtol=1e-10, maxiter=5000, preconditioner_type=3);
+res1 = ground_state(Hm, ψ1; gradtol=1e-9, maxiter=5000, preconditioner_type=3);
 @save joinpath(root_folder, folder_name, "results_chi4.jld2") res=res1
 
 ψ2 = left_canonical(expand(res1[1]; perturb=0.05));
 ϕ2 = MultiBosonCMPSData_diag(ψ2)
 res_d2 = ground_state(Hm, ϕ2; gradtol=1e-12, maxiter=1000, do_preconditioning=false);
 ψ2 = left_canonical(MultiBosonCMPSData_MDMinv(res_d2[1]))
-res2 = ground_state(Hm, ψ2; gradtol=1e-10, maxiter=5000, preconditioner_type=3);
+res2 = ground_state(Hm, ψ2; gradtol=1e-9, maxiter=5000, preconditioner_type=3);
 @save joinpath(root_folder, folder_name, "results_chi8.jld2") res=res2
 
 ψ3 = left_canonical(expand(res2[1]; perturb=0.05));
 ϕ3 = MultiBosonCMPSData_diag(ψ3)
 res_d3 = ground_state(Hm, ϕ3; gradtol=1e-12, maxiter=1000, do_preconditioning=false);
 ψ3 = left_canonical(MultiBosonCMPSData_MDMinv(res_d3[1]))
-res3 = ground_state(Hm, ψ3; gradtol=1e-10, maxiter=5000, preconditioner_type=3);
+res3 = ground_state(Hm, ψ3; gradtol=1e-9, maxiter=5000, preconditioner_type=3);
 @save joinpath(root_folder, folder_name, "results_chi16.jld2") res=res3
 
 ψ4 = left_canonical(expand(res3[1]; perturb=0.075));
 ϕ4 = MultiBosonCMPSData_diag(ψ4)
 res_d4 = ground_state(Hm, ϕ4; gradtol=1e-12, maxiter=2000, do_preconditioning=false);
 ψ4 = left_canonical(MultiBosonCMPSData_MDMinv(res_d4[1]))
-res4 = ground_state(Hm, ψ4; gradtol=1e-10, maxiter=5000, preconditioner_type=3);
+res4 = ground_state(Hm, ψ4; gradtol=1e-9, maxiter=5000, preconditioner_type=3);
 @save joinpath(root_folder, folder_name, "results_chi32.jld2") res=res4
 
 # some basic measurements 
