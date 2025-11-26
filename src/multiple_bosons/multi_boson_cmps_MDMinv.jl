@@ -227,14 +227,15 @@ function perturb(ψ::MultiBosonCMPSData_MDMinv; perturb::Real = 1e-4)
 
     M = ψ.M * exp(perturb * X)
     Minv = exp(-perturb * X) * ψ.Minv
-    Ds = map(Ds) do D
+    R0s = [ψ.M * D * ψ.Minv for D in ψ.Ds]
+    Ds = map(ψ.Ds) do D
         dD = Diagonal(rand(ComplexF64, χ))
         dD = (dD + dD') / norm(dD + dD')
         D + perturb * dD
     end
-    ΔRs = [M * D * Minv - R0 for (D, R0) in zip(Ds, R0s)]
+    ΔRs = [M * D * Minv - R0 for (D, R0) in zip(ψ.Ds, R0s)]
     V = sum(-[R0' * ΔR + 0.5 * ΔR' * ΔR for (R0, ΔR) in zip(R0s, ΔRs)])
-    Q = Q + V
+    Q = ψ.Q + V
 
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end

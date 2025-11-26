@@ -14,7 +14,7 @@ using CircularCMPS
 
 # parameters for the model, only consider equal mass for now
 c = 1.0
-#μ, c12 = 1, -0.4
+μ, c12 = 1.0, -0.4
 μ = parse(Float64, ARGS[1])
 c12 = parse(Float64, ARGS[2])
 
@@ -72,7 +72,7 @@ for perturbing_label in labels
     for (χ, file) in zip([4, 8, 16, 32], ["results_chi4.jld2", "results_chi8.jld2", "results_chi16.jld2", "results_chi32.jld2"])
         @load joinpath("tmp_init", file) res
         ψ1 = deepcopy(res[1])
-        ψ1 = left_canonical(perturb(ψ1; perturb=1e-4))
+        ψ1 = left_canonical(CircularCMPS.perturb(ψ1; perturb=1e-4))
         res1 = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=10000, preconditioner_type=3);
         @save joinpath(root_folder, folder_name_perturbing, file) res=res1
 
