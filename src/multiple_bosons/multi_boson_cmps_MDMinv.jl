@@ -219,6 +219,26 @@ function retract_left_canonical(ψ::MultiBosonCMPSData_MDMinv{T}, α::Float64, d
     return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
 end
 
+function perturb(ψ::MultiBosonCMPSData_MDMinv; perturb::Real = 1e-4)
+    χ, d = get_χ(ψ), get_d(ψ)
+
+    X = rand(ComplexF64, χ, χ)
+    X = (X + X') / norm(X + X')
+
+    M = ψ.M * exp(perturb * X)
+    Minv = exp(-perturb * X) * ψ.Minv
+    Ds = map(Ds) do D
+        dD = Diagonal(rand(ComplexF64, χ))
+        dD = (dD + dD') / norm(dD + dD')
+        D + perturb * dD
+    end
+    ΔRs = [M * D * Minv - R0 for (D, R0) in zip(Ds, R0s)]
+    V = sum(-[R0' * ΔR + 0.5 * ΔR' * ΔR for (R0, ΔR) in zip(R0s, ΔRs)])
+    Q = Q + V
+
+    return MultiBosonCMPSData_MDMinv(Q, M, Minv, Ds)
+end
+
 function expand(ψ::MultiBosonCMPSData_MDMinv; perturb = 1e-3)
     χ0, d = get_χ(ψ), get_d(ψ)
     χ = 2 * χ0
