@@ -747,7 +747,7 @@ function ground_state(H::AbstractHamiltonian, ψ0::MultiBosonCMPSData_MDMinv; pr
         return x, f, g, numiter
     end
 
-    optalg_LBFGS = LBFGS(m_LBFGS; maxiter=maxiter, gradtol=gradtol, acceptfirst=false, verbosity=2, linesearch = HagerZhangLineSearch(ϵ=1e-9, maxiter=10)) # the choice of ϵ can be subtle. it seems that it should not be too small, otherwise the line search will stuck; it should not be too large, otherwise the optimization will fluctuate. It appears ϵ should match the magnitude of the error in the gradient. 
+    optalg_LBFGS = LBFGS(m_LBFGS; maxiter=maxiter, gradtol=gradtol, acceptfirst=false, verbosity=2, linesearch = HagerZhangLineSearch(ϵ=1e-9, maxiter=10)) # the choice of ϵ in linesearch can be subtle. it seems that it should not be too small, otherwise the line search will stuck; it should not be too large, otherwise the optimization will fluctuate. It appears ϵ should match the magnitude of the error in the gradient. 
 
     # preconditioner type 0 is not doing any preconditioning.
     # only preconditioner type 1, 2 works.  
