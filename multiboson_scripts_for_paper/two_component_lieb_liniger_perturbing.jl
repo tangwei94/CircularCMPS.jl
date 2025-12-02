@@ -18,7 +18,7 @@ c = 1.0
 μ = parse(Float64, ARGS[1])
 c12 = parse(Float64, ARGS[2])
 
-δμ = 0.001
+δμ = 0.005
 
 c1, c2 = c, c
 μ1, μ2 = μ, μ 
@@ -35,7 +35,7 @@ label_meaning = Dict('N' => -4.0, 'n' => -3.0, 'M' => -2.0, 'm' => -1.0, '0' => 
 # otherwise, different jobs might conflict with eachother when copying data to the management node
 # TODO. read the datafile first, and then delete everything
 labels = ["NN", "nn", "MM", "mm", "pp", "PP", "qq", "QQ", "mp", "MP", "nq", "NQ"]
-files_to_keep = ["perturbing_$(perturbing_label)_1e-3_results_c$(c)_mu$(μ)_coupling$(c12)" for perturbing_label in labels]
+files_to_keep = ["perturbing_$(perturbing_label)_1e-2_results_c$(c)_mu$(μ)_coupling$(c12)" for perturbing_label in labels]
 @info "Cleaning up directories in $root_folder..."
 mkpath("tmp_init")
 # copy jld2 files in folder_name to tmp_init 
@@ -63,7 +63,7 @@ for perturbing_label in labels
     μ2_perturbing = μ2 + s2 * δμ
     Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1_perturbing, μ2_perturbing], Inf);
     
-    folder_name_perturbing = "perturbing_$(perturbing_label)_1e-3_results_c$(c)_mu$(μ)_coupling$(c12)"
+    folder_name_perturbing = "perturbing_$(perturbing_label)_1e-2_results_c$(c)_mu$(μ)_coupling$(c12)"
     mkpath(joinpath(root_folder, folder_name_perturbing))
     open(joinpath(root_folder, folder_name_perturbing, "basic_measurements.txt"), "w") do f
         println(f, "chi, energy, gnorm, n1, n2, num_iter")
@@ -86,6 +86,3 @@ for perturbing_label in labels
         end
     end
 end
-
-
-
