@@ -72,7 +72,10 @@ for perturbing_label in labels
     for (χ, file) in zip([4, 8, 16, 32], ["results_chi4.jld2", "results_chi8.jld2", "results_chi16.jld2", "results_chi32.jld2"])
         @load joinpath("tmp_init", file) res
         ψ1 = deepcopy(res[1])
-        #ψ1 = left_canonical(CircularCMPS.perturb(ψ1; perturb=1e-6))
+        ϕ1 = MultiBosonCMPSData_diag(ψ1)
+        non_precond_steps = (χ == 32) ? 2000 : 1000
+        res_d1 = ground_state(Hm, ϕ1; gradtol=1e-12, maxiter=2000, do_preconditioning=false);
+        ψ1 = left_canonical(MultiBosonCMPSData_MDMinv(res_d1[1]))
         res1 = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=10000, preconditioner_type=3);
         @save joinpath(root_folder, folder_name_perturbing, file) res=res1
 
