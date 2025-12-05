@@ -74,7 +74,7 @@ for perturbing_label in labels
         ψ1 = deepcopy(res[1])
         ϕ1 = MultiBosonCMPSData_diag(ψ1)
         non_precond_steps = (χ == 32) ? 2000 : 1000
-        res_d1 = ground_state(Hm, ϕ1; gradtol=1e-12, maxiter=2000, do_preconditioning=false);
+        res_d1 = ground_state(Hm, ϕ1; gradtol=1e-9, maxiter=2000, do_preconditioning=false);
         ψ1 = left_canonical(MultiBosonCMPSData_MDMinv(res_d1[1]))
         res1 = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=10000, preconditioner_type=3);
         @save joinpath(root_folder, folder_name_perturbing, file) res=res1
