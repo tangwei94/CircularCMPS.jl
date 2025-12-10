@@ -59,6 +59,17 @@ function point_interaction(ψ::CMPSData, index1::Integer, index2::Integer)
     return K_otimes(Oψ_1, Oψ_2) 
 end
 
+function field_operator(ψ::CMPSData, index::Integer, dag::Bool)
+    Iψ = id(domain(ψ.Q))
+    _, Rs = get_matrices(ψ)
+    Oψ = Rs[index]
+    if dag
+        return K_otimes(Oψ, Iψ)
+    else
+        return K_otimes(Iψ, Oψ)
+    end
+end
+
 """
     pairing(ψ::CMPSData)
 

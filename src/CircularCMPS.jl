@@ -25,7 +25,7 @@ export MPSBondTensor, GenericMPSTensor, MPSTensor, fill_data!, randomize!, K_per
 export AbstractCMPSData, CMPSData, get_χ, get_d, get_matrices, transfer_matrix, transfer_matrix_dagger, left_canonical, right_canonical, expand, K_mat, finite_env, rescale
 
 # operators.jl
-export kinetic, particle_density, point_interaction, pairing, pairing12, hopping12
+export kinetic, particle_density, point_interaction, field_operator, pairing, pairing12, hopping12
 
 # ground_state.jl 
 export lieb_liniger_ground_state
