@@ -23,23 +23,27 @@ for c12 in -0.9:0.1:0.9
     corr, λs = correlator(ψ, Inf);
     ξ = 1/abs(λs[end-1])
     
-    ρp = real(measure_local_observable(ψ, On1 + On2, Inf))
-    
     On1 = particle_density(ψ, 1);
     On2 = particle_density(ψ, 2);
     
-    Δxs = (0.01:0.01:1) .* 3*ξ;
+    ρp = real(measure_local_observable(ψ, On1 + On2, Inf))
+    #pairing_term = norm(measure_local_observable(ψ, pairing12(ψ, false), Inf))
+    #hopping_term = norm(measure_local_observable(ψ, hopping12(ψ, false), Inf))
+    #field1_term = norm(measure_local_observable(ψ, field_operator(ψ, 1, false), Inf))
+    #field2_term = norm(measure_local_observable(ψ, field_operator(ψ, 2, false), Inf))
+    
+    Δxs = (0.02:0.02:1) .* 2*ξ;
     
     open(joinpath(root_folder, output_folder_name, "correlations.txt"), "w") do f
         println(f, "Δx, ξ, corr_rhom, corr_rhop, coherence_plus, coherence_minus, coherence_1, coherence_2")
         for Δx in Δxs 
             corr_ρm = real(corr(On1 - On2, On1 - On2, Δx))
             corr_ρp = real(corr(On1 + On2, On1 + On2, Δx)) - ρp^2
-            coherence_plus = real(corr(pairing12(ψ, false), pairing12(ψ, true), Δx))
-            coherence_minus = real(corr(hopping12(ψ, false), hopping12(ψ, true), Δx)) 
+            coherence_plus = real(corr(pairing12(ψ, false), pairing12(ψ, true), Δx)) #- pairing_term^2
+            coherence_minus = real(corr(hopping12(ψ, false), hopping12(ψ, true), Δx)) #- hopping_term^2
         
-            coherence_1 = real(corr(field_operator(ψ, 1, false), field_operator(ψ, 1, true), Δx))
-            coherence_2 = real(corr(field_operator(ψ, 2, false), field_operator(ψ, 2, true), Δx))
+            coherence_1 = real(corr(field_operator(ψ, 1, false), field_operator(ψ, 1, true), Δx)) #- field1_term^2
+            coherence_2 = real(corr(field_operator(ψ, 2, false), field_operator(ψ, 2, true), Δx)) #- field2_term^2
             
             msg = "$Δx, $ξ, $corr_ρm, $corr_ρp, $coherence_plus, $coherence_minus, $coherence_1, $coherence_2"
             msg = println(f, msg)
