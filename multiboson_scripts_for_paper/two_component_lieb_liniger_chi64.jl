@@ -46,7 +46,7 @@ if isdir(root_folder)
 end
 
 @load joinpath(root_folder, folder_name, "results_chi32.jld2") res
-ψ5 = left_canonical(expand(res[1]; perturb=0.05));
+ψ5 = left_canonical(expand(res[1]; perturb=0.075));
 ϕ5 = MultiBosonCMPSData_diag(ψ5)
 res_d5 = ground_state(Hm, ϕ5; gradtol=1e-6, maxiter=2500, do_preconditioning=false);
 ψ5 = left_canonical(MultiBosonCMPSData_MDMinv(res_d5[1]))
