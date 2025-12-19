@@ -7,10 +7,10 @@ using CSV, DataFrames
 using Revise 
 using CircularCMPS 
 
-χs = [4, 8, 16, 32, 64]
-c = 1.0 
-μ = 2.0
-c12 = 0.0
+χs = [4, 8, 16, 32]
+c = 10.0 
+μ = 0.0
+c12 = -6.0
 
 root_folder = "data_two_component_lieb_liniger"
 folder_name = "results_c$(c)_mu$(μ)_coupling$(c12)"
@@ -35,7 +35,7 @@ k1 = 1/(sqrt(12/1)+1)
 k2 = 1/(sqrt(12/2)+1)
 @show k1, k2
 
-fit_range = 3:5
+fit_range = 3:4
 X = hcat(ones(length(fit_range)), log.(χs[fit_range]))
 βs = X \ EEs[fit_range]
 println("k=$(βs[2]), C=$(βs[1])")
@@ -61,3 +61,4 @@ scatter!(ax2, log.(ξs), EEs)
 lines!(ax2, log.(ξs), log.(ξs) .* γs[2] .+ γs[1])
 
 @show fig
+save("tmp.pdf", fig)
