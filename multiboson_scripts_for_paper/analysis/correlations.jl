@@ -7,12 +7,12 @@ using CSV, DataFrames
 using Revise 
 using CircularCMPS 
 
-#c = 1.0
-#μ = 2.0
-#for c12 in -0.9:0.1:0.9
-c = 10.0
-μ = 0.0
-for c12 in [-2.0, -3.0, -4.0, -5.0, -6.0, -7.0]
+c = 1.0
+μ = 2.0
+for c12 in -0.9:0.1:0.9
+#c = 10.0
+#μ = 0.0
+#for c12 in [-2.0, -3.0, -4.0, -5.0, -6.0, -7.0]
     root_folder = "data_two_component_lieb_liniger"
     folder_name = "results_c$(c)_mu$(μ)_coupling$(c12)"
     output_folder_name = "analysis_results_c$(c)_mu$(μ)_coupling$(c12)"
