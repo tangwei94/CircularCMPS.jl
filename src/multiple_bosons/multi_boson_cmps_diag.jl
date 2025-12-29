@@ -144,10 +144,12 @@ function expand(ψ::MultiBosonCMPSData_diag, χ::Integer; perturb::Float64=1e-1)
         @warn "new χ not bigger than χ0"
         return ψ
     end
-    Q = 0.1 * randn(eltype(ψ), χ, χ)
+    Q = perturb * rand(eltype(ψ), χ, χ)
     Q[1:χ0, 1:χ0] = ψ.Q
+    q0 = minimum(real.(eigvals(ψ.Q)))
+    Q[diagind(Q)[χ0+1:end]] .+= q0 
 
-    Λs = perturb * randn(eltype(ψ), χ, d)
+    Λs = rand(eltype(ψ), χ, d)
     Λs[1:χ0, 1:d] = ψ.Λs
 
     return MultiBosonCMPSData_diag(Q, Λs) 
