@@ -13,9 +13,11 @@ using CircularCMPS
 # parameters for the model, only consider equal mass for now
 c = 10.0
 μ, c12 = 0.0, -7.0
+#μ = parse(Float64, ARGS[1])
+#c12 = parse(Float64, ARGS[2])
 
-root_folder = "data_two_component_lieb_liniger_benchmark"
-folder_name = "results_c$(c)_mu$(μ)_coupling$(c12)_benchmark"
+root_folder = "data_two_component_lieb_liniger"
+folder_name = "results_c$(c)_mu$(μ)_coupling$(c12)_testing"
 mkpath(root_folder)
 mkpath(joinpath(root_folder, folder_name))
 
@@ -25,30 +27,42 @@ c1, c2 = c, c
 Hm = MultiBosonLiebLiniger([c1 c12; c12 c2], [μ1, μ2], Inf);
 @info "Doing calculation for c1 = $c1, c2 = $c2, c12 = $c12, μ1 = $μ1, μ2 = $μ2 "
 
-ϕ1 = MultiBosonCMPSData_diag(rand, 8, 2);
-res_d1 = ground_state(Hm, ϕ1; gradtol=1e-9, maxiter=100, do_preconditioning=false);
+ϕ1 = MultiBosonCMPSData_diag(rand, 4, 2);
+res_d1 = ground_state(Hm, ϕ1; gradtol=1e-9, maxiter=80, do_preconditioning=false);
 ψ1 = left_canonical(MultiBosonCMPSData_MDMinv(res_d1[1]))
-res1 = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=5000, preconditioner_type=3);
+res1 = ground_state(Hm, ψ1; gradtol=1e-6, maxiter=800, preconditioner_type=3);
 @save joinpath(root_folder, folder_name, "results_chi4.jld2") res=res1
 
-ϕ2 = MultiBosonCMPSData_diag(rand, 16, 2);
-res_d2 = ground_state(Hm, ϕ2; gradtol=1e-9, maxiter=400, do_preconditioning=false);
+ψ2 = left_canonical(expand(res1[1]; perturb=0.05));
+ϕ2 = MultiBosonCMPSData_diag(ψ2)
+res_d2 = ground_state(Hm, ϕ2; gradtol=1e-9, maxiter=160, do_preconditioning=false);
 ψ2 = left_canonical(MultiBosonCMPSData_MDMinv(res_d2[1]))
-res2 = ground_state(Hm, ψ2; gradtol=1e-6, maxiter=5000, preconditioner_type=3);
-@save joinpath(root_folder, folder_name, "results_chi16.jld2") res=res2
+res2 = ground_state(Hm, ψ2; gradtol=1e-6, maxiter=1600, preconditioner_type=3);
+@save joinpath(root_folder, folder_name, "results_chi8.jld2") res=res2
 
-res2[5]
+ψ3 = left_canonical(expand(res2[1]; perturb=0.05));
+ϕ3 = MultiBosonCMPSData_diag(ψ3)
+res_d3 = ground_state(Hm, ϕ3; gradtol=1e-9, maxiter=320, do_preconditioning=false);
+ψ3 = left_canonical(MultiBosonCMPSData_MDMinv(res_d3[1]))
+res3 = ground_state(Hm, ψ3; gradtol=1e-6, maxiter=3200, preconditioner_type=3);
+@save joinpath(root_folder, folder_name, "results_chi16.jld2") res=res3
 
-ψ2_compare = left_canonical(expand(res1[1]; perturb=0.05));
-ϕ2_compare = MultiBosonCMPSData_diag(ψ2_compare)
-res_d2_compare = ground_state(Hm, ϕ2_compare; gradtol=1e-9, maxiter=200, do_preconditioning=false);
-ψ2_compare = left_canonical(MultiBosonCMPSData_MDMinv(res_d2_compare[1]))
-res2_compare = ground_state(Hm, ψ2_compare; gradtol=1e-6, maxiter=5000, preconditioner_type=3);
-@save joinpath(root_folder, folder_name, "results_chi16_compare.jld2") res=res2_compare
+ψ4 = left_canonical(expand(res3[1]; perturb=0.05));
+ϕ4 = MultiBosonCMPSData_diag(ψ4)
+res_d4 = ground_state(Hm, ϕ4; gradtol=1e-9, maxiter=640, do_preconditioning=false);
+ψ4 = left_canonical(MultiBosonCMPSData_MDMinv(res_d4[1]))
+res4 = ground_state(Hm, ψ4; gradtol=1e-6, maxiter=6400, preconditioner_type=3);
+@save joinpath(root_folder, folder_name, "results_chi32.jld2") res=res4
 
-ψ3_compare = left_canonical(expand(res2_compare[1]; perturb=0.05));
-ϕ3_compare = MultiBosonCMPSData_diag(ψ3_compare)
-res_d3_compare = ground_state(Hm, ϕ3_compare; gradtol=1e-9, maxiter=400, do_preconditioning=false);
-ψ3_compare = left_canonical(MultiBosonCMPSData_MDMinv(res_d3_compare[1]))
-res3_compare = ground_state(Hm, ψ3_compare; gradtol=1e-6, maxiter=2000, preconditioner_type=3);
-@save joinpath(root_folder, folder_name, "results_chi16_compare3.jld2") res=res3_compare
+# some basic measurements 
+open(joinpath(root_folder, folder_name, "basic_measurements.txt"), "w") do f
+    println(f, "chi, energy, gnorm, n1, n2, num_iter")
+    for (res, χ) in zip([res1, res2, res3, res4], [4, 8, 16, 32])
+        n1 = particle_density(res[1], 1)
+        n2 = particle_density(res[1], 2)
+        num_iter = size(res[5])[1]
+        msg = "$χ, $(res[2]), $(norm(res[3])), $n1, $n2, $num_iter"
+        println(f, msg)
+        println(msg)
+    end
+end
