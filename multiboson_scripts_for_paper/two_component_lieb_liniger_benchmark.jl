@@ -60,4 +60,4 @@ end
 #    end
 #end
 
-@save joinpath(root_folder, folder_name, "results_chi$(chi).jld2") res1
+#@save joinpath(root_folder, folder_name, "results_chi$(chi).jld2") res1
