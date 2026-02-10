@@ -6,7 +6,6 @@ Pkg.instantiate()
 
 using LinearAlgebra, TensorKit, KrylovKit 
 using ChainRules, Zygote 
-using CairoMakie 
 using JLD2 
 using OptimKit 
 using Revise 

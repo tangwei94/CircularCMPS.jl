@@ -1,6 +1,6 @@
 using LinearAlgebra, TensorKit, KrylovKit 
 using ChainRules, Zygote 
-using CairoMakie 
+#using CairoMakie 
 using JLD2 
 using OptimKit 
 using CSV, DataFrames 
@@ -16,12 +16,13 @@ k1 = 1/(sqrt(12/1)+1)
 k2 = 1/(sqrt(12/2)+1)
 @show k1, k2
 
-fig = Figure(fontsize=18, size= (400, 400))
-    
-ax1 = Axis(fig[1, 1], 
-    xlabel = "ln(χ)",
-    ylabel = "S",
-    )
+# Temporary plotting disabled.
+# fig = Figure(fontsize=18, size= (400, 400))
+#     
+# ax1 = Axis(fig[1, 1], 
+#     xlabel = "ln(χ)",
+#     ylabel = "S",
+#     )
 
 for c12 in [-0.6, -0.3, 0.0, 0.3, 0.6]
     root_folder = "data_two_component_lieb_liniger"
@@ -54,7 +55,7 @@ for c12 in [-0.6, -0.3, 0.0, 0.3, 0.6]
     γs = X \ EEs[fit_range]
     println("central charge=$(γs[2] * 6)")
     
-    scatter!(ax1, log.(ξs), EEs)
+    # scatter!(ax1, log.(ξs), EEs)
     #lines!(ax1, log.(ξs), log.(ξs) .* βs[2] .+ βs[1])
 
     open(joinpath(root_folder, analysis_folder_name, "entanglement.txt"), "w") do io
@@ -64,6 +65,5 @@ for c12 in [-0.6, -0.3, 0.0, 0.3, 0.6]
         end
     end
 end
-@show fig
-save("tmp.pdf", fig)
-
+# @show fig
+# save("tmp.pdf", fig)
