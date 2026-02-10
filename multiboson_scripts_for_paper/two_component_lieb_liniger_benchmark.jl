@@ -1,6 +1,13 @@
-using Pkg;
+using Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))
-Pkg.instantiate()
+
+try
+    Pkg.instantiate()
+catch err
+    @warn "Instantiate failed, resolving for current Julia $(VERSION)" exception=(err, catch_backtrace())
+    Pkg.resolve()
+    Pkg.instantiate()
+end
 
 using LinearAlgebra, TensorKit, KrylovKit 
 using ChainRules, Zygote 
