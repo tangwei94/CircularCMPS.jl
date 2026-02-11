@@ -6,7 +6,6 @@ using LinearAlgebra, TensorKit, KrylovKit
 using ChainRules, Zygote 
 using JLD2 
 using OptimKit 
-using Revise 
 using CircularCMPS 
 
 # parameters for the model, only consider equal mass for now
