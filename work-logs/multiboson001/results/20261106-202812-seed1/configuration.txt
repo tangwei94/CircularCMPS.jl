@@ -1,0 +1,12 @@
+seed=1
+maxiter=1000
+prepsteps=100
+chi=8
+c=10
+c12=-7
+mu=0
+gradtol=1e-6
+Julia=1.11.9
+threads=1
+BLAS_threads=4
+project=/home/tangwei/Workspace/research/CircularCMPS.jl/work-logs/multiboson001/environment/Project.toml

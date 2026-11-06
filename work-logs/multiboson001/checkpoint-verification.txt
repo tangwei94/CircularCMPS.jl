@@ -1,0 +1,7 @@
+initial-diagonal.h5 OK keys=Lambda,Q
+initial-left.h5 OK keys=D1,D2,M,Minv,Q
+noprep_noprecond-final.h5 OK keys=D1,D2,M,Minv,Q
+noprep_precond-final.h5 OK keys=D1,D2,M,Minv,Q
+prep100_precond-final.h5 OK keys=D1,D2,M,Minv,Q
+prepared-diagonal.h5 OK keys=Lambda,Q
+prepared-left.h5 OK keys=D1,D2,M,Minv,Q
