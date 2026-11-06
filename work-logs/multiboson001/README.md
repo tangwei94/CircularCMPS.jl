@@ -1,5 +1,9 @@
 # multiboson001 — left-canonical random-initialization diagnostics
 
+**Status: closed positively — completed successfully.** See the
+[closure record and roadmap entry](closure.md). Simulation results are committed
+in `ddd0ed2`; manuscript edits remain deferred outside this work's scope.
+
 Work performed directly in the existing CircularCMPS.jl checkout, starting at
 `5af47a4`. No manuscript changes or DATASTORE writes. No additional agents.
 The earlier, clean worktree was removed after confirming all async agents stopped.
