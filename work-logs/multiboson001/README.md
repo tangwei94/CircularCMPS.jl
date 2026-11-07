@@ -1,8 +1,11 @@
 # multiboson001 — left-canonical random-initialization diagnostics
 
-**Status: closed positively — completed successfully.** See the
-[closure record and roadmap entry](closure.md). Simulation results are committed
-in `ddd0ed2`; manuscript edits remain deferred outside this work's scope.
+**Status: reopened — preparation-phase diagnostic extension completed.**
+The original comparison was closed positively in the [closure record](closure.md).
+The owner reopened this work to measure the left-canonical environment condition
+number and energy at every diagonal-gauge preparation iterate; that extension is
+now complete. Original simulation results are committed in `ddd0ed2`; manuscript
+edits remain deferred. The work has not been closed again.
 
 Work performed directly in the existing CircularCMPS.jl checkout, starting at
 `5af47a4`. No manuscript changes or DATASTORE writes. No additional agents.
@@ -96,6 +99,62 @@ maximum excludes iteration zero; use the audited summary for all reported extrem
 `plot.py` writes `trajectories.pdf` and `trajectories.png`: only the left-canonical
 segments appear, each starting at local iteration zero. The TSV also retains total
 iteration counts including preparation.
+
+## Preparation diagnostic extension — run `20261107-134511-preparation`
+
+Owner requested the condition number after converting each diagonal-gauge preparation
+iterate to left-canonical form, together with its energy history. Work was done
+directly in the existing checkout/REPL, retaining the owner's direct-work and
+no-worktree overrides. No new agents were launched and package source was unchanged.
+
+Driver [preparation.jl](preparation.jl) loads the exact original diagonal-state HDF5
+checkpoint from run `20261106-202812-seed1`. It runs 100 ordinary diagonal-gauge
+L-BFGS iterations with gradtol=1e-12 and no preconditioner. Unlike the original run,
+internal solver randomness is explicitly seeded (20261107) in a dedicated Julia
+task, preserving the interactive task's RNG. This is a new controlled rerun of the
+preparation, not a reconstruction of its original stochastic solver history.
+
+The callback only copies accepted iterates and records energy/gradient. After the
+optimizer finishes, each saved state is independently copied, canonicalized, and
+measured using the existing diagnostic. This prevents diagnostic environment solves
+from affecting optimization RNG or caches. Assertions verify all callback rows
+against returned optimizer history and verify diagnostics do not mutate saved
+states. Iteration zero plus steps 1–100 give 101 records.
+
+Results ([table](results/20261107-134511-preparation/preparation.tsv),
+[summary](results/20261107-134511-preparation/summary.tsv),
+[plot](results/20261107-134511-preparation/preparation.pdf)):
+
+- Energy (manuscript units): 1.3947678171655884 to -167.40383428872653.
+- Left-canonical cond(rho_R): 1.775244469e9 to 2.960078645e5, an overall reduction
+  by about 6000. The curve is nonmonotonic, spanning 5.972452446e4 to 5.273417106e9.
+- Final diagonal-coordinate gradient norm: 8.1399492753. Preparation terminates at
+  its 100-step cap; it is not intended to meet the final ground-state tolerance.
+- Maximum absolute energy difference introduced by canonicalization: 1.52682e-10
+  in manuscript units. Maximum gauge residual: 3.48969e-10; Hermiticity residual:
+  1.35464e-13. Minimum Hermitian-part environment eigenvalue: 1.89585e-10.
+- All 101 rows are finite and consecutive; raw-to-paper energy conversion and
+  canonicalization energy invariance passed the checks in
+  [plot-preparation.py](plot-preparation.py).
+
+This run supports a large overall improvement of conditioning during preparation,
+with fluctuations; it does not establish monotonic improvement or a causal mechanism.
+Its final energy differs from the earlier preparation by approximately 0.000897,
+consistent with this being a new solver-seeded run. Do not concatenate it with the
+old post-preparation trajectory as if they were one uninterrupted optimization.
+
+All 101 diagonal states are retained as groups iter_0 through iter_100 in
+`/home/tangwei/Workspace/research/CircularCMPS.jl/data/multiboson001/20261107-134511-preparation/checkpoints/diagonal-iterates.h5`.
+Each has Q and Lambda datasets; left-canonical endpoint snapshots are in the same
+folder as `left-iter_0.h5` and `left-iter_100.h5`. These ignored checkpoints are state
+snapshots, not L-BFGS restart files. They were reopened in the REPL: all diagonal
+Q/Lambda values are finite, all Q shapes are 8x8, and iteration-zero tensors match
+the original input checkpoint exactly. Provenance baseline is commit `7b9b118`;
+the final driver and artifact hashes are recorded in sha256sums.txt.
+
+Execution log: [preparation-execution.log](preparation-execution.log). Original active
+project restored; cmps-repl left alive and idle. The initial closure remains a
+historical record; this extension is complete and awaits any further owner direction.
 
 ## Reproducibility and limitations
 

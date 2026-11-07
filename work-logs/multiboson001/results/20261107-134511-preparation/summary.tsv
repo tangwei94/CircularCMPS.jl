@@ -1,0 +1,12 @@
+quantity	value
+initial_energy_paper	1.3947678171655884
+final_energy_paper	-167.40383428872653
+initial_cond_rhoR	1775244469.1841395
+final_cond_rhoR	296007.8644536898
+min_cond_rhoR	59724.52446041605
+max_cond_rhoR	5273417106.484347
+final_gnorm_diagonal	8.1399492753095
+max_energy_conversion_abs_error_paper	1.5268142306013033e-10
+max_gauge_residual	3.4896815429914697e-10
+max_hermiticity	1.3546330039890843e-13
+min_eigenvalue	1.89584545297856e-10

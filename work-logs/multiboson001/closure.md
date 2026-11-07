@@ -1,6 +1,10 @@
 # multiboson001 closure
 
-Status: **closed positively — completed successfully**, at the owner's request.
+Status at original closure: **closed positively — completed successfully**, at the owner's request.
+
+**Subsequently reopened by the owner.** The preparation-phase diagnostic extension
+is complete; see the current [work log](README.md). This document preserves the
+original closure and roadmap entry, rather than declaring the reopened work closed.
 
 The requested simulation comparison is complete and recorded in commit `ddd0ed2`.
 All three left-canonical trajectories, step-aligned diagnostics, scientific TSVs,

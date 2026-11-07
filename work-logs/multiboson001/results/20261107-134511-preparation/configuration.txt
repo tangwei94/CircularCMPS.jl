@@ -1,0 +1,10 @@
+source_checkpoint=/home/tangwei/Workspace/research/CircularCMPS.jl/data/multiboson001/20261106-202812-seed1/checkpoints/initial-diagonal.h5
+solver_seed=20261107
+maxiter=100
+gradtol=1e-12
+do_preconditioning=false
+Julia=1.11.9
+threads=1
+BLAS_threads=4
+project=/home/tangwei/Workspace/research/CircularCMPS.jl/work-logs/multiboson001/environment/Project.toml
+diagnostics=postprocess exact saved accepted iterates; no extra solves inside optimizer
