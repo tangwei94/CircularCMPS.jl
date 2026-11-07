@@ -1,0 +1,304 @@
+trajectory	source	iter	energy_paper	cond_rhoR
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	0	1.3947678171655884	1.7752444691841395e9
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	1	-0.019805404935343305	5.273417106484347e9
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	2	-0.21677308381678728	4.436886836240978e9
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	3	-0.7594193330128014	1.0787279906320496e9
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	4	-1.5432569138855539	2.3368379223996955e8
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	5	-1.8538651906957524	1.9987894045475166e7
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	6	-4.612912764003258	7.001544882175246e7
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	7	-7.786275170875205	4.916907414959132e7
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	8	-12.971620196441613	4.78837508831567e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	9	-15.649094093819874	2.63354207938468e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	10	-20.553427334848635	1.087611100818116e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	11	-21.945152582188086	832689.141052863
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	12	-24.308667665223453	290540.8461403199
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	13	-27.92660543562312	482919.34386386734
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	14	-33.67245701898808	725799.4364020787
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	15	-40.92817942062045	686813.6170673614
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	16	-46.53617135407846	570474.5474879398
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	17	-53.40143512256776	335224.7376516796
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	18	-64.36431246823807	138291.35066988893
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	19	-72.74567430282808	71264.90650544687
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	20	-79.20254102038386	133515.5755209685
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	21	-91.87606461479442	109817.55521353948
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	22	-98.71306945689749	114901.45345412263
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	23	-104.47639146155149	171056.1630234513
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	24	-108.42995767270436	374239.2196364933
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	25	-111.55540870692242	366168.209203555
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	26	-115.42040824315693	394873.75697835535
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	27	-117.76129791092944	660380.2626109561
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	28	-119.24279396742274	966785.2649013023
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	29	-121.00665359066976	1.695047139129657e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	30	-121.9006946748917	1.8442993420037315e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	31	-123.24550474683525	1.961480006259184e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	32	-125.22430290870139	1.0270965609709173e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	33	-128.3034656643874	573214.545596697
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	34	-130.81821760658372	288428.4436501587
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	35	-134.0229843508277	142217.09394386387
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	36	-136.6234540004461	97976.22361727766
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	37	-137.98563144115687	88191.33395565883
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	38	-139.35358020033752	83544.13083462107
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	39	-141.2847943271666	73997.4423022369
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	40	-142.9120093895795	95080.71930177628
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	41	-144.42671160661365	103464.811021842
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	42	-145.88864289015171	102161.6111684984
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	43	-147.37946349885013	92346.88383521573
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	44	-148.6859490798342	92336.9404193158
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	45	-149.7187877895773	72877.0354139072
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	46	-150.2730468514847	61034.55236768163
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	47	-150.86816153270263	59737.62961227183
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	48	-151.2230677911358	62410.47668780484
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	49	-151.55163117673428	59724.52446041605
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	50	-151.8645455127385	65852.02127319654
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	51	-152.1989913867751	81250.95112139145
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	52	-152.55111569541543	101769.72871877857
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	53	-152.91014086700315	133695.1373827819
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	54	-153.10559680978832	136316.4133725053
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	55	-153.26855437807492	140664.78766891867
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	56	-153.642168798093	177782.6624294168
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	57	-153.95584512678593	200704.64901314888
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	58	-154.36849487336352	218581.93520230125
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	59	-154.86572103630408	283589.3092398215
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	60	-155.27117139499887	300306.5621504233
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	61	-155.69638560591548	413602.0084091198
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	62	-156.34113153919645	511491.72889275046
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	63	-156.63626945535216	573174.2666927999
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	64	-156.94916516568827	555540.584870949
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	65	-157.35037607743666	550129.4198353635
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	66	-157.79684285351146	504896.16834788414
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	67	-158.03132119271882	500343.1515605449
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	68	-158.37632940035746	539356.0031988918
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	69	-158.66230440639234	576282.8435295027
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	70	-159.37929822112358	732534.9981282754
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	71	-160.20895807306462	1.0102557249978328e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	72	-160.88465416112464	1.2693036320933476e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	73	-161.31192712954353	1.3071991943811695e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	74	-161.7814651642387	1.5052196843654246e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	75	-162.18251468444453	1.6534736509251196e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	76	-162.50689821885945	1.7871440185856568e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	77	-162.71519743101095	1.905614777590712e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	78	-162.88517183517757	2.0451527491766203e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	79	-163.00341289746484	1.988905125891488e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	80	-163.1352043379499	1.8573277679197742e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	81	-163.31673979685397	1.7735956304462706e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	82	-163.503868973989	1.6287223449097073e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	83	-163.6621357261746	1.596395071109643e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	84	-163.9235045552865	1.486813065104241e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	85	-164.0539768589559	1.4815059775408146e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	86	-164.1375082515271	1.5638754707101195e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	87	-164.27331074188052	1.604438498117446e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	88	-164.65886809089284	1.3538460772370577e6
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	89	-165.21178302724144	957902.394130545
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	90	-165.5575923998406	756800.7387493256
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	91	-165.81481311378832	715097.1549528891
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	92	-166.02152177441658	557016.8853959176
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	93	-166.28562148366544	420721.5711732902
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	94	-166.54161505215293	341870.6142542369
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	95	-166.69392827576596	346054.7826002648
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	96	-166.78038946959927	307833.1238836258
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	97	-166.8927133637693	309607.9986651708
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	98	-167.01805240009827	300769.18940215395
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	99	-167.2182174045507	320512.10285988235
+Diagonal gauge	20261107-134511-preparation/preparation.tsv	100	-167.40383428872653	296007.8644536898
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	0	1.3947678171657385	1.7752443680615654e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	1	0.7843689551761842	1.880919686812147e8
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	2	0.6847495250999635	6.242677995598035e8
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	3	0.631265795813469	1.1047325378647125e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	4	0.6124602485632603	1.1800034007491813e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	5	0.5289382312439709	9.853116744134203e8
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	6	0.40279159630923284	1.6585331772188148e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	7	0.334943443292731	2.7714909524716835e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	8	0.16816580025295882	8.160036322243829e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	9	0.1248276634472553	7.09155945158554e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	10	0.04158050002925837	6.608657642084311e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	11	-0.0470228745264509	7.895823772519449e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	12	-0.10499793180501195	7.050148644681656e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	13	-0.17675799543452897	1.468582247681254e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	14	-0.2029158399788739	2.4603679515845562e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	15	-0.21044835899947822	2.5163419801486866e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	16	-0.23516789500277038	2.1933269061387123e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	17	-0.27626183224133166	1.9244247506160892e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	18	-0.3560236234948924	2.0314210991067352e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	19	-0.4012388385211212	2.656576480129448e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	20	-0.4381519048595455	2.9398204494237247e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	21	-0.45905694166092936	3.655141372203062e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	22	-0.5020699160282559	3.244989939946632e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	23	-0.5358229377661927	3.367165481349726e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	24	-0.5548725406492505	2.3985490850277073e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	25	-0.6065684995122526	1.722070700188345e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	26	-0.6573664651148925	1.527048872950316e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	27	-0.6974235544198689	1.787210064807369e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	28	-0.7179328624626349	1.9439770349042316e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	29	-0.7630470053346349	2.031746653286156e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	30	-0.8172364421523469	2.1319523711652096e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	31	-0.8596470194854355	1.9234928969065758e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	32	-0.8876873152032806	1.7247090412819687e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	33	-0.9343124673778167	1.4440798046197742e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	34	-0.983824406277303	1.4750740320953459e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	35	-1.0229117305007962	1.5866974033804386e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	36	-1.0608491884094902	1.2737692470179817e10
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	37	-1.1011621903725144	9.798603706826439e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	38	-1.1366969350270961	8.048377991636236e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	39	-1.1678359728553402	7.901891767185558e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	40	-1.2004215431304868	6.469386301698384e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	41	-1.2744487554331465	6.3777239017271595e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	42	-1.369115761725147	5.140976638314267e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	43	-1.4287870533277736	3.899379022168079e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	44	-1.446893430209122	3.746844434475075e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	45	-1.4714989412241655	4.483375030248946e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	46	-1.5053475971295958	4.046550336254777e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	47	-1.5403874729431586	3.993551012377789e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	48	-1.5584917019434974	4.311171904121222e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	49	-1.5788210983024875	4.811507651032847e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	50	-1.6334047954130322	4.591678372210985e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	51	-1.7082553107300378	3.8014909648478136e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	52	-1.7450583821660146	3.271702255612251e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	53	-1.7831236429151096	3.410032766406571e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	54	-1.8193888975531058	4.1428872655902247e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	55	-1.8796088948509195	4.396240500796993e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	56	-1.9272413739724485	2.775591679404258e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	57	-2.015070748332847	1.2883152524777515e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	58	-2.075608930721747	7.404584981035161e8
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	59	-2.1418703314689216	5.1171215253557295e8
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	60	-2.1971543446732276	6.716666008143256e8
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	61	-2.246216124563473	1.1535516610994601e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	62	-2.3192907967800434	1.1904776042436333e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	63	-2.3909570310527823	2.147863218260676e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	64	-2.4482877704699533	2.293496391456642e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	65	-2.4928035996650943	3.1469278874092436e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	66	-2.5350630715908213	2.0398151372642906e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	67	-2.598680767255447	1.3848989124149616e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	68	-2.659741000871688	1.3449581998229015e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	69	-2.7547355702559715	1.3443295304836748e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	70	-2.9019919756979986	1.4369646784317472e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	71	-2.977229764367406	1.411504533394985e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	72	-3.0884141538535084	1.5290243495053668e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	73	-3.1547822531786083	1.6571863459844825e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	74	-3.2183760122659644	1.653171198609083e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	75	-3.2594105967930833	1.7884295645589116e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	76	-3.284483964452637	1.678579535881026e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	77	-3.355186224631967	1.4800366799273095e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	78	-3.418385255853404	1.6580439644924555e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	79	-3.457821203417095	1.6596068265239336e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	80	-3.489139917042593	1.5308128806522558e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	81	-3.5387368186301105	1.917025219835686e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	82	-3.5717431418727688	1.7354235679747665e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	83	-3.60062480517301	1.7384355275202858e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	84	-3.6186156328853283	1.6946040698604612e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	85	-3.6467945520283163	1.531115447353465e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	86	-3.686782681358689	1.6856335058888452e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	87	-3.7063664614566947	2.0684232828766088e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	88	-3.7148759357152636	2.1734983381724076e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	89	-3.742239430247454	1.900974481636063e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	90	-3.775407103177229	1.8783582541953175e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	91	-3.798523540698962	2.0919701007142785e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	92	-3.810827345116756	1.9494210209167917e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	93	-3.8328990916301158	2.084456024727526e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	94	-3.8545351107994965	1.8947618602125452e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	95	-3.8748611595762066	1.6358510291504784e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	96	-3.904648829141017	1.5319550521728714e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	97	-3.9237943488889275	1.6040232787677681e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	98	-3.9439432877945544	1.4190476562969835e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	99	-3.962970040918699	1.2647490536414084e9
+Left canonical, with preconditioner	20261106-202812-seed1/noprep_precond.tsv	100	-3.980849188738755	1.26767825991991e9
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	0	1.3947678171655096	1.7752443040089111e9
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	1	0.9972740294470702	3.2043785066919155e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	2	0.6538953147461216	1.5819973031163922e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	3	0.14074595096685133	1.569003670238442e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	4	-0.028398012344914323	1.7093414926780146e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	5	-0.1621339058695732	9.440786377542453e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	6	-0.24886535733415968	6.831820491306284e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	7	-0.33200390795324364	5.403115786177751e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	8	-0.47480739553325174	3.0372321004669335e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	9	-0.6183273167588187	3.691331275259255e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	10	-0.8077958367147762	1.1889787575296167e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	11	-0.899989594880293	1.7974672284992078e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	12	-0.9673071019101361	1.6474020141508818e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	13	-1.0332311114564428	1.1507850609014358e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	14	-1.0962517670885554	1.0033620354486789e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	15	-1.1359299916271135	6.522016643880839e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	16	-1.2036012790921533	5.089441136219322e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	17	-1.3035358355879736	1.5497329505652025e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	18	-1.4574233163026304	2.25575734387108e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	19	-1.527506278356065	1.7380396304935718e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	20	-1.5499734366151117	2.0105869791373453e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	21	-1.612380048550552	3.0496055381811714e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	22	-1.7193706931406232	1.61770143662185e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	23	-1.7615028661212064	1.8437881822193363e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	24	-1.7822562671831816	1.7118195185363272e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	25	-1.8028926727634709	1.4711908013674656e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	26	-1.8231541160470297	1.065186342302057e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	27	-1.8628043908580114	1.0586749226292072e8
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	28	-1.90814186959141	6.36832210870982e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	29	-1.934835705900505	7.236069731779025e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	30	-2.0099815446620584	8.693997501191413e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	31	-2.0906760454823337	3.92869464656616e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	32	-2.180540532799632	2.2830480476079144e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	33	-2.243070381705007	2.0510740364016328e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	34	-2.2914590567547926	1.717234046153839e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	35	-2.3384702297285194	1.766280093467982e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	36	-2.3820417514563923	2.1313967434805423e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	37	-2.417258009914099	1.570989194869712e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	38	-2.439297099112675	1.329992263813293e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	39	-2.4532294420910534	1.2592549047014534e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	40	-2.4713120925068517	1.287166097267749e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	41	-2.5261120600911657	1.4688696018100023e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	42	-2.595254392534907	1.365005356664531e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	43	-2.668863342912258	1.4870307177500183e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	44	-2.768715166363247	1.5304299226185434e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	45	-2.913921431363159	7.782098220967663e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	46	-2.9632824958438917	7.628038160795828e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	47	-3.045822981627209	5.778263191754537e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	48	-3.086779151016745	4.859652483631236e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	49	-3.111971867426276	4.554051822800099e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	50	-3.154100214807224	5.140178707887787e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	51	-3.1888540113279036	4.635188491855587e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	52	-3.2244797261334748	4.543082762807571e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	53	-3.255011976812171	4.918433307020594e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	54	-3.2890937555700357	5.196727159407994e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	55	-3.344489763156122	4.755358340178415e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	56	-3.35999135690566	4.961766604858704e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	57	-3.378638454842618	5.970516112672093e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	58	-3.410371189838618	6.026265016792912e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	59	-3.45246552517343	6.269297611768104e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	60	-3.507527998052666	5.692103959678512e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	61	-3.525356903057752	5.859514992539965e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	62	-3.5507749276483884	5.929962515964295e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	63	-3.5840169296127717	5.434766358962049e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	64	-3.6209810115738623	5.706098066316703e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	65	-3.661188512355177	6.433622953766842e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	66	-3.688754197847187	5.856549577504437e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	67	-3.7304813176481177	7.277597167529184e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	68	-3.755084353663358	8.253107424383682e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	69	-3.7772118785599043	1.049693867255539e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	70	-3.790387412896083	1.1670573818176549e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	71	-3.8096764098978824	1.2620615914603574e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	72	-3.8446373840005736	1.2113531498654066e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	73	-3.8658694433174148	1.1060303735604275e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	74	-3.8778511972121863	9.222393389350878e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	75	-3.88556103318901	9.074892092447245e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	76	-3.906113344911921	9.523584465640338e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	77	-3.9512728351045125	1.0677311326946026e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	78	-3.974771732982937	9.284497194708107e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	79	-3.987050322797672	1.1365028583938932e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	80	-3.9964505091772295	1.0189638973915666e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	81	-4.016273112061637	9.780081231561314e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	82	-4.044573059086845	1.0234148014195358e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	83	-4.078878350427091	1.0255546192252938e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	84	-4.111377528221084	9.20550277617558e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	85	-4.127539649341267	8.660311233924942e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	86	-4.138611696697363	8.77483919927422e6
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	87	-4.160139934064371	1.1979664864798874e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	88	-4.1783619471275015	1.3030453339803724e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	89	-4.198342752133977	1.5231937086776659e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	90	-4.223263914309257	1.4333022165567618e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	91	-4.245483363279085	1.2405250956972627e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	92	-4.2633762054492355	1.4339384685888682e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	93	-4.278070297142954	1.545332730286671e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	94	-4.309140464246733	1.9587532949280318e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	95	-4.331080662845799	2.0401899418228693e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	96	-4.353888454197873	2.1013225787923552e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	97	-4.370399864301965	2.251967788484401e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	98	-4.3784255831594185	2.1855087023280844e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	99	-4.38813161582321	1.9925132770992357e7
+Left canonical, without preconditioner	20261106-202812-seed1/noprep_noprecond.tsv	100	-4.41013603989136	1.9041660672223702e7

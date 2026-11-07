@@ -156,6 +156,18 @@ Execution log: [preparation-execution.log](preparation-execution.log). Original 
 project restored; cmps-repl left alive and idle. The initial closure remains a
 historical record; this extension is complete and awaits any further owner direction.
 
+## First 100 iterations: three-way comparison
+
+[Combined plot](results/first100-comparison/first100-comparison.pdf) compares
+iterations 0–100 for diagonal-gauge preparation and the two unprepared
+left-canonical runs (with/without preconditioning). Energy is in manuscript units;
+all condition numbers refer to rho_R in left-canonical form, including the
+postprocessed diagonal-gauge iterates. Script: [plot-first100.py](plot-first100.py).
+[Combined scientific TSV](results/first100-comparison/curves.tsv) retains source
+paths and all 303 plotted points. No new simulations were needed. Inputs share the
+same initial tensors, with solver-RNG differences as documented above. Each curve's
+indices were verified to be exactly 0–100, and the rendered plot was inspected.
+
 ## Reproducibility and limitations
 
 The initial tensors are reproducible from the explicitly seeded local generator and
