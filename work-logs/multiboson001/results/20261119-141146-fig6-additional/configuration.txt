@@ -1,0 +1,26 @@
+Julia=1.11.9
+threads=1
+BLAS_threads=4
+project=/home/tangwei/Workspace/research/CircularCMPS.jl/work-logs/multiboson001/environment/Project.toml
+solver_seed=20261107
+chi=8
+couplings=[10.0 -7.0; -7.0 10.0]
+chemical_potentials=[0.0, 0.0]
+L=Inf
+energy_paper=energy_raw/2
+reference_energy=-180.07883852694263
+wall_ns=elapsed wall time of ground_state including any Julia compilation during the call
+
+[diag_500]
+checkpoint=/home/tangwei/Workspace/research/CircularCMPS.jl/data/multiboson001/20261106-202812-seed1/checkpoints/initial-diagonal.h5
+offset=0
+maxiter=500
+gradtol=1.0e-12
+do_preconditioning=false
+
+[prep100_noprecond]
+checkpoint=/home/tangwei/Workspace/research/CircularCMPS.jl/data/multiboson001/20261106-202812-seed1/checkpoints/prepared-left.h5
+offset=100
+maxiter=400
+gradtol=1.0e-6
+preconditioner_type=0
